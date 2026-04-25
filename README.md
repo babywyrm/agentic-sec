@@ -53,6 +53,7 @@ A closed-loop defense stack:
 | [1. The Attack](docs/walkthroughs/attack.md) | Scan camazotz with mcpnuke, understand the findings, map attack chains |
 | [2. The Defense](docs/walkthroughs/defense.md) | Generate nullfield policy from findings, apply it, re-scan to prove it works |
 | [3. Lab Practice](docs/walkthroughs/practice.md) | Work through defense labs — write policy, craft redaction rules, tune budgets |
+| [4. AI-Powered Scanning](docs/walkthroughs/ai-powered-scanning.md) | Wire Claude into both mcpnuke and camazotz — deep reasoning, attack chain analysis, realistic AI guardrails |
 
 ### Deployment & Integration
 
