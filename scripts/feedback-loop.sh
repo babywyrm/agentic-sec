@@ -11,7 +11,8 @@
 #   # With Claude AI analysis
 #   ANTHROPIC_API_KEY=sk-ant-... ./scripts/feedback-loop.sh http://localhost:8080/mcp --claude
 
-set -euo pipefail
+set -uo pipefail
+# Note: not using -e because mcpnuke exits 1 when findings exist (expected)
 
 TARGET="${1:?Usage: feedback-loop.sh <TARGET_URL> [--k8s NAMESPACE] [--claude]}"
 shift
@@ -25,6 +26,25 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
+
+# Find mcpnuke — try as module first, then as command
+# Find mcpnuke
+if command -v mcpnuke &>/dev/null; then
+  MCPNUKE="mcpnuke"
+elif python3 -c "import mcpnuke" 2>/dev/null; then
+  MCPNUKE="python3 -m mcpnuke"
+elif [ -d "${MCPNUKE_DIR:-$HOME/mcpnuke}" ]; then
+  MCPNUKE="python3 -m mcpnuke"
+  export PYTHONPATH="${MCPNUKE_DIR:-$HOME/mcpnuke}:${PYTHONPATH:-}"
+elif [ -d "$(dirname "$0")/../../../mcpnuke" ]; then
+  MCPNUKE="python3 -m mcpnuke"
+  export PYTHONPATH="$(cd "$(dirname "$0")/../../../mcpnuke" && pwd):${PYTHONPATH:-}"
+else
+  echo "ERROR: mcpnuke not found."
+  echo "  Install: pip install mcpnuke"
+  echo "  Or set:  export MCPNUKE_DIR=/path/to/mcpnuke"
+  exit 1
+fi
 
 SCAN_ARGS="--targets $TARGET --fast --no-invoke --verbose"
 [ -n "$USE_CLAUDE" ] && SCAN_ARGS="$SCAN_ARGS $USE_CLAUDE"
@@ -43,7 +63,7 @@ echo "╔═══════════════════════�
 echo "║  STEP 1: Initial Scan                                      ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 
-mcpnuke $SCAN_ARGS \
+$MCPNUKE $SCAN_ARGS \
   --save-baseline /tmp/loop-baseline.json \
   --json /tmp/loop-scan-before.json 2>&1 | tail -15
 
@@ -64,7 +84,7 @@ echo "╔═══════════════════════�
 echo "║  STEP 2: Generate nullfield Policy                         ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 
-mcpnuke --targets $TARGET --fast --no-invoke \
+$MCPNUKE --targets $TARGET --fast --no-invoke \
   --generate-policy /tmp/loop-policy.yaml 2>&1 | grep "policy"
 
 echo ""
@@ -100,7 +120,7 @@ echo "╔═══════════════════════�
 echo "║  STEP 4: Re-scan (validate defenses)                       ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 
-mcpnuke $SCAN_ARGS \
+$MCPNUKE $SCAN_ARGS \
   --baseline /tmp/loop-baseline.json \
   --json /tmp/loop-scan-after.json 2>&1 | tail -15
 
