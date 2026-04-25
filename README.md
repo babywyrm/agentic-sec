@@ -54,10 +54,11 @@ A closed-loop defense stack:
 | [2. The Defense](docs/walkthroughs/defense.md) | Generate nullfield policy from findings, apply it, re-scan to prove it works |
 | [3. Lab Practice](docs/walkthroughs/practice.md) | Work through defense labs — write policy, craft redaction rules, tune budgets |
 
-### Integration Guides
+### Deployment & Integration
 
 | Guide | What it covers |
 |-------|---------------|
+| [Deployment Guide](docs/deployment-guide.md) | Local, cluster, and cloud — performance, brain providers, scan modes per environment |
 | [Teleport Setup](docs/teleport/setup.md) | Machine identity for agents — tbot, K8s access, MCP App Access |
 | [nullfield Quick Reference](docs/reference/nullfield.md) | The five actions, policy YAML, deployment modes, CRDs |
 | [mcpnuke Quick Reference](docs/reference/mcpnuke.md) | Scan modes, Teleport checks, policy generation, baselines |
