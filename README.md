@@ -54,6 +54,8 @@ A closed-loop defense stack:
 | [2. The Defense](docs/walkthroughs/defense.md) | Generate nullfield policy from findings, apply it, re-scan to prove it works |
 | [3. Lab Practice](docs/walkthroughs/practice.md) | Work through defense labs — write policy, craft redaction rules, tune budgets |
 | [4. AI-Powered Scanning](docs/walkthroughs/ai-powered-scanning.md) | Wire Claude into both mcpnuke and camazotz — deep reasoning, attack chain analysis, realistic AI guardrails |
+| [5. Live Feedback Loop](docs/walkthroughs/live-loop.md) | Automated scan → generate → apply → validate cycle with one script |
+| [6. Delegation Chain Attacks](docs/walkthroughs/delegation-chains.md) | Multi-agent identity dilution — Agent A → B → C loses human authorization |
 
 ### Deployment & Integration
 
