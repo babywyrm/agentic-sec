@@ -250,8 +250,8 @@ incident response runbooks (what to do when mcpnuke finds a gap).
 
 | Goal | Start Here |
 |------|-----------|
-| Understand the vulnerability patterns | [Camazotz Quick Start](../QUICKSTART.md) — run the labs locally |
+| Understand the vulnerability patterns | [Camazotz Quick Start](https://github.com/babywyrm/camazotz/blob/main/QUICKSTART.md) — run the labs locally |
 | Add the policy layer | [nullfield README](https://github.com/babywyrm/nullfield) — deploy as sidecar |
-| Add machine identity | [integrations/teleport/](../integrations/teleport/) — step-by-step Teleport setup |
+| Add machine identity | [Teleport Setup](teleport/setup.md) — step-by-step Teleport integration |
 | Scan and validate | [mcpnuke README](https://github.com/babywyrm/mcpnuke) — `mcpnuke --targets http://localhost:8080/mcp` |
-| Production architecture | [Golden Path v3](mcp-at-scale-golden-path.md) — the complete security spec |
+| Production architecture | [Golden Path v3](golden-path.md) — the complete security spec |
