@@ -314,13 +314,70 @@ This is where each project in the ecosystem actually lives.
 
 ### camazotz — Per‑Lane Lab Coverage
 
-| Lane | Labs |
-|------|------|
-| 1. Human Direct | `auth_lab`, `rbac_lab`, `tenant_lab`, `notification_lab` |
-| 2. Human → Agent | `oauth_delegation_lab`, `revocation_lab`, `pattern_downgrade_lab`, `credential_broker_lab` |
-| 3. Machine Identity | `bot_identity_theft_lab`, `teleport_role_escalation_lab`, `cert_replay_lab` |
-| 4. Agent → Agent | `delegation_chain_lab`, `delegation_depth_lab`, `hallucination_lab` |
-| 5. Anonymous | `tool_lab` (rug‑pull on discovery), `shadow_lab`, `error_lab` |
+Complete distribution across all 32 labs. The `T` column is the primary
+transport surface each lab targets (A = MCP JSON‑RPC, B = Direct HTTP
+API, C = SDK/library). `+N` in "Secondary" means that lab's *also* a
+touchpoint on another lane.
+
+| Lane | T=A (MCP) | T=B (Direct API) | T=C (SDK) | Secondary |
+|------|-----------|------------------|-----------|-----------|
+| **1. Human Direct** (6) | `auth_lab`, `rbac_lab`, `tenant_lab`, `notification_lab`, `temporal_lab` | `secrets_lab` | — | — |
+| **2. Human → Agent** (12) | `oauth_delegation_lab`, `revocation_lab`, `pattern_downgrade_lab`, `credential_broker_lab`, `context_lab`, `comms_lab`, `audit_lab`, `indirect_lab`, `budget_tuning_lab`, `policy_authoring_lab`, `response_inspection_lab` | `egress_lab` | — | `delegation_chain_lab` (from L4), `relay_lab` (from L4) |
+| **3. Machine Identity** (5) | `bot_identity_theft_lab`, `teleport_role_escalation_lab`, `cert_replay_lab`, `config_lab` | — | `supply_lab` | `credential_broker_lab` (from L2) |
+| **4. Agent → Agent** (6) | `delegation_chain_lab`, `delegation_depth_lab`, `hallucination_lab`, `relay_lab`, `attribution_lab`, `cost_exhaustion_lab` | — | — | `bot_identity_theft_lab` (from L3) |
+| **5. Anonymous** (3) | `tool_lab`, `shadow_lab`, `error_lab` | — | — | — |
+
+**Transport coverage gaps** (surfaced by `/api/lanes` as machine-readable
+`gaps` fields — a teaching artifact, not a bug):
+
+- **Lane 1**: no Transport C lab yet (no SDK-level direct-human flow).
+- **Lane 2**: no Transport C lab yet.
+- **Lane 3**: no Transport B lab yet (no machine-identity-over-direct-API).
+- **Lane 4**: no Transport B or C lab yet (agent chains today are all
+  MCP-transport in this corpus).
+- **Lane 5** has no transport notion by design (anonymous pre-auth).
+
+These are blind spots worth filling as the lab catalog grows; they also
+define the honest boundary of what camazotz currently teaches.
+
+#### Browsing the coverage
+
+The camazotz portal ships two parallel views of the same 32 labs:
+
+- `GET /threat-map` — lab grid organized by *attack category* (best for
+  learners asking "what kind of attack is this?").
+- `GET /lanes` — lab grid organized by *identity lane* (best for
+  practitioners asking "who is the actor in this flow?"). A sticky
+  jump bar anchors to each of the five lanes; each strip shows the
+  flow diagram, default nullfield action, covering mcpnuke checks, and
+  coverage gaps inline.
+
+#### Machine‑readable taxonomy: `GET /api/lanes`
+
+The portal also publishes the full taxonomy as JSON, versioned as
+`schema: "v1"`:
+
+```bash
+curl -s http://<camazotz-host>:3000/api/lanes | jq '.schema, .lanes | length, .coverage."4".gaps'
+# "v1"
+# 5
+# [
+#   "Transport B not covered",
+#   "Transport C not covered"
+# ]
+```
+
+The schema is the intended contract surface for sibling tools:
+
+- **mcpnuke** consumes `/api/lanes` for its `--coverage-report` flag to
+  intersect its finding catalog with the camazotz lane distribution.
+- **nullfield** policies reference the same lane slugs
+  (`human-direct`, `delegated`, `machine`, `chain`, `anonymous`) and
+  transport codes (`A`/`B`/`C`) via the `nullfield.io/lane` and
+  `nullfield.io/transport` policy labels.
+
+Do not rename the slugs without updating the three consumer projects
+in lockstep — they are the ecosystem's shared vocabulary.
 
 ### Identity Providers / Issuers
 
