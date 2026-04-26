@@ -319,6 +319,42 @@ transport surface each lab targets (A = MCP JSON‑RPC, B = Direct HTTP
 API, C = SDK/library). `+N` in "Secondary" means that lab's *also* a
 touchpoint on another lane.
 
+```mermaid
+flowchart TB
+  subgraph grid["Lane × Transport coverage (primary-lab counts)"]
+    direction LR
+    subgraph lane1["<b>Lane 1 — Human Direct</b>"]
+      L1A["T=A · 5 labs"]:::filled
+      L1B["T=B · 1 lab"]:::filled
+      L1C["T=C · gap"]:::gap
+    end
+    subgraph lane2["<b>Lane 2 — Human → Agent</b>"]
+      L2A["T=A · 11 labs"]:::filled
+      L2B["T=B · 1 lab"]:::filled
+      L2C["T=C · gap"]:::gap
+    end
+    subgraph lane3["<b>Lane 3 — Machine</b>"]
+      L3A["T=A · 4 labs"]:::filled
+      L3B["T=B · gap"]:::gap
+      L3C["T=C · 1 lab"]:::filled
+    end
+    subgraph lane4["<b>Lane 4 — Agent → Agent</b>"]
+      L4A["T=A · 6 labs"]:::filled
+      L4B["T=B · gap"]:::gap
+      L4C["T=C · gap"]:::gap
+    end
+    subgraph lane5["<b>Lane 5 — Anonymous</b>"]
+      L5["3 labs · no transport notion"]:::filled
+    end
+  end
+  classDef filled fill:#34d399,stroke:#064e3b,color:#000;
+  classDef gap    fill:#fbbf24,stroke:#78350f,color:#000;
+```
+
+Green = lab exists. Amber = gap flagged by
+`camazotz /api/lanes` as a teaching artifact — a known boundary of the
+corpus, not a bug.
+
 | Lane | T=A (MCP) | T=B (Direct API) | T=C (SDK) | Secondary |
 |------|-----------|------------------|-----------|-----------|
 | **1. Human Direct** (6) | `auth_lab`, `rbac_lab`, `tenant_lab`, `notification_lab`, `temporal_lab` | `secrets_lab` | — | — |

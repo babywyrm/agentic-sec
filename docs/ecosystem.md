@@ -21,9 +21,10 @@ brokers, webhook registrations. Every `tools/call` is a function invocation with
 side effects, triggered by an LLM that cannot be trusted to make authorization
 decisions.
 
-The attack surface is not theoretical. Camazotz demonstrates 28 distinct
-vulnerability patterns — from prompt injection that triggers secret exfiltration,
-to confused-deputy attacks where the AI grants admin access because the attacker
+The attack surface is not theoretical. Camazotz demonstrates 32 distinct
+vulnerability patterns spanning five agentic-identity lanes and three transport
+surfaces — from prompt injection that triggers secret exfiltration, to
+confused-deputy attacks where the AI grants admin access because the attacker
 wrote a convincing justification. These attacks work because:
 
 1. **LLM guardrails are advisory, not enforceable.** The model can warn about a
@@ -123,9 +124,9 @@ Teleport labs, mcpnuke chains the lab tools into complete attack sequences:
 
 | Chain | Steps | What It Tests |
 |-------|-------|---------------|
-| Bot identity theft | Read tbot secret → replay cert → check session binding | MCP-T04: credential theft and replay |
-| Role escalation | Get roles → request escalation → privileged operation | MCP-T20: RBAC bypass via social engineering |
-| Cert replay | Get expired cert → replay in grace window → check detection | MCP-T26: short-lived cert revocation gap |
+| Bot identity theft | Read tbot secret → replay cert → check session binding | MCP-T18: credential theft and replay |
+| Role escalation | Get roles → request escalation → privileged operation | MCP-T28: RBAC bypass via social engineering |
+| Cert replay | Get expired cert → replay in grace window → check detection | MCP-T19: short-lived cert revocation gap |
 
 Each chain reports whether the attack succeeded (finding) or the defense held
 (info). On easy difficulty, attacks succeed. On hard difficulty, nullfield's
@@ -135,34 +136,37 @@ session binding, HOLD gates, and replay detection block them.
 
 ## How the Layers Interact
 
-```
-                     ┌──────────────────────────────────────────────┐
-                     │            Kubernetes Cluster                │
-                     │                                              │
-  Agent/Bot ────────▶│  Teleport Proxy (:443)                       │
-  (with tbot cert)   │       │                                      │
-                     │       ├── K8s access (kubeconfig)            │
-                     │       │   └── RBAC: agent-readonly           │
-                     │       │                                      │
-                     │       └── MCP access (App Access agent)      │
-                     │           └── Teleport role: agent-mcp       │
-                     │               └── Tool filter: cost.*,audit.*│
-                     │                   │                          │
-                     │                   ▼                          │
-                     │           nullfield sidecar (:9090)          │
-                     │           ├── Identity: verify cert/JWT      │
-                     │           ├── Registry: tool registered?     │
-                     │           ├── Policy: ALLOW/DENY/HOLD/SCOPE  │
-                     │           ├── Budget: within quota?          │
-                     │           └── Audit: structured log          │
-                     │                   │                          │
-                     │                   ▼                          │
-                     │           brain-gateway (:8080)              │
-                     │           └── 28 vulnerable MCP labs         │
-                     │                                              │
-  mcpnuke ──────────▶│  Scans both Teleport infra + MCP tools       │
-  (scanner)          │  Reports findings + exploit chain results    │
-                     └──────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+  subgraph Attackers["Attack side"]
+    BOT["Agent / Bot<br/>(tbot cert)"]
+    MCPNUKE["mcpnuke scanner<br/>(outside-in)"]
+  end
+
+  subgraph Cluster["Kubernetes cluster"]
+    direction TB
+    TELEPORT["<b>Teleport Proxy</b> :443<br/>identity layer"]
+    K8S["K8s API<br/>(RBAC: agent-readonly)"]
+    NF["<b>nullfield sidecar</b> :9090<br/>identity → registry → integrity →<br/>circuit → policy → budget → audit"]
+    GW["<b>brain-gateway</b> :8080<br/>32 vulnerable MCP labs<br/>(5 lanes × 3 transports)"]
+  end
+
+  BOT -->|short-lived cert| TELEPORT
+  TELEPORT -->|kubeconfig| K8S
+  TELEPORT -->|MCP App Access| NF
+  NF -->|ALLOW / SCOPE / BUDGET forwarded| GW
+  NF -.->|DENY / HOLD queued| HOLDQ["human approval queue"]
+  MCPNUKE -->|scan| TELEPORT
+  MCPNUKE -->|scan tools/list + probes| GW
+
+  classDef identity fill:#60a5fa,stroke:#1e3a8a,color:#000;
+  classDef policy   fill:#a78bfa,stroke:#4c1d95,color:#000;
+  classDef target   fill:#fb923c,stroke:#7c2d12,color:#000;
+  classDef scanner  fill:#34d399,stroke:#064e3b,color:#000;
+  class TELEPORT,K8S identity;
+  class NF,HOLDQ policy;
+  class GW target;
+  class MCPNUKE scanner;
 ```
 
 The key insight: **defense in depth is testable**. You deploy nullfield and
@@ -173,11 +177,78 @@ INFO findings ("defense held"), you're in good shape.
 
 ---
 
+## Per-Project Coverage Scorecard
+
+What each project covers today, and what it deliberately leaves to the others.
+This is the honest boundary of the ecosystem as of 2026-04-26.
+
+| Project | Covers | Does not cover | Source of truth |
+|---------|--------|----------------|-----------------|
+| **[camazotz](https://github.com/babywyrm/camazotz)** | 32 labs across all 5 identity lanes and 3 transport surfaces (A=MCP, B=Direct API, C=SDK). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
+| **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
+| **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
+| **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
+
+**Coverage gaps acknowledged in the current corpus** (surfaced by
+camazotz `/api/lanes` as machine-readable `gaps`):
+
+- Lane 1 (Human Direct) — no Transport C (SDK) lab yet
+- Lane 2 (Delegated) — no Transport C lab yet
+- Lane 3 (Machine) — no Transport B (direct API) lab yet
+- Lane 4 (Agent → Agent) — no Transport B or C lab yet
+- Lane 5 (Anonymous) — has no transport notion by design (pre-auth)
+
+These aren't failures; they are the honest boundary of what the lab corpus
+teaches and the concrete next additions as the ecosystem grows.
+
+---
+
+## Roadmap — How This Grows
+
+Three horizons, committed in decreasing order of near-term certainty.
+
+### Near-term (spec'd, implementation pending)
+
+- **nullfield per-lane policy templates** — five starter policies
+  (`policies/by-lane/lane-N-*.yaml`) + three new primitives:
+  `identity.requireActChain`, `delegation.maxDepth`,
+  `identity.audienceMustNarrow`. Spec: [`nullfield/docs/specs/2026-04-26-per-lane-policy-templates.md`](https://github.com/babywyrm/nullfield/blob/main/docs/specs/2026-04-26-per-lane-policy-templates.md).
+- **mcpnuke `--by-lane` and `--coverage-report <url>`** — lane/transport
+  fields on every Finding; cross-project coverage reports that consume
+  camazotz `/api/lanes` schema v1 directly. Spec:
+  [`mcpnuke/docs/specs/2026-04-26-by-lane-reporting.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/specs/2026-04-26-by-lane-reporting.md).
+
+### Medium-term (fill the visible gaps)
+
+- New Transport C (SDK) labs for Lanes 1 and 2 — probably shaped like
+  `sdk_supply_lab` and `sdk_delegation_lab`.
+- New Transport B (direct API) labs for Lanes 3 and 4.
+- Nullfield per-lane templates deployed on the reference NUC cluster so
+  the feedback loop's "apply" step closes end-to-end without extra setup.
+- Walkthrough: "Building a Lane 4 defense from scratch" using the new
+  nullfield primitives on the `delegation_depth_lab` and
+  `delegation_chain_lab` labs.
+
+### Future (revisit when the three-repo vocabulary diverges)
+
+- A central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml`
+  (or JSON schema) that all three tools pull from at build time. Not worth
+  the cross-repo dependency weight today — camazotz/frontend/lane_taxonomy.py
+  is the de-facto source. Revisit if nullfield or mcpnuke start to drift.
+- Per-lane rate-limit primitives in nullfield (distinct from global
+  `maxCallsPerMinute`).
+- mcpnuke `--watch` mode producing continuous lane-coverage deltas against
+  a long-running camazotz target.
+- Integration with external IDPs (Okta, Auth0) beyond ZITADEL to widen
+  Lane 1/2 coverage.
+
+---
+
 ## The Teleport Labs — What They Teach
 
 Three camazotz labs specifically test Teleport machine identity patterns:
 
-### Bot Identity Theft (`bot_identity_theft_lab`, MCP-T04)
+### Bot Identity Theft (`bot_identity_theft_lab`, MCP-T18)
 
 **Attack:** A tbot agent writes short-lived certificates to a Kubernetes Secret.
 If that secret is readable by other pods (misconfigured RBAC), an attacker
@@ -192,7 +263,7 @@ extracts the certificate and replays it to access MCP tools as the bot.
 **Golden path defense:** Scope tbot secrets to specific pods via RBAC.
 Enable nullfield `integrity.bindToSession` to catch identity swaps.
 
-### Role Escalation (`teleport_role_escalation_lab`, MCP-T20)
+### Role Escalation (`teleport_role_escalation_lab`, MCP-T28)
 
 **Attack:** The bot has `agent-readonly` but discovers an MCP tool that modifies
 role assignments. By crafting a convincing justification, it social-engineers
@@ -209,7 +280,7 @@ the LLM into approving an escalation to `agent-ops`.
 HOLD on any tool that changes permissions. Teleport CE roles are static — use
 Enterprise access requests for just-in-time elevation.
 
-### Certificate Replay (`cert_replay_lab`, MCP-T26)
+### Certificate Replay (`cert_replay_lab`, MCP-T19)
 
 **Attack:** A short-lived certificate has expired, but clock skew between the
 proxy and the application creates a grace window. The attacker replays the
@@ -242,8 +313,9 @@ secrets, full audit). Together they implement the golden path: every request
 carries identity, every tool is registered and scoped, every secret lives in a
 secret manager, and the AI's output is never trusted as authorization.
 
-**The validation:** camazotz provides 28 intentionally vulnerable labs covering
-every OWASP MCP Top 10 risk. mcpnuke automates the attack sequences and
+**The validation:** camazotz provides 32 intentionally vulnerable labs
+covering every OWASP MCP Top 10 risk and every one of the five
+agentic-identity lanes. mcpnuke automates the attack sequences and
 reports whether your defenses hold. Run mcpnuke on hard difficulty — if the
 exploit chains fail and defenses hold, your golden path is working.
 

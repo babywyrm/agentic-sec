@@ -7,17 +7,34 @@ generating defenses, applying them, and proving they work.
 
 ## The Loop
 
+```mermaid
+flowchart LR
+  SCAN["1. SCAN<br/>mcpnuke finds<br/>vulnerabilities"]
+  REC["2. RECOMMEND<br/>--generate-policy<br/>produces nullfield YAML"]
+  ENF["3. ENFORCE<br/>kubectl apply →<br/>nullfield hot-reloads"]
+  VAL["4. VALIDATE<br/>re-scan or run<br/>defense labs"]
+
+  SCAN --> REC --> ENF --> VAL
+  VAL -->|regression testing| SCAN
+
+  classDef scan fill:#34d399,stroke:#064e3b,color:#000;
+  classDef gen  fill:#60a5fa,stroke:#1e3a8a,color:#000;
+  classDef enf  fill:#a78bfa,stroke:#4c1d95,color:#000;
+  classDef val  fill:#fb923c,stroke:#7c2d12,color:#000;
+  class SCAN scan;
+  class REC gen;
+  class ENF enf;
+  class VAL val;
 ```
-1. SCAN        mcpnuke finds vulnerabilities in the MCP server
-                  ↓
-2. RECOMMEND   mcpnuke --generate-policy produces nullfield YAML
-                  ↓
-3. ENFORCE     kubectl apply the policy → nullfield hot-reloads
-                  ↓
-4. VALIDATE    Re-scan to confirm findings are gone, or run defense labs
-                  ↓
-               Loop back to 1 for regression testing
-```
+
+> **Note on setup:** step 3 (ENFORCE) requires nullfield to be deployed in
+> the same cluster as the MCP target. If nullfield isn't present, the
+> included `scripts/feedback-loop.sh` runs the loop in "advisory" mode:
+> scan → recommend → (skip apply) → re-scan. That still produces a working
+> `policy.yaml` for offline review, but the re-scan will show unchanged
+> findings until the policy is applied by hand. See
+> [nullfield deployment](https://github.com/babywyrm/nullfield) for the
+> in-cluster setup.
 
 ---
 
