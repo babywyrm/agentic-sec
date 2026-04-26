@@ -4,6 +4,11 @@ Lightweight MCP arbiter proxy. One binary, one YAML policy.
 
 **Repo:** [github.com/babywyrm/nullfield](https://github.com/babywyrm/nullfield)
 
+**In the framework:** nullfield is the per‑cell policy enforcer in the
+[Identity Flow Framework](../identity-flows.md). Each of the five actions
+below maps to typical defaults for one or more identity lanes — see the
+"Per‑Lane Default Actions" table in the framework.
+
 ## The Five Actions
 
 | Action | What Happens | When to Use |

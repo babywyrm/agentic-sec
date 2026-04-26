@@ -4,6 +4,10 @@ MCP red teaming and security scanner.
 
 **Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke)
 
+**In the framework:** mcpnuke is the validator that exercises every cell of
+the [Identity Flow Framework](../identity-flows.md). New checks should
+declare which lane (1–5) and transport (A–C) they target in their docstring.
+
 ## Scan Modes
 
 | Mode | Flag | What It Does |

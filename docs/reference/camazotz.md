@@ -4,6 +4,11 @@ MCP security playground — 31 intentionally vulnerable labs.
 
 **Repo:** [github.com/babywyrm/camazotz](https://github.com/babywyrm/camazotz)
 
+**In the framework:** every camazotz lab targets one cell of the
+[Identity Flow Framework](../identity-flows.md). The "Lab Categories" table
+below already groups labs roughly by lane — see the framework's "camazotz —
+Per‑Lane Lab Coverage" table for the explicit mapping.
+
 ## Lab Categories
 
 | Category | Labs | What They Teach |

@@ -42,6 +42,7 @@ A closed-loop defense stack:
 
 | Document | What it covers |
 |----------|---------------|
+| [Identity Flow Framework](docs/identity-flows.md) | **Foundational** — five identity lanes × three transport surfaces; the lens every other doc uses |
 | [The Ecosystem](docs/ecosystem.md) | How the three projects fit together — defense layers, data flows, what each solves |
 | [Golden Path](docs/golden-path.md) | Production security architecture for MCP deployments — identity, registry, policy, audit |
 | [The Feedback Loop](docs/feedback-loop.md) | Scan → recommend → enforce → validate — the complete operational cycle |

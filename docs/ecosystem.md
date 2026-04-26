@@ -5,6 +5,13 @@ Protocol (MCP) tool execution in production Kubernetes environments. It explains
 the architecture, the defense layers, how to test them, and what to present to
 your security review board.
 
+> **Read first:** [The Identity Flow Framework](identity-flows.md) is the
+> foundational lens this document is written through. The "defense layers"
+> below correspond to the lane × transport matrix defined there: nullfield is
+> the per‑cell policy enforcer, Teleport handles Lane 3 (and Lane 4
+> partially), ZITADEL handles Lanes 1 and 2, and mcpnuke validates every
+> cell.
+
 ---
 
 ## The Problem
