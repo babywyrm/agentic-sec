@@ -488,6 +488,7 @@ Add machine identity for agents — short-lived certificates, K8s RBAC, MCP tool
 | [4. AI-Powered Scanning](docs/walkthroughs/ai-powered-scanning.md) | Wire Claude into both mcpnuke and camazotz — deep reasoning, attack-chain analysis, realistic AI guardrails | 45m |
 | [5. Live Feedback Loop](docs/walkthroughs/live-loop.md) | Automated scan → generate → apply → validate cycle with one script | 20m |
 | [6. Delegation Chain Attacks](docs/walkthroughs/delegation-chains.md) | Multi-agent identity dilution — Agent A → B → C loses human authorization | 45m |
+| [7. Flow Types in Practice](docs/walkthroughs/flow-types-in-practice.md) | **All five lanes end-to-end** — captured output from a live reference deployment, with the `--by-lane` + `--coverage-report` cross-project view | 60m |
 
 ---
 
