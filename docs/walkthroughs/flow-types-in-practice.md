@@ -313,9 +313,9 @@ The `TestDelegationMaxDepth_RejectsDeepChains` case verifies the classic Lane 4 
 
 That's the primitive doing its job. The same truth table drives the `delegation_depth_lab` on camazotz — on hard difficulty, the lab's `_handle_delegate` denies depth > 2 with nullfield's `maxDepth` primitive as the recommended external enforcement.
 
-### Installed, not yet wired to the sidecar
+### Installed and wired end-to-end on the reference NUC
 
-On the reference NUC cluster:
+On the cluster:
 
 ```
 $ kubectl get nullfieldpolicies -n camazotz -o custom-columns=NAME:.metadata.name,LANE:.metadata.labels."nullfield\.io/lane"
@@ -328,7 +328,65 @@ lane-5-anonymous-starter   anonymous
 mcpnuke-recommended        <none>
 ```
 
-The five lane templates and an mcpnuke-generated policy are all present as CRDs. Activating them on the sidecar requires deploying the [`nullfield-controller`](https://github.com/babywyrm/nullfield/tree/main/cmd/nullfield-controller) which syncs CRDs to the ConfigMap the sidecar mounts — called out under [What's Next](#whats-next) and intentionally out of scope for this walkthrough.
+The five lane templates and an mcpnuke-generated policy are all present
+as CRDs. The `nullfield-controller` deployed alongside camazotz watches
+these CRDs and syncs them to per-policy ConfigMaps. With the
+**active-policy bridge** ([`nullfield@31997c4`](https://github.com/babywyrm/nullfield/commit/31997c4))
+configured via:
+
+```
+NULLFIELD_ACTIVE_TARGET_CM=nullfield-active-policy
+NULLFIELD_ACTIVE_TARGET_LABEL=brain-gateway
+```
+
+…the controller picks the first NullfieldPolicy carrying
+`nullfield.io/active-for=brain-gateway` and writes it to a separate
+ConfigMap that the camazotz helm chart can mount via
+`--set nullfield.activePolicySource=nullfield-active-policy`
+([`camazotz@f9d9d97`](https://github.com/babywyrm/camazotz/commit/f9d9d97)).
+
+When the bridge was activated with lane-4-chain-starter as the chosen
+policy, captured live:
+
+```
+$ kubectl logs -n camazotz deployment/nullfield-controller | grep bridged
+{"level":"INFO","msg":"active-policy sync: bridged NullfieldPolicy to sidecar ConfigMap",
+ "policy":"lane-4-chain-starter","configmap":"nullfield-active-policy","key":"policy.yaml",
+ "label":"brain-gateway"}
+
+$ kubectl get configmap nullfield-active-policy -n camazotz -o jsonpath='{.metadata.labels}'
+{
+  "nullfield.io/active-source":"lane-4-chain-starter",
+  "nullfield.io/managed-by":"crd-controller",
+  "nullfield.io/sidecar-for":"brain-gateway"
+}
+
+$ curl -X POST http://192.168.1.85:30080/mcp \\
+    -H 'Content-Type: application/json' \\
+    -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
+         "params":{"name":"auth.issue_token","arguments":{"username":"alice"}}}'
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32001,
+    "message": "identity verification failed"
+  }
+}
+```
+
+That `-32001 "identity verification failed"` is the Lane 4 policy's
+`identity.requireSignature: true` taking effect on a `dev-user` request
+that has no JWT — *different error path than the chart-shipped policy
+would take* (which returns `-32000 "denied by rule"` on its allowlist
+check). The bridge is empirically swapping in the CRD-managed policy
+on a running sidecar.
+
+For day-to-day demo purposes the reference NUC keeps the chart-shipped
+policy active (`activePolicySource` empty) so dev-user smoke tests stay
+green; the controller stays deployed and continues maintaining the
+`nullfield-active-policy` ConfigMap so flipping back is just a
+`helm upgrade` away.
 
 ### What *is* live on the NUC right now
 
@@ -494,12 +552,13 @@ Lane 5 — Anonymous
 
 Concrete work items surfaced by this walkthrough, in rough value order:
 
-1. **Deploy `nullfield-controller` to the reference cluster** so the five installed `NullfieldPolicy` CRDs are synced into the sidecar's ConfigMap and actually enforce. Right now they're installed and validated but not consumed at runtime — the one last hop.
-2. **Backfill lane/transport on the rest of `mcpnuke` checks.** Done for 10 of the firing modules (chaining, injection, theft, config_tampering, exfil_flow, webhook_persistence, execution, enumerator, teleport, teleport_labs — 46 sites total). The remaining `excessive_permissions` findings need a per-tool lookup because the lane lives on the tool, not the check — explicitly deferred as a follow-up. The `--coverage-report` output above shows the result: 4/5 lanes now firing, widest gap clearly named (Lane 1 Human Direct).
+1. ✅ **`nullfield-controller` deployed to the reference cluster with the active-policy bridge.** Done 2026-04-27 — see the captured controller log + curl output above. The five installed `NullfieldPolicy` CRDs are now consumable by the sidecar via the `activePolicySource` chart values knob.
+2. ✅ **Lane/transport backfill across `mcpnuke` checks.** Done — 10 modules / 46 emission sites now lane-tagged. Coverage went from 0/5 lanes covered to 4/5. The remaining `excessive_permissions` findings need a per-tool lookup because the lane lives on the tool, not the check — explicitly deferred as a follow-up.
 3. **Fill a transport gap with a camazotz lab.** Lane 1 Transport C (an SDK-level direct-human flow), or Lane 4 Transport B/C. Each new lab turns one amber cell to green in the lane × transport grid.
-4. **Walkthroughs per-lane with an *active* nullfield policy.** Once (1) lands, this document can be extended with end-to-end attack→deny captures for Lanes 1, 2, 3, 5 to match the Lane 4 section.
+4. **Per-lane attack→deny captures.** With the bridge live, each of Lanes 1/2/3/5 can be cycled in as the active policy and its enforcement captured. Lane 4 already has its capture above. Lane 5 (allowlist-only, dev-user compatible) is the lowest-friction next one.
+5. **Sidecar hot-reload on ConfigMap change.** Today the bridged ConfigMap update requires either a sidecar restart or relying on the binary's existing hot-reload watcher. Verifying the timing end-to-end (CRD label flip → controller sync → ConfigMap update → sidecar reload) is a tight measurement worth capturing.
 
-None of those are session-sized for a single afternoon; each is a clean contained unit.
+The first two are now done — the remaining three are clean session-sized units each.
 
 ---
 
