@@ -412,7 +412,7 @@ Any `tools/call` from an anonymous caller that isn't on the allowlist gets rejec
 
 ## The Cross-Project Coverage Report
 
-Running `mcpnuke --coverage-report` against the live NUC camazotz gives us the honest picture of *where the lanes are covered by scanning today*. Captured 2026-04-26:
+Running `mcpnuke --coverage-report` against the live NUC camazotz gives us the honest picture of *where the lanes are covered by scanning today*. Captured 2026-04-27 after the lane-tag backfill across 10 check modules:
 
 ```
 $ python3 -m mcpnuke --targets http://192.168.1.85:30080/mcp \
@@ -420,10 +420,38 @@ $ python3 -m mcpnuke --targets http://192.168.1.85:30080/mcp \
     --by-lane \
     --coverage-report http://192.168.1.85:3000
 
+── Findings grouped by identity lane (34 total) ──
+
+Lane 1 — Human Direct (slug=human-direct, transport=-)
+  (no findings fired)
+
+Lane 2 — Delegated (slug=delegated, transport=A+B)
+  3 finding(s): CRITICAL=2, HIGH=1
+    CRITICAL prompt_injection          Prompt injection payload detected
+    HIGH     token_theft               Tool 'relay.execute_with_context' accepts credential param
+    CRITICAL exfil_flow                Exfiltration path: sensitive data → 'shadow.register_webhook'
+
+Lane 3 — Machine Identity (slug=machine, transport=A)
+  1 finding(s): CRITICAL=1
+    CRITICAL config_tampering          Agent self-modification tool: 'shadow.register_webhook'
+
+Lane 4 — Agent → Agent (slug=chain, transport=A)
+  14 finding(s): CRITICAL=13, HIGH=1
+    [...code_execution / attack_chain / multi_vector findings...]
+
+Lane 5 — Anonymous (slug=anonymous, transport=A)
+  3 finding(s): HIGH=3
+    HIGH     auth                      Unauthenticated MCP initialize accepted
+    HIGH     webhook_persistence       Webhook/callback tool accepts URL
+    HIGH     webhook_persistence       Webhook registration capability
+
+Uncategorized (no lane scope — 13 finding(s))
+    [...excessive_permissions findings — tool-specific, not yet auto-tagged...]
+
 ── Cross-project coverage report (vs camazotz) ──
   camazotz: 32 labs across 5 lanes
-  mcpnuke covered 0/5 lanes on this scan
-  widest gap: Lane 2 (delegated) — camazotz declares labs, mcpnuke fired none
+  mcpnuke covered 4/5 lanes on this scan
+  widest gap: Lane 1 (human-direct) — camazotz declares labs, mcpnuke fired none
 
 Lane 1 — Human Direct
   camazotz: 6 primary lab(s), transports [A, B], gaps: Transport C not covered
@@ -432,33 +460,33 @@ Lane 1 — Human Direct
 
 Lane 2 — Human → Agent
   camazotz: 12 primary lab(s), transports [A, B], gaps: Transport C not covered
-  mcpnuke:  0 finding(s) fired (none)
-  camazotz declares 12 primary lab(s); mcpnuke fired zero findings — check may not exist or is dormant
+  mcpnuke:  3 finding(s) fired (CRITICAL=2, HIGH=1), transports [A, B]
+  target camazotz flags: Transport C not covered
 
 Lane 3 — Machine Identity
   camazotz: 5 primary lab(s), transports [A, C], gaps: Transport B not covered
-  mcpnuke:  0 finding(s) fired (none)
-  camazotz declares 5 primary lab(s); mcpnuke fired zero findings — check may not exist or is dormant
+  mcpnuke:  1 finding(s) fired (CRITICAL=1), transports [A]
+  target camazotz flags: Transport B not covered
 
 Lane 4 — Agent → Agent
   camazotz: 6 primary lab(s), transports [A], gaps: Transport B not covered, Transport C not covered
-  mcpnuke:  0 finding(s) fired (none)
-  camazotz declares 6 primary lab(s); mcpnuke fired zero findings — check may not exist or is dormant
+  mcpnuke:  14 finding(s) fired (CRITICAL=13, HIGH=1), transports [A]
+  target camazotz flags: Transport B not covered, Transport C not covered
 
 Lane 5 — Anonymous
   camazotz: 3 primary lab(s), transports [A]
-  mcpnuke:  0 finding(s) fired (none)
-  camazotz declares 3 primary lab(s); mcpnuke fired zero findings — check may not exist or is dormant
+  mcpnuke:  3 finding(s) fired (HIGH=3), transports [A]
+  3 lab(s) covered, 3 finding(s) fired — aligned
 ```
 
 **What this output actually says:**
 
-- camazotz *does* cover all 5 lanes with 32 labs.
-- mcpnuke fires findings on this scan, but with `--no-invoke --fast` only the Uncategorized bucket fills (34 findings, mostly `excessive_permissions` and `prompt_injection`) because those checks aren't yet lane-tagged.
-- The teleport-chain checks (the only lane-3-tagged checks) don't fire on `--no-invoke` because they require calling the lab tools.
-- The honest story: **the coverage gap between the target corpus and the scanner's lane vocabulary is the next batch of checks to backfill**. This is the kind of actionable gap the report is built to surface.
+- **mcpnuke covered 4/5 lanes** — Lane 5 is fully aligned (3 camazotz labs, 3 findings fired); Lanes 2/3/4 each fire on the relevant attack patterns.
+- **Widest gap: Lane 1 (Human Direct)** — camazotz declares 6 labs but no mcpnuke check on a `--no-invoke` static scan probes the human-direct flow. That's the *next* actionable batch of detection work.
+- **Lane 4 dominates the count** (14/34 findings) — chain-of-tools attacks (`code_execution`, `attack_chain`, `multi_vector`) are the most common pattern surfaced by static analysis, which matches the camazotz corpus emphasis on agent-to-agent labs.
+- **Uncategorized** is now down to `excessive_permissions` (13/34) — these findings are tool-specific (the dangerous capability lives on the tool, not on a lane the check itself knows about). Tagging requires a per-tool lookup, deliberately deferred.
 
-**In short:** the tooling tells you what you can't yet measure. That's the loop closing.
+**In short:** the tooling reports exactly which lanes are covered today, and exactly which gap to fill next. That's the loop closed.
 
 ---
 
@@ -467,7 +495,7 @@ Lane 5 — Anonymous
 Concrete work items surfaced by this walkthrough, in rough value order:
 
 1. **Deploy `nullfield-controller` to the reference cluster** so the five installed `NullfieldPolicy` CRDs are synced into the sidecar's ConfigMap and actually enforce. Right now they're installed and validated but not consumed at runtime — the one last hop.
-2. **Backfill lane/transport on more `mcpnuke` checks.** Today only `teleport_labs.py` (13 findings, Lane 3 / Transport A) and `teleport.py` (5 findings, Lane 3 / Transport A) are tagged. The `--coverage-report` output above makes the remaining gap directly actionable — every check that fires needs a lane decision.
+2. **Backfill lane/transport on the rest of `mcpnuke` checks.** Done for 10 of the firing modules (chaining, injection, theft, config_tampering, exfil_flow, webhook_persistence, execution, enumerator, teleport, teleport_labs — 46 sites total). The remaining `excessive_permissions` findings need a per-tool lookup because the lane lives on the tool, not the check — explicitly deferred as a follow-up. The `--coverage-report` output above shows the result: 4/5 lanes now firing, widest gap clearly named (Lane 1 Human Direct).
 3. **Fill a transport gap with a camazotz lab.** Lane 1 Transport C (an SDK-level direct-human flow), or Lane 4 Transport B/C. Each new lab turns one amber cell to green in the lane × transport grid.
 4. **Walkthroughs per-lane with an *active* nullfield policy.** Once (1) lands, this document can be extended with end-to-end attack→deny captures for Lanes 1, 2, 3, 5 to match the Lane 4 section.
 
