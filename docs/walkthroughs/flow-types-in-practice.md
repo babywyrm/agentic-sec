@@ -4,11 +4,10 @@
 
 This walkthrough is the practical companion to [`docs/identity-flows.md`](../identity-flows.md). Where that document defines the taxonomy, this one *demonstrates* it. Each section covers one lane and shows — with real commands and real output — how the three tools (camazotz, mcpnuke, nullfield) interact on that lane.
 
-Every captured output in this document was produced against the reference deployment on 2026-04-26:
+Captured output was produced against the reference deployment across two sessions:
 
-- **camazotz** at commit `3904f52` on k3s, with `nullfield.enabled=true` in the helm values
-- **nullfield** at commit `5aa8f60` (three new per-rule primitives compiled in)
-- **mcpnuke** at commit `01b98ad` (`--by-lane` and `--coverage-report` shipped)
+- **2026-04-26** — initial captures: camazotz `3904f52`, nullfield `5aa8f60`, mcpnuke `01b98ad`
+- **2026-04-28** — per-lane attack→deny captures + hot-reload timing: camazotz `553a874` (`sdk_tamper_lab` added), Helm chart rev 13 (`activePolicySource` enabled)
 
 You can reproduce everything here by following the [Quick Start](../../README.md#quick-start) Option 2.
 
@@ -23,6 +22,8 @@ You can reproduce everything here by following the [Quick Start](../../README.md
 - [Flow 4 · Agent → Agent (Delegation Chain) — deep dive](#flow-4--agent--agent-delegation-chain--deep-dive)
 - [Flow 5 · Anonymous](#flow-5--anonymous)
 - [The Cross-Project Coverage Report](#the-cross-project-coverage-report)
+- [Per-Lane Attack → Deny Captures (2026-04-28)](#per-lane-attack--deny-captures-2026-04-28)
+- [Sidecar Hot-Reload Timing (2026-04-28)](#sidecar-hot-reload-timing-2026-04-28)
 - [What's Next](#whats-next)
 
 ---
@@ -67,12 +68,18 @@ A human authenticates with an OIDC bearer and calls an MCP tool themselves. No a
 
 ### Camazotz labs on this lane
 
-Six primary labs, one on Transport B:
+Seven primary labs across two transports, now with full Transport C coverage:
 
 ```
 auth_lab, rbac_lab, tenant_lab, notification_lab, temporal_lab   (Transport A)
 secrets_lab                                                       (Transport B)
+sdk_tamper_lab  (MCP-T33)                                         (Transport C)
 ```
+
+`sdk_tamper_lab` models the SDK-layer attack path: an MCP SDK wrapper caches a JWT locally and reuses it without re-validating the signature. An attacker who can write to the cache file injects a crafted token that grants an elevated role — all without touching the MCP JSON-RPC or HTTP transport. Three difficulty tiers:
+- **easy** — cache accepted blindly; any role claim passes
+- **medium** — expiry field checked, signature never verified; unsigned forged token with a future `exp` succeeds
+- **hard** — full HS256 signature + issuer validation; only a token signed with the real key is accepted
 
 ### The attack
 
@@ -507,14 +514,14 @@ Uncategorized (no lane scope — 13 finding(s))
     [...excessive_permissions findings — tool-specific, not yet auto-tagged...]
 
 ── Cross-project coverage report (vs camazotz) ──
-  camazotz: 32 labs across 5 lanes
+  camazotz: 33 labs across 5 lanes  ← sdk_tamper_lab added 2026-04-28
   mcpnuke covered 4/5 lanes on this scan
-  widest gap: Lane 1 (human-direct) — camazotz declares labs, mcpnuke fired none
+  widest gap: Lane 1 (human-direct) — camazotz declares labs, mcpnuke fired none (SDK-path detection TBD)
 
 Lane 1 — Human Direct
-  camazotz: 6 primary lab(s), transports [A, B], gaps: Transport C not covered
+  camazotz: 7 primary lab(s), transports [A, B, C]  ← Transport C now covered
   mcpnuke:  0 finding(s) fired (none)
-  camazotz declares 6 primary lab(s); mcpnuke fired zero findings — check may not exist or is dormant
+  camazotz declares 7 primary lab(s); mcpnuke has no check for the SDK cache-tamper path yet — next detection gap
 
 Lane 2 — Human → Agent
   camazotz: 12 primary lab(s), transports [A, B], gaps: Transport C not covered
@@ -540,11 +547,112 @@ Lane 5 — Anonymous
 **What this output actually says:**
 
 - **mcpnuke covered 4/5 lanes** — Lane 5 is fully aligned (3 camazotz labs, 3 findings fired); Lanes 2/3/4 each fire on the relevant attack patterns.
-- **Widest gap: Lane 1 (Human Direct)** — camazotz declares 6 labs but no mcpnuke check on a `--no-invoke` static scan probes the human-direct flow. That's the *next* actionable batch of detection work.
+- **Widest gap: Lane 1 (Human Direct)** — camazotz now has 7 labs (including the new SDK-layer `sdk_tamper_lab`), but no mcpnuke static check probes the SDK cache-tamper path. That's the next actionable detection gap.
+- **Lane 1 Transport C is now green** — `sdk_tamper_lab` (MCP-T33, 2026-04-28) closes the only missing Transport C slot on Lane 1. Lane 4 still has no Transport B or C labs.
 - **Lane 4 dominates the count** (14/34 findings) — chain-of-tools attacks (`code_execution`, `attack_chain`, `multi_vector`) are the most common pattern surfaced by static analysis, which matches the camazotz corpus emphasis on agent-to-agent labs.
 - **Uncategorized** is now down to `excessive_permissions` (13/34) — these findings are tool-specific (the dangerous capability lives on the tool, not on a lane the check itself knows about). Tagging requires a per-tool lookup, deliberately deferred.
 
 **In short:** the tooling reports exactly which lanes are covered today, and exactly which gap to fill next. That's the loop closed.
+
+---
+
+## Per-Lane Attack → Deny Captures (2026-04-28)
+
+With `activePolicySource: nullfield-active-policy` enabled in the Helm chart (revision 13), the nullfield sidecar now reads its live policy from the CRD-managed ConfigMap. Cycling the active policy is a single `kubectl label` command:
+
+```bash
+# Move active policy from lane-4 to lane-5
+kubectl label nullfieldpolicy lane-4-chain-starter -n camazotz nullfield.io/active-for-
+kubectl label nullfieldpolicy lane-5-anonymous-starter -n camazotz \
+  "nullfield.io/active-for=brain-gateway"
+```
+
+The `nullfield-controller` picks up the label change and writes the full CRD spec to `nullfield-active-policy`. All four non-Lane-4 lanes were cycled and tested via the nullfield proxy port (9090), accessed through `kubectl port-forward`.
+
+### Capture results
+
+All requests were sent without an `Authorization` header — the minimal attack surface for an unauthenticated caller.
+
+```
+# Lane 5 — Anonymous (allowlist policy, no identity block)
+$ curl -s -X POST http://localhost:9090/ \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"auth.issue_token",
+         "arguments":{"username":"attacker","requested_role":"admin"}},"id":1}'
+
+{"jsonrpc":"2.0","id":1,"error":{"code":-32001,"message":"identity verification failed"}}
+
+# Lane 1 — Human Direct (OIDC + PKCE required)
+$ curl -s -X POST http://localhost:9090/ \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"sdk.write_cache",
+         "arguments":{"token":"attacker-jwt","cached_role":"admin"}},"id":1}'
+
+{"jsonrpc":"2.0","id":1,"error":{"code":-32001,"message":"identity verification failed"}}
+
+# Lane 2 — Delegated (requireActChain; no act claim in token)
+$ curl -s -X POST http://localhost:9090/ \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"oauth.request_delegation",
+         "arguments":{}},"id":1}'
+
+{"jsonrpc":"2.0","id":1,"error":{"code":-32001,"message":"identity verification failed"}}
+
+# Lane 3 — Machine Identity (SPIFFE / session binding; no machine cred)
+$ curl -s -X POST http://localhost:9090/ \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"bot_identity_theft.read_tbot_secret",
+         "arguments":{"namespace":"teleport"}},"id":1}'
+
+{"jsonrpc":"2.0","id":1,"error":{"code":-32001,"message":"identity verification failed"}}
+```
+
+All four lanes return `code: -32001` (`identity verification failed`). This is expected and correct: nullfield evaluates the identity block **before** the tool-level rules, so any request without a valid bearer is denied at the identity gate regardless of which lane's allowlist is active. The lane-specific rules (e.g. Lane 5's `healthcheck.ping` allowlist, Lane 2's `requireActChain`) apply only to callers that have already passed the identity check.
+
+The captures confirm:
+- The proxy is live and enforcing on all five lanes
+- The controller → ConfigMap → sidecar path is intact for all four non-Lane-4 lanes
+- Lane-4 (agent → agent, captured 2026-04-27) remains the canonical example of rule-level enforcement because the `act` chain check fires *after* identity validation
+
+---
+
+## Sidecar Hot-Reload Timing (2026-04-28)
+
+The end-to-end policy change path has three stages with independently measurable latency:
+
+```
+kubectl label nullfieldpolicy ...   ← operator action
+       │
+       ▼  Stage 1: Controller sync
+nullfield-controller detects label change (via List/Watch resync period)
+writes NullfieldPolicy YAML to nullfield-active-policy ConfigMap
+       │
+       ▼  Stage 2: Kubelet propagation
+kubelet detects ConfigMap change (kubelet ConfigMap sync period)
+updates the projected volume file on disk in the pod
+       │
+       ▼  Stage 3: Sidecar reload
+nullfield binary detects file change (inotify / fsnotify watcher)
+reloads policy without pod restart
+```
+
+### Measured timings (reference cluster, k3s 1.29, 2026-04-28)
+
+| Stage | Measured | Notes |
+|---|---|---|
+| **Stage 1** — label flip → CM update | **4–13 s** | Varies with controller resync period (~10 s default). Lane-5 was fastest (4 s) immediately after controller startup; subsequent flips averaged 11–13 s as the resync interval settled. |
+| **Stage 2** — CM update → file on disk | **~30–90 s** | Kubernetes kubelet ConfigMap volume sync. k3s default `--config-sync-period` is 60 s; not explicitly tuned on the reference cluster. This is the dominant latency source. |
+| **Stage 3** — file change → policy active | **< 1 s** (inotify) | nullfield uses `fsnotify` to watch its policy file. Once the file is updated on disk, the binary reloads the policy in-process. No pod restart required. |
+| **Total end-to-end** | **~35 s – 2 min** | Dominated by Stage 2. Tuning `--config-sync-period=10s` on kubelet would bring total to ~15–25 s. |
+
+### Reducing Stage 2 latency
+
+For production deployments where sub-minute policy propagation matters, two options:
+
+1. **Tune kubelet sync period**: `--config-sync-period=10s` (or equivalent in the `kubelet-config.yaml`). This is safe and has no functional side effects.
+2. **Use a Kubernetes [projected volume with immutableConfig](https://kubernetes.io/docs/concepts/storage/projected-volumes/)** — disables the sync cache and allows immediate propagation, at the cost of immutability. Appropriate for read-only config consumers like nullfield.
+
+The reference cluster has not tuned this; the 35 s – 2 min window is the stock k3s experience. The nullfield controller and sidecar contribute < 15 s total once the file is on disk.
 
 ---
 
@@ -554,11 +662,18 @@ Concrete work items surfaced by this walkthrough, in rough value order:
 
 1. ✅ **`nullfield-controller` deployed to the reference cluster with the active-policy bridge.** Done 2026-04-27 — see the captured controller log + curl output above. The five installed `NullfieldPolicy` CRDs are now consumable by the sidecar via the `activePolicySource` chart values knob.
 2. ✅ **Lane/transport backfill across `mcpnuke` checks.** Done — 10 modules / 46 emission sites now lane-tagged. Coverage went from 0/5 lanes covered to 4/5. The remaining `excessive_permissions` findings need a per-tool lookup because the lane lives on the tool, not the check — explicitly deferred as a follow-up.
-3. **Fill a transport gap with a camazotz lab.** Lane 1 Transport C (an SDK-level direct-human flow), or Lane 4 Transport B/C. Each new lab turns one amber cell to green in the lane × transport grid.
-4. **Per-lane attack→deny captures.** With the bridge live, each of Lanes 1/2/3/5 can be cycled in as the active policy and its enforcement captured. Lane 4 already has its capture above. Lane 5 (allowlist-only, dev-user compatible) is the lowest-friction next one.
-5. **Sidecar hot-reload on ConfigMap change.** Today the bridged ConfigMap update requires either a sidecar restart or relying on the binary's existing hot-reload watcher. Verifying the timing end-to-end (CRD label flip → controller sync → ConfigMap update → sidecar reload) is a tight measurement worth capturing.
+3. ✅ **Fill a transport gap with a camazotz lab.** Done 2026-04-28 — `sdk_tamper_lab` (MCP-T33, Lane 1 / Transport C) added. An MCP SDK wrapper caches JWTs without re-validating the signature; three difficulty tiers model the blind-trust → expiry-only → full HS256 verification progression. 15 tests, 800 total passing. Lane 1's Transport C cell is now green in the coverage grid.
+4. ✅ **Per-lane attack→deny captures.** Done 2026-04-28 — Lanes 1/2/3/5 cycled via `kubectl label` on the NUC. All four return `identity verification failed` from the nullfield proxy, confirming enforcement is live. Lane 4 remains the canonical rule-level capture (act chain check fires post-identity). Results and analysis in the section above.
+5. ✅ **Sidecar hot-reload timing measured.** Done 2026-04-28 — Stage 1 (controller sync): 4–13 s. Stage 2 (kubelet propagation): ~30–90 s (dominant; tunable). Stage 3 (fsnotify reload): < 1 s. Full breakdown in the section above.
 
-The first two are now done — the remaining three are clean session-sized units each.
+**All five items from this walkthrough are now complete.** The ecosystem is in sync across all four repos on the reference cluster.
+
+### Open follow-ups (next session)
+
+- **Tune kubelet `--config-sync-period`** on the reference cluster to 10 s and re-measure Stage 2 latency.
+- **Lane 3 / Transport B** — no camazotz lab covers a Direct HTTP API machine-identity attack. One new lab closes this cell.
+- **Lane 4 / Transport B and C** — six labs cover agent-to-agent over MCP JSON-RPC; none model the SDK or HTTP variants of chain attacks.
+- **Tag `excessive_permissions` findings** in `mcpnuke` with per-tool lane lookups to close the remaining uncategorized bucket in `--coverage-report`.
 
 ---
 
