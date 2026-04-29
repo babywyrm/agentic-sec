@@ -157,6 +157,26 @@ discovery endpoints, health checks, and the first packet of any OAuth dance.
 
 ## The Three Transport Surfaces
 
+> **⚠️ Update 2026-04-28 — Transport dimension extended from 3 to 5 codes.**
+>
+> The body of this section (covering A, B, C) remains accurate but is
+> incomplete. Two new codes have been ratified in the canonical taxonomy
+> (`camazotz/frontend/lane_taxonomy.py::TRANSPORT_DEFINITIONS`):
+>
+> - **D — Subprocess / native binary** (agent spawns `kubectl`/`terraform`
+>   as a child process; identity envelope = OS process tree)
+> - **E — Native LLM function-calling, non-MCP** (OpenAI tools, Anthropic
+>   `tool_use`, Gemini function-calling; identity envelope = third-party
+>   model-provider trust boundary)
+>
+> The full rewrite of this section — including the expanded 5×5 matrix and
+> per-transport RFC anchors — is pending validation via two spike labs
+> (`subprocess_lab`, `function_calling_lab`). Decision record:
+> [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md).
+>
+> Existing labs/policies/findings tagged `A`/`B`/`C` remain valid; no
+> migration is required for existing work.
+
 Transport is *how* the call physically reaches the resource. The same lane
 behaves differently across transports because each transport has a different
 identity envelope.
@@ -208,6 +228,11 @@ by the model SDK, a vector‑store query.
 ---
 
 ## The Lane × Transport Matrix
+
+> **⚠️ The matrix below shows 5 lanes × 3 transports.** As of 2026-04-28
+> the transport dimension is 5 codes (`A`/`B`/`C`/`D`/`E`); the table
+> here will be expanded to 5×5 once the spike labs for D and E ship.
+> See the banner under "The Three Transport Surfaces" above.
 
 The cell labels are the *primary control surface* — what enforces identity at
 that intersection.
