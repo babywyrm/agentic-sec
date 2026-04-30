@@ -39,7 +39,7 @@ A documentation hub and cross-project reference for a closed-loop security stack
 
 | Project | Role | What it is | Scale today |
 |---------|------|-----------|-------------|
-| **[camazotz](https://github.com/babywyrm/camazotz)** | The vulnerable *target* | Intentionally vulnerable MCP server covering every OWASP MCP Top 10 risk, organized by identity lane | **33 labs**, 5 lanes, 5 transports, 81 tools |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | The vulnerable *target* | Intentionally vulnerable MCP server covering every OWASP MCP Top 10 risk, organized by identity lane | **35 labs**, 5 lanes, 5 transports, 86 tools |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | The *arbiter* | Sidecar proxy in front of any MCP server — the per-call policy layer the LLM cannot override | **5 actions**, 3 new per-rule primitives (2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | The *scanner* | Outside-in MCP security scanner — static, behavioral, and infrastructure probes plus exploit chains | Scan modes: `--fast`, `--no-invoke`, `--claude`; outputs JSON + nullfield policy |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The *lynchpin* | This repo — the framework, the vocabulary, the docs, the walkthroughs | [Identity Flow Framework](docs/identity-flows.md), 6 walkthroughs, golden-path architecture |
@@ -192,12 +192,12 @@ curl -s http://<camazotz>:3000/api/lanes | jq '.schema, .lanes | length, .labs |
 
 **Coverage gaps surfaced by camazotz itself** (as teaching artifacts, not bugs):
 
-- Lane 1 — Human Direct: ✅ all three baseline transports covered (A/B/C) as of 2026-04-28 (`sdk_tamper_lab` MCP-T33)
-- Lane 2 — Delegated: no Transport C lab yet
-- Lane 3 — Machine: no Transport B (direct API) lab yet
-- Lane 4 — Agent → Agent: no Transport B or C lab yet
+- Lane 1 — Human Direct: ✅ all three baseline transports A/B/C covered (`sdk_tamper_lab` MCP-T33); D/E gap
+- Lane 2 — Delegated: A/B/E covered (`function_calling_lab` MCP-T35); C/D gap
+- Lane 3 — Machine: A/C/D covered (`subprocess_lab` MCP-T34); B/E gap
+- Lane 4 — Agent → Agent: A only — widest open lane (B/C/D/E all gap)
 - Lane 5 — Anonymous: no transport notion (pre-auth, by design)
-- **Transports D (subprocess) and E (native LLM function-calling)** — newly added 2026-04-28; spike labs pending. See [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md) for the decision record.
+- **Transports D (subprocess) and E (native LLM function-calling)** ratified 2026-04-28 and validated 2026-04-29 by two spike labs. See [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md).
 
 See the live coverage grid in [`docs/identity-flows.md`](docs/identity-flows.md#camazotz--per-lane-lab-coverage).
 
@@ -518,12 +518,13 @@ Three horizons, committed in decreasing order of near-term certainty — detail 
 - ✅ nullfield CRD watcher + active-policy bridge wired into the reference cluster — *shipped 2026-04-27*
 - ✅ `sdk_tamper_lab` (Lane 1 / Transport C) — *shipped 2026-04-28; closes Lane 1 baseline transport coverage*
 - ✅ Five-transport taxonomy (D = subprocess, E = native LLM function-calling) — *ratified 2026-04-28; see camazotz ADR 0001*
+- ✅ `subprocess_lab` (Lane 3 / Transport D) + `function_calling_lab` (Lane 2 / Transport E) — *shipped 2026-04-29; both spike labs validate ADR 0001 buckets are non-degenerate*
+- ✅ `docs/identity-flows.md` rewritten to 5×5 matrix with per-transport identity envelopes and standards anchors — *2026-04-29*
 
 **Medium-term (visible work):**
 
-- Spike `subprocess_lab` (Transport D) and `function_calling_lab` (Transport E) to validate the new transport buckets are non-degenerate
-- Rewrite `docs/identity-flows.md` Transport Surfaces section + matrix from 5×3 to 5×5 once the spike labs ship
-- Fill remaining baseline transport gaps — Lane 2 Transport C, Lane 3 Transport B, Lane 4 Transport B and C
+- Fill remaining baseline transport gaps — Lane 2 Transport C, Lane 3 Transport B, Lane 4 Transport B (and C if a coherent threat exists)
+- Lane 4 transport widening — agent chains today are all MCP; D and E variants would model real LangChain / OpenAI assistants chains
 - Walkthrough: "Lane 4 defense in practice" using `delegation.maxDepth` against `delegation_depth_lab`
 
 **Future (revisit when the three-repo vocabulary diverges):**

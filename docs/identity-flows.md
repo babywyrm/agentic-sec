@@ -6,10 +6,16 @@
 
 This is the framework that gives shape to every other document in the
 agentic-security hub. It separates the problem space into five **identity
-lanes** and three **transport layers**, then maps every existing tool —
+lanes** and five **transport layers**, then maps every existing tool —
 camazotz labs, nullfield actions, mcpnuke checks, Teleport, ZITADEL — into the
 resulting matrix. New work picks a cell. Defenses cover their cell. Tests prove
 their cell holds.
+
+> **Transport dimension extended 2026-04-28.** Originally three codes
+> (`A`/`B`/`C`); the dimension was expanded to five codes (added `D` =
+> subprocess, `E` = native LLM function-calling) once two spike labs
+> validated the new buckets. Decision record:
+> [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md).
 
 The framework is grounded in the relevant IETF and OASIS specifications so
 that anything we build can be reviewed against real standards rather than
@@ -155,31 +161,15 @@ discovery endpoints, health checks, and the first packet of any OAuth dance.
 
 ---
 
-## The Three Transport Surfaces
-
-> **⚠️ Update 2026-04-28 — Transport dimension extended from 3 to 5 codes.**
->
-> The body of this section (covering A, B, C) remains accurate but is
-> incomplete. Two new codes have been ratified in the canonical taxonomy
-> (`camazotz/frontend/lane_taxonomy.py::TRANSPORT_DEFINITIONS`):
->
-> - **D — Subprocess / native binary** (agent spawns `kubectl`/`terraform`
->   as a child process; identity envelope = OS process tree)
-> - **E — Native LLM function-calling, non-MCP** (OpenAI tools, Anthropic
->   `tool_use`, Gemini function-calling; identity envelope = third-party
->   model-provider trust boundary)
->
-> The full rewrite of this section — including the expanded 5×5 matrix and
-> per-transport RFC anchors — is pending validation via two spike labs
-> (`subprocess_lab`, `function_calling_lab`). Decision record:
-> [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md).
->
-> Existing labs/policies/findings tagged `A`/`B`/`C` remain valid; no
-> migration is required for existing work.
+## The Five Transport Surfaces
 
 Transport is *how* the call physically reaches the resource. The same lane
-behaves differently across transports because each transport has a different
-identity envelope.
+behaves differently across transports because each transport has a
+**materially different identity envelope** — what carries the credential at
+the wire / process boundary, not what wire bytes flow. Codes are stable
+and consumed as labels by `nullfield` policies (`nullfield.io/transport`),
+finding fields in `mcpnuke`, and the `transport` field in
+`camazotz`'s `scenario.yaml::agentic` block.
 
 ### Transport A — MCP (JSON‑RPC over HTTP/SSE/stdio)
 
@@ -209,46 +199,92 @@ Kubernetes API, GitHub, internal microservices.
   emulates these (cloud, secrets, db) so nullfield can reason about them
   without real upstream blast radius.
 
-### Transport C — SDK / In‑Process
+### Transport C — In‑Process SDK / Library
 
-The code path that exists *inside* the agent runtime, before any wire protocol
-is involved. Function calls into a Python/TS library, a `tool_call` resolved
-by the model SDK, a vector‑store query.
+The code path that exists *inside* the agent runtime, in the same address
+space. Function calls into a Python/TS library, a vector‑store query, a
+local SDK that wraps an upstream service. **No process boundary, no
+network.**
 
 - **Identity envelope:** Whatever the process holds in memory — env vars,
-  file‑mounted tokens, short‑lived creds from a credential helper.
-- **Notable wrinkle:** This is where prompt injection wins or loses. If the
-  SDK trusts the LLM's output as authorization (e.g., it just passes
-  `args["role"] = "admin"` straight through), no downstream control can
-  recover.
-- **Where it lives:** Cursor / Claude Code / OpenAI Assistants tool runtime,
-  any agent built directly on a model SDK, and the Python/Go test harnesses
-  in our repos.
+  file‑mounted tokens, short‑lived creds from a credential helper, cached
+  bearer tokens read at import time.
+- **Notable wrinkle:** No fresh credential boundary. Whatever the parent
+  has, the SDK has. If the SDK caches a JWT and reuses it without
+  re‑validating the signature (see `sdk_tamper_lab` MCP-T33), an attacker
+  with file‑system access wins.
+- **Standards:** No canonical RFC — this is application code.
+- **Where it lives:** Cursor / Claude Code SDK internals, any agent built
+  on a Python or TypeScript library, the Python harnesses in our repos.
+
+### Transport D — Subprocess / Native Binary
+
+The agent spawns a child process via `fork()`+`execve()` to perform an
+operation — `kubectl`, `terraform`, `git`, `aws`, a custom binary. The
+identity envelope crosses the process boundary, but **not** the network.
+
+- **Identity envelope:** OS process tree. The child inherits the parent's
+  environment variables, file mounts (including
+  `/var/run/secrets/kubernetes.io/serviceaccount/token`), umask, and Unix
+  credentials. Anything the parent has that wasn't explicitly stripped
+  becomes the child's.
+- **Notable wrinkle:** Three concurrent failure modes that look similar
+  but require different defenses — argv injection (shell=True with raw
+  user input), env‑var credential leakage to the child, and operation
+  drift (subcommand selection without an allowlist). See
+  `subprocess_lab` (MCP-T34) for all three modeled in parallel.
+- **Standards:** POSIX `exec(3)`; Kubernetes projected ServiceAccount
+  tokens; OWASP A03:2021 Injection (CWE‑78 OS Command Injection).
+- **Where it lives:** CI agents, GitOps reconcilers, infra‑automation
+  bots, anything that wraps a CLI rather than calling an API directly.
+
+### Transport E — Native LLM Function‑Calling (non‑MCP)
+
+The agent uses a model provider's *native* tool-use protocol instead of
+MCP — OpenAI tools, Anthropic `tool_use`, Google Gemini function-calling.
+The model decides which function to call and with what arguments; the
+agent dispatches the call locally based on the model's response.
+
+- **Identity envelope:** The model provider mediates. The provider sees
+  only the agent's API key — there is **no standardized way** to carry
+  an end‑user identity through the round‑trip. End‑user identity must
+  be tracked separately by the agent and validated at dispatch time
+  (RFC 8693 `act` chain, equivalent in‑band claim).
+- **Notable wrinkle:** Identity erasure is the headline threat.
+  Prompt injection that steers the model to a privileged function call
+  emits a tool‑use envelope that is *indistinguishable from a legitimate
+  call* unless the agent enforces an external act-chain check. See
+  `function_calling_lab` (MCP-T35).
+- **Standards:** Proprietary per provider — no IETF spec covers the
+  envelope. RFC 8693 (Token Exchange) is the right pattern for the
+  out‑of‑band identity track.
+- **Where it lives:** Agents built directly on the OpenAI Assistants
+  API, Anthropic Messages API with `tool_use`, Google Gemini
+  function-calling, LangChain / LlamaIndex tool dispatch chains that
+  don't go through MCP.
 
 ---
 
 ## The Lane × Transport Matrix
 
-> **⚠️ The matrix below shows 5 lanes × 3 transports.** As of 2026-04-28
-> the transport dimension is 5 codes (`A`/`B`/`C`/`D`/`E`); the table
-> here will be expanded to 5×5 once the spike labs for D and E ship.
-> See the banner under "The Three Transport Surfaces" above.
-
 The cell labels are the *primary control surface* — what enforces identity at
-that intersection.
+that intersection. Cells annotated `(camazotz: lab_name)` are exercised by a
+camazotz lab today; empty cells are coverage gaps surfaced by `/api/lanes`.
 
-| Lane ↓ / Transport →             | **A. MCP**                                   | **B. Direct API**                                | **C. SDK / In‑Process**                          |
-|----------------------------------|----------------------------------------------|--------------------------------------------------|--------------------------------------------------|
-| **1. Human Direct**              | OIDC bearer + DPoP, MCP session              | OIDC bearer to upstream                          | Local browser + cookie, dev token in env         |
-| **2. Human → Agent (Delegated)** | Token exchange (8693) + Resource Ind. (8707) | On‑behalf‑of token, downscoped                   | SDK passes user token, never claims it           |
-| **3. Machine Identity**          | Teleport bot cert / SPIFFE JWT               | mTLS, IAM workload identity                      | Mounted SA token, credential helper              |
-| **4. Agent → Agent**             | Chained token exchange, depth‑bounded        | Same chained token, audience pinned per hop      | SDK `act` propagation, never re‑claim `sub`      |
-| **5. Anonymous**                 | Discovery + healthz only                     | Public read endpoints (rate‑limited)             | Process boot, before any cred is loaded          |
+| Lane ↓ / Transport →             | **A. MCP**                                   | **B. Direct API**                                | **C. In‑Process SDK**                            | **D. Subprocess**                                | **E. Native Function‑Calling**                   |
+|----------------------------------|----------------------------------------------|--------------------------------------------------|--------------------------------------------------|--------------------------------------------------|--------------------------------------------------|
+| **1. Human Direct**              | OIDC bearer + DPoP, MCP session              | OIDC bearer to upstream                          | Local cache + sig validation (`sdk_tamper_lab`)  | Curated env + arg allowlist                      | Out‑of‑band user identity                        |
+| **2. Human → Agent (Delegated)** | Token exchange (8693) + Resource Ind. (8707) | On‑behalf‑of token, downscoped (`egress_lab`)    | SDK passes user token, never claims it           | Pass act‑claim through env explicitly             | act_chain in dispatch (`function_calling_lab`)   |
+| **3. Machine Identity**          | Teleport bot cert / SPIFFE JWT               | mTLS, IAM workload identity                      | Mounted SA token, credential helper (`supply_lab`) | Strip secrets from child env (`subprocess_lab`)  | Provider key isolated per workload               |
+| **4. Agent → Agent**             | Chained token exchange, depth‑bounded        | Same chained token, audience pinned per hop      | SDK `act` propagation, never re‑claim `sub`      | Refuse subprocess for delegated calls             | Refuse function‑calling for delegated chains     |
+| **5. Anonymous**                 | Discovery + healthz only                     | Public read endpoints (rate‑limited)             | Process boot, before any cred is loaded          | n/a (anonymous calls do not spawn child procs)   | n/a (anonymous calls do not invoke functions)    |
 
 > **Reading the matrix:** Each cell is a *state*, not a tool. A request in
 > cell (3, A) — a Teleport bot calling MCP — needs different controls than a
 > request in cell (4, A) — a delegated chain calling MCP. Conflating them is
-> the bug.
+> the bug. Empty cells in this matrix are **declared coverage gaps** —
+> `camazotz /api/lanes` lists them as machine-readable `gaps` fields under
+> each lane's `coverage` block.
 
 ---
 
@@ -311,6 +347,24 @@ against these specs. This is the per‑lane checklist.
 | **RFC 9728** OAuth Protected Resource Metadata | `WWW-Authenticate` + `resource_metadata` URL |
 | **RFC 6585** HTTP 429 | Rate limiting required on all anonymous surfaces |
 
+### Standards Adherence Per Transport
+
+The transport dimension also has standards anchors. Even if a transport is
+proprietary (E), there's typically a *cross-cutting* spec that should drive
+the agent's identity behaviour at that surface.
+
+| Transport | Anchoring spec(s) | What it constrains |
+|-----------|-------------------|--------------------|
+| **A — MCP** | MCP 2024-11-05 spec, RFC 6750 (Bearer), RFC 9449 (DPoP) | The wire envelope for `Authorization` and session continuity |
+| **B — Direct API** | RFC 6749, RFC 8693, RFC 8705 (mTLS), RFC 9068 (JWT profile) | The upstream identity protocol per service |
+| **C — In‑Process SDK** | None canonical — application code | But: signature verification rules, token cache hygiene |
+| **D — Subprocess** | POSIX `exec(3)`, K8s projected SA tokens, OWASP A03 (CWE‑78) | Argv handling, env curation, allowlist enforcement |
+| **E — Native Function‑Calling** | Proprietary (OpenAI / Anthropic / Gemini) | But: RFC 8693 act‑chain pattern still applies out of band |
+
+> **Anti‑pattern across all five transports:** trusting the LLM's output
+> as authorization. The transport changes the wire envelope; the threat
+> remains identical.
+
 ---
 
 ## Tool Coverage Map
@@ -339,10 +393,10 @@ This is where each project in the ecosystem actually lives.
 
 ### camazotz — Per‑Lane Lab Coverage
 
-Complete distribution across all 32 labs. The `T` column is the primary
-transport surface each lab targets (A = MCP JSON‑RPC, B = Direct HTTP
-API, C = SDK/library). `+N` in "Secondary" means that lab's *also* a
-touchpoint on another lane.
+Complete distribution across all 35 labs (as of 2026-04-29). The `T`
+column is the primary transport surface each lab targets — see "The Five
+Transport Surfaces" above for code definitions. `+N` in "Secondary" means
+that lab's *also* a touchpoint on another lane.
 
 ```mermaid
 flowchart TB
@@ -351,25 +405,33 @@ flowchart TB
     subgraph lane1["<b>Lane 1 — Human Direct</b>"]
       L1A["T=A · 5 labs"]:::filled
       L1B["T=B · 1 lab"]:::filled
-      L1C["T=C · gap"]:::gap
+      L1C["T=C · 1 lab"]:::filled
+      L1D["T=D · gap"]:::gap
+      L1E["T=E · gap"]:::gap
     end
     subgraph lane2["<b>Lane 2 — Human → Agent</b>"]
       L2A["T=A · 11 labs"]:::filled
       L2B["T=B · 1 lab"]:::filled
       L2C["T=C · gap"]:::gap
+      L2D["T=D · gap"]:::gap
+      L2E["T=E · 1 lab"]:::filled
     end
     subgraph lane3["<b>Lane 3 — Machine</b>"]
       L3A["T=A · 4 labs"]:::filled
       L3B["T=B · gap"]:::gap
       L3C["T=C · 1 lab"]:::filled
+      L3D["T=D · 1 lab"]:::filled
+      L3E["T=E · gap"]:::gap
     end
     subgraph lane4["<b>Lane 4 — Agent → Agent</b>"]
       L4A["T=A · 6 labs"]:::filled
       L4B["T=B · gap"]:::gap
       L4C["T=C · gap"]:::gap
+      L4D["T=D · gap"]:::gap
+      L4E["T=E · gap"]:::gap
     end
     subgraph lane5["<b>Lane 5 — Anonymous</b>"]
-      L5["3 labs · no transport notion"]:::filled
+      L5["3 labs · no transport notion (pre-auth)"]:::filled
     end
   end
   classDef filled fill:#34d399,stroke:#064e3b,color:#000;
@@ -378,32 +440,38 @@ flowchart TB
 
 Green = lab exists. Amber = gap flagged by
 `camazotz /api/lanes` as a teaching artifact — a known boundary of the
-corpus, not a bug.
+corpus, not a bug. Lane 5 has no transport notion by design (anonymous
+callers haven't declared a transport yet).
 
-| Lane | T=A (MCP) | T=B (Direct API) | T=C (SDK) | Secondary |
-|------|-----------|------------------|-----------|-----------|
-| **1. Human Direct** (6) | `auth_lab`, `rbac_lab`, `tenant_lab`, `notification_lab`, `temporal_lab` | `secrets_lab` | — | — |
-| **2. Human → Agent** (12) | `oauth_delegation_lab`, `revocation_lab`, `pattern_downgrade_lab`, `credential_broker_lab`, `context_lab`, `comms_lab`, `audit_lab`, `indirect_lab`, `budget_tuning_lab`, `policy_authoring_lab`, `response_inspection_lab` | `egress_lab` | — | `delegation_chain_lab` (from L4), `relay_lab` (from L4) |
-| **3. Machine Identity** (5) | `bot_identity_theft_lab`, `teleport_role_escalation_lab`, `cert_replay_lab`, `config_lab` | — | `supply_lab` | `credential_broker_lab` (from L2) |
-| **4. Agent → Agent** (6) | `delegation_chain_lab`, `delegation_depth_lab`, `hallucination_lab`, `relay_lab`, `attribution_lab`, `cost_exhaustion_lab` | — | — | `bot_identity_theft_lab` (from L3) |
-| **5. Anonymous** (3) | `tool_lab`, `shadow_lab`, `error_lab` | — | — | — |
+| Lane | T=A (MCP) | T=B (Direct API) | T=C (In‑Process) | T=D (Subprocess) | T=E (Function‑Calling) | Secondary |
+|------|-----------|------------------|------------------|------------------|------------------------|-----------|
+| **1. Human Direct** (7) | `auth_lab`, `rbac_lab`, `tenant_lab`, `notification_lab`, `temporal_lab` | `secrets_lab` | `sdk_tamper_lab` | — | — | — |
+| **2. Human → Agent** (13) | `oauth_delegation_lab`, `revocation_lab`, `pattern_downgrade_lab`, `credential_broker_lab`, `context_lab`, `comms_lab`, `audit_lab`, `indirect_lab`, `budget_tuning_lab`, `policy_authoring_lab`, `response_inspection_lab` | `egress_lab` | — | — | `function_calling_lab` | `delegation_chain_lab` (from L4), `relay_lab` (from L4) |
+| **3. Machine Identity** (6) | `bot_identity_theft_lab`, `teleport_role_escalation_lab`, `cert_replay_lab`, `config_lab` | — | `supply_lab` | `subprocess_lab` | — | `credential_broker_lab` (from L2) |
+| **4. Agent → Agent** (6) | `delegation_chain_lab`, `delegation_depth_lab`, `hallucination_lab`, `relay_lab`, `attribution_lab`, `cost_exhaustion_lab` | — | — | — | — | `bot_identity_theft_lab` (from L3) |
+| **5. Anonymous** (3) | `tool_lab`, `shadow_lab`, `error_lab` | — | — | — | — | — |
 
 **Transport coverage gaps** (surfaced by `/api/lanes` as machine-readable
 `gaps` fields — a teaching artifact, not a bug):
 
-- **Lane 1**: no Transport C lab yet (no SDK-level direct-human flow).
-- **Lane 2**: no Transport C lab yet.
-- **Lane 3**: no Transport B lab yet (no machine-identity-over-direct-API).
-- **Lane 4**: no Transport B or C lab yet (agent chains today are all
-  MCP-transport in this corpus).
-- **Lane 5** has no transport notion by design (anonymous pre-auth).
+- **Lane 1**: ✅ all three baseline transports (A/B/C) covered as of
+  2026-04-28; no Transport D or E lab yet.
+- **Lane 2**: no Transport C or D lab yet (E filled by `function_calling_lab`).
+- **Lane 3**: no Transport B or E lab yet.
+- **Lane 4**: no Transport B, C, D, or E lab yet — agent chains today are
+  all MCP-transport in this corpus. The widest open lane.
+- **Lane 5**: no transport notion by design (anonymous pre-auth).
 
 These are blind spots worth filling as the lab catalog grows; they also
-define the honest boundary of what camazotz currently teaches.
+define the honest boundary of what camazotz currently teaches. The gap
+detection logic in `lane_taxonomy.coverage_summary` treats D and E as
+**opportunistic** — only flagged on a lane when at least one *other*
+lane already exercises that transport, avoiding noise on deployments that
+don't care about the new surfaces.
 
 #### Browsing the coverage
 
-The camazotz portal ships two parallel views of the same 32 labs:
+The camazotz portal ships two parallel views of the same 35 labs:
 
 - `GET /threat-map` — lab grid organized by *attack category* (best for
   learners asking "what kind of attack is this?").
