@@ -5,8 +5,17 @@
 #   # Local Docker Compose
 #   ./scripts/feedback-loop.sh http://localhost:8080/mcp
 #
-#   # Kubernetes (through nullfield sidecar)
+#   # Kubernetes — :30080 is the BYPASS path (raw brain-gateway, no policy).
+#   # Use this to enumerate the unguarded finding set.
 #   ./scripts/feedback-loop.sh http://192.168.1.85:30080/mcp --k8s camazotz
+#
+#   # Kubernetes — :30090 is the POLICED path (NodePort 30090 ->
+#   # nullfield sidecar :9090 -> brain-gateway). Use this to prove the
+#   # arbiter actually blocks what mcpnuke flagged on :30080.
+#   ./scripts/feedback-loop.sh http://192.168.1.85:30090/mcp --k8s camazotz
+#
+#   # The recommended demo runs the loop against BOTH ports back-to-back:
+#   # the diff between the two reports is the value nullfield is adding.
 #
 #   # With Claude AI analysis
 #   ANTHROPIC_API_KEY=sk-ant-... ./scripts/feedback-loop.sh http://localhost:8080/mcp --claude
