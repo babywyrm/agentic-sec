@@ -27,7 +27,7 @@ ad‑hoc assumptions about how AI agents authenticate.
 
 1. [Why a Framework](#why-a-framework)
 2. [The Five Identity Lanes](#the-five-identity-lanes)
-3. [The Three Transport Surfaces](#the-three-transport-surfaces)
+3. [The Five Transport Surfaces](#the-five-transport-surfaces)
 4. [The Lane × Transport Matrix](#the-lane--transport-matrix)
 5. [Standards Adherence Per Lane](#standards-adherence-per-lane)
 6. [Tool Coverage Map](#tool-coverage-map)

@@ -1,6 +1,6 @@
 # camazotz Quick Reference
 
-MCP security playground — 31 intentionally vulnerable labs.
+MCP security playground — 35 intentionally vulnerable labs.
 
 **Repo:** [github.com/babywyrm/camazotz](https://github.com/babywyrm/camazotz)
 
@@ -54,9 +54,26 @@ make helm-deploy
 | `http://localhost:3000/challenges` | Challenge grid with flag submission |
 | `http://localhost:3000/operator` | Guided walkthroughs (hidden) |
 | `http://localhost:3000/identity` | ZITADEL identity dashboard |
+| `http://localhost:3000/lanes` | **Agentic Lane View** — labs grouped by identity lane (HTML) |
+| `http://localhost:3000/threat-map` | Labs grouped by attack category (HTML) |
 | `http://localhost:8080/mcp` | MCP JSON-RPC endpoint |
+| `http://localhost:8080/api/lanes` | **Lane taxonomy** — schema v1 JSON (consumed by `mcpnuke --coverage-report`) |
 | `http://localhost:8080/health` | Health check |
 | `POST http://localhost:8080/reset` | Reset all lab state |
+
+### Kubernetes NodePort entry points
+
+When deployed via `kube/brain-gateway-policed.yaml`, two NodePorts surface
+the brain gateway with different enforcement postures:
+
+| NodePort | Path | Behaviour |
+|----------|------|-----------|
+| `:30080` | direct → brain-gateway `:8080` | **Bypass** — raw target, no policy. Use for red-team scans. |
+| `:30090` | nullfield sidecar `:9090` → brain-gateway | **Policed** — every call goes through nullfield identity + policy. Unauthenticated calls return JSON-RPC `-32001 identity verification failed`. |
+| `:31591` | nullfield admin `:9091` | Policy CRD status, decision counters, audit tail. |
+
+Smoke target: `make smoke-k8s-policed` in camazotz exercises the policed
+path end-to-end.
 
 ## MCP Protocol
 
