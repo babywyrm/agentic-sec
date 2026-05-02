@@ -1,0 +1,91 @@
+name: Cross-repo coherence
+
+# Catches drift across the four-repo MCP security ecosystem (camazotz,
+# mcpnuke, nullfield, agentic-sec). Runs `scripts/check_coherence.py`
+# against the four repos at HEAD of main:
+#
+#   - lab module count (camazotz_modules/*/scenario.yaml is the truth source)
+#     must match every prose assertion across the four repos
+#   - five-transport taxonomy (ADR 0001 in camazotz) must be cited as A-E,
+#     never as "three transports" or "A-C"
+#   - lane vocabulary (frontend/lane_taxonomy.py in camazotz) must be the
+#     canonical 5 slugs
+#   - nullfield/integrations/camazotz/tools.yaml count must match the
+#     "all N tools" assertion in its README
+#
+# When this fails, the failure message names the file and the stale string.
+# Triggered on: push to main here, push to any sibling repo (via
+# repository_dispatch), and a nightly cron as a safety net.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/check_coherence.py'
+      - '.github/workflows/cross-repo-coherence.yml'
+      - 'docs/**'
+      - 'README.md'
+  schedule:
+    - cron: '0 11 * * *'   # nightly at 11:00 UTC (catches landed drift within 24h)
+  repository_dispatch:
+    types: [ecosystem-changed]
+  workflow_dispatch:
+
+jobs:
+  coherence:
+    name: Assert cross-repo facts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out agentic-sec
+        uses: actions/checkout@v4
+        with:
+          path: agentic-sec
+
+      - name: Check out camazotz @ main
+        uses: actions/checkout@v4
+        with:
+          repository: babywyrm/camazotz
+          path: camazotz
+          ref: main
+
+      - name: Check out mcpnuke @ main
+        uses: actions/checkout@v4
+        with:
+          repository: babywyrm/mcpnuke
+          path: mcpnuke
+          ref: main
+
+      - name: Check out nullfield @ main
+        uses: actions/checkout@v4
+        with:
+          repository: babywyrm/nullfield
+          path: nullfield
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run coherence assertions
+        run: |
+          python agentic-sec/scripts/check_coherence.py --root "$PWD"
+
+      - name: Drift summary on failure
+        if: failure()
+        run: |
+          {
+            echo "## Cross-repo drift detected"
+            echo ""
+            echo "One or more of the four repos asserts a number or vocabulary that"
+            echo "does not match the authoritative source. Re-run locally with:"
+            echo ""
+            echo '```bash'
+            echo "git clone git@github.com:babywyrm/agentic-sec.git"
+            echo "git clone git@github.com:babywyrm/camazotz.git"
+            echo "git clone git@github.com:babywyrm/mcpnuke.git"
+            echo "git clone git@github.com:babywyrm/nullfield.git"
+            echo "python agentic-sec/scripts/check_coherence.py --root \$PWD"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
