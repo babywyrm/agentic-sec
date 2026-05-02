@@ -6,10 +6,10 @@ A documentation hub and cross-project reference for a closed-loop security stack
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <a href="https://github.com/babywyrm/camazotz"><img alt="camazotz" src="https://img.shields.io/badge/camazotz-32%20labs-fb923c"></a>
+  <a href="https://github.com/babywyrm/camazotz"><img alt="camazotz" src="https://img.shields.io/badge/camazotz-35%20labs-fb923c"></a>
   <a href="https://github.com/babywyrm/nullfield"><img alt="nullfield" src="https://img.shields.io/badge/nullfield-5%20actions-a78bfa"></a>
   <a href="https://github.com/babywyrm/mcpnuke"><img alt="mcpnuke" src="https://img.shields.io/badge/mcpnuke-scan%20%2B%20generate-34d399"></a>
-  <a href="docs/identity-flows.md"><img alt="Identity Flows" src="https://img.shields.io/badge/identity%20lanes-5%20lanes%20×%203%20transports-60a5fa"></a>
+  <a href="docs/identity-flows.md"><img alt="Identity Flows" src="https://img.shields.io/badge/identity%20lanes-5%20lanes%20×%205%20transports-60a5fa"></a>
 </p>
 
 ---
@@ -79,7 +79,7 @@ flowchart TB
     subgraph pod["brain-gateway Pod"]
       direction LR
       NF["nullfield<br/><b>Arbiter</b> :9090"]
-      GW["camazotz<br/><b>Target</b> :8080<br/>32 vulnerable labs"]
+      GW["camazotz<br/><b>Target</b> :8080<br/>35 vulnerable labs"]
     end
     IDP["ZITADEL / Teleport<br/><b>Identity layer</b>"]
     AUDIT["Audit stream<br/>structured JSON"]
@@ -150,6 +150,22 @@ flowchart LR
 ANTHROPIC_API_KEY=sk-ant-... ./scripts/feedback-loop.sh http://localhost:8080/mcp --claude
 ```
 
+> **Brain key asymmetry — read this once.** The two cloud-AI surfaces in
+> the ecosystem fail differently when `ANTHROPIC_API_KEY` is unset, and
+> the contrast is itself a teaching artifact:
+>
+> - **camazotz brain (`claude-sonnet-4-20250514` via `CloudClaudeProvider`)
+>   silently degrades.** With no key, brain responses are prefixed
+>   `[cloud-stub] ...` text but every smoke probe still passes. Useful
+>   for offline demos; *terrifying* if you mistake "smoke green" for
+>   "real LLM in the loop." Always grep for `[cloud-stub]` in operator
+>   transcripts before claiming a Claude-backed run.
+> - **mcpnuke `--claude` exits loudly.** No key → non-zero exit, error
+>   on stderr, scan does not run. Scanner refuses to fake the AI layer.
+>
+> Defaults differ on purpose — camazotz prioritizes "labs work in any
+> environment," mcpnuke prioritizes "scan results mean what they say."
+
 Detail in [`docs/feedback-loop.md`](docs/feedback-loop.md).
 
 ---
@@ -158,15 +174,15 @@ Detail in [`docs/feedback-loop.md`](docs/feedback-loop.md).
 
 ### camazotz — The Vulnerable Target
 
-> **[babywyrm/camazotz](https://github.com/babywyrm/camazotz)** — 32 labs, 5 identity lanes, 3 transport surfaces
+> **[babywyrm/camazotz](https://github.com/babywyrm/camazotz)** — 35 labs, 5 identity lanes, 5 transport surfaces
 
 **What it covers (today):**
 
 | Capability | Detail |
 |------------|--------|
 | Identity lanes covered | 1. Human Direct · 2. Human→Agent · 3. Machine · 4. Agent→Agent · 5. Anonymous |
-| Transport surfaces | A (MCP JSON-RPC) · B (Direct HTTP API) · C (SDK) |
-| Lab catalog | 32 intentionally vulnerable labs mapped to OWASP MCP Top 10 |
+| Transport surfaces | A (MCP JSON-RPC) · B (Direct HTTP API) · C (in-process SDK) · D (subprocess / CLI) · E (native LLM function-calling) — full taxonomy in [ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md) |
+| Lab catalog | 35 intentionally vulnerable labs mapped to OWASP MCP Top 10 |
 | Difficulty levels | Easy · Medium · Hard — each level exercises a different defense |
 | Identity providers | ZITADEL (live OIDC + token exchange) · Teleport (machine ID) · Mock (deterministic offline) |
 | Browsing | `/threat-map` (by attack category) · `/lanes` (by identity flow) |
@@ -187,7 +203,7 @@ Detail in [`docs/feedback-loop.md`](docs/feedback-loop.md).
 curl -s http://<camazotz>:3000/api/lanes | jq '.schema, .lanes | length, .labs | length'
 # "v1"
 # 5
-# 32
+# 35
 ```
 
 **Coverage gaps surfaced by camazotz itself** (as teaching artifacts, not bugs):
@@ -356,27 +372,35 @@ Live data from camazotz `GET /api/lanes` (schema v1), rendered as a grid. Green 
 
 ```mermaid
 flowchart TB
-  subgraph grid["Lane × Transport coverage · 32 labs total"]
+  subgraph grid["Lane × Transport coverage · 35 labs total"]
     direction LR
     subgraph lane1["<b>Lane 1 — Human Direct</b>"]
       L1A["T=A · 5 labs"]:::filled
       L1B["T=B · 1 lab"]:::filled
-      L1C["T=C · gap"]:::gap
+      L1C["T=C · 1 lab"]:::filled
+      L1D["T=D · gap"]:::gap
+      L1E["T=E · gap"]:::gap
     end
     subgraph lane2["<b>Lane 2 — Delegated</b>"]
       L2A["T=A · 11 labs"]:::filled
       L2B["T=B · 1 lab"]:::filled
       L2C["T=C · gap"]:::gap
+      L2D["T=D · gap"]:::gap
+      L2E["T=E · 1 lab"]:::filled
     end
     subgraph lane3["<b>Lane 3 — Machine</b>"]
       L3A["T=A · 4 labs"]:::filled
       L3B["T=B · gap"]:::gap
       L3C["T=C · 1 lab"]:::filled
+      L3D["T=D · 1 lab"]:::filled
+      L3E["T=E · gap"]:::gap
     end
     subgraph lane4["<b>Lane 4 — Agent → Agent</b>"]
       L4A["T=A · 6 labs"]:::filled
       L4B["T=B · gap"]:::gap
       L4C["T=C · gap"]:::gap
+      L4D["T=D · gap"]:::gap
+      L4E["T=E · gap"]:::gap
     end
     subgraph lane5["<b>Lane 5 — Anonymous</b>"]
       L5["3 labs · no transport notion"]:::filled
@@ -445,6 +469,26 @@ mcpnuke --targets http://$K8S_HOST:30080/mcp --fast --no-invoke --generate-polic
 ./scripts/feedback-loop.sh http://$K8S_HOST:30080/mcp --k8s camazotz
 ```
 
+> **Two K8s entry points (by design).** `:30080` is the **bypass** path — it
+> hits `brain-gateway` directly so red-team probes can hit the raw target.
+> `:30090` is the **policed** path — NodePort `30090` → nullfield sidecar
+> on `:9090` → upstream brain-gateway. The nullfield admin port is exposed
+> on NodePort `:31591`. Manifest:
+> [`kube/brain-gateway-policed.yaml`](https://github.com/babywyrm/camazotz/blob/main/kube/brain-gateway-policed.yaml).
+> Smoke target: `make smoke-k8s-policed` in camazotz. Quick proof the
+> arbiter is enforcing identity:
+>
+> ```bash
+> # Unauthenticated → policy denies before the target ever sees the call
+> curl -s -X POST http://$K8S_HOST:30090/mcp \
+>   -H 'Content-Type: application/json' \
+>   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | jq .error
+> # { "code": -32001, "message": "identity verification failed" }
+> ```
+>
+> Run the feedback loop against **both** ports — `:30080` shows the raw
+> finding set, `:30090` shows what nullfield actually blocks.
+
 ### Option 3 — Full Stack with Teleport
 
 Add machine identity for agents — short-lived certificates, K8s RBAC, MCP tool-level access control. Follow [`docs/teleport/setup.md`](docs/teleport/setup.md).
@@ -457,7 +501,7 @@ Add machine identity for agents — short-lived certificates, K8s RBAC, MCP tool
 
 | Document | What it covers |
 |----------|---------------|
-| [**Identity Flow Framework**](docs/identity-flows.md) | **Foundational.** Five identity lanes × three transport surfaces. The lens every other doc uses. Live coverage grid. |
+| [**Identity Flow Framework**](docs/identity-flows.md) | **Foundational.** Five identity lanes × five transport surfaces (A–E). The lens every other doc uses. Live coverage grid. |
 | [The Ecosystem](docs/ecosystem.md) | How the three projects fit together — defense layers, data flows, per-project coverage scorecard, roadmap |
 | [Golden Path](docs/golden-path.md) | Production security architecture for MCP deployments — identity, registry, policy, audit. For security review boards. |
 | [The Feedback Loop](docs/feedback-loop.md) | Scan → recommend → enforce → validate — the complete operational cycle |
@@ -497,7 +541,7 @@ Add machine identity for agents — short-lived certificates, K8s RBAC, MCP tool
 
 **Security engineers** evaluating how to secure MCP / agentic tool execution in production Kubernetes environments. The architecture docs and golden path are written for security review boards. Start with [Golden Path](docs/golden-path.md).
 
-**Red team operators** testing MCP server defenses. camazotz provides 32 intentionally vulnerable labs; mcpnuke automates the attack sequences. Start with [Walkthrough 1 — The Attack](docs/walkthroughs/attack.md).
+**Red team operators** testing MCP server defenses. camazotz provides 35 intentionally vulnerable labs; mcpnuke automates the attack sequences. Start with [Walkthrough 1 — The Attack](docs/walkthroughs/attack.md).
 
 **Blue team defenders** learning to write nullfield policy. The defense-mode labs teach policy authoring, response redaction, and budget tuning with scored feedback. Start with [Walkthrough 2 — The Defense](docs/walkthroughs/defense.md) and [Walkthrough 3 — Lab Practice](docs/walkthroughs/practice.md).
 
