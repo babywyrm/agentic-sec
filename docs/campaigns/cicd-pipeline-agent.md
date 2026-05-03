@@ -294,7 +294,14 @@ spec:
 curl -sf http://localhost:8080/config -H 'Content-Type: application/json' \
   -d '{"difficulty": "medium"}'
 
-# Run the feedback loop against the policed endpoint
+# Full campaign loop — scan, apply pre-authored policy, re-scan, diff
+# (uses kube/policies/cicd-pipeline-agent.yaml — no policy generation step)
+K8S_HOST=192.168.1.85 make campaign SCENARIO=cicd-pipeline-agent
+
+# Preview only (no apply)
+K8S_HOST=192.168.1.85 make campaign-print SCENARIO=cicd-pipeline-agent
+
+# Or use the raw feedback loop if you prefer generated policy
 K8S_HOST=192.168.1.85 make feedback-loop-apply
 ```
 

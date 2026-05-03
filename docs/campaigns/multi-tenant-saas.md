@@ -311,6 +311,12 @@ spec:
 ## Validation
 
 ```bash
+# One-liner: full campaign loop (local Compose)
+make campaign SCENARIO=multi-tenant-saas
+
+# NUC / k3s
+K8S_HOST=192.168.1.85 make campaign SCENARIO=multi-tenant-saas
+
 # Switch to hard difficulty
 curl -sf http://localhost:8080/config -H 'Content-Type: application/json' \
   -d '{"difficulty": "hard"}'

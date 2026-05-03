@@ -312,6 +312,12 @@ spec:
 ## Validation
 
 ```bash
+# One-liner: full campaign loop (local Compose)
+make campaign SCENARIO=code-review-agent
+
+# NUC / k3s
+K8S_HOST=192.168.1.85 make campaign SCENARIO=code-review-agent
+
 # Switch to hard difficulty — application-layer controls
 curl -sf http://localhost:8080/config -H 'Content-Type: application/json' \
   -d '{"difficulty": "hard"}'

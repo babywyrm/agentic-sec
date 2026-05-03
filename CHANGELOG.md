@@ -10,7 +10,49 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
-## [2026-05 pt.2] Real-World Scenario Expansion
+## [2026-05 pt.3] Ecosystem Feedback Loop — Scenario Flag + Persistent Policies
+
+Closes the two ecosystem integration gaps identified during the Campaign A
+live walkthrough:
+
+**Gap 1 — `feedback_loop.py` `--scenario` flag (camazotz)**
+The feedback loop now accepts `--scenario <name>` to run a full campaign
+cycle with a single command.  Passing the flag:
+
+- Prints a scenario banner (name, description, policy-name, focus-tools).
+- Skips the mcpnuke `--generate-policy` step.
+- Instead copies the pre-authored policy from `kube/policies/<scenario>.yaml`
+  and applies / diffs against it.
+
+Available names: `customer-support-bot`, `cicd-pipeline-agent`,
+`code-review-agent`, `multi-tenant-saas`.
+
+**Gap 2 — `kube/policies/` pre-authored NullfieldPolicy CRDs (camazotz)**
+Four hand-tuned `NullfieldPolicy` manifests now live in the repo — one per
+campaign.  They are derived from the mcpnuke auto-generated output and
+extended with scenario-specific comments explaining the threat rationale:
+
+| File | Key rules |
+|---|---|
+| `customer-support-bot.yaml` | DENY secrets + webhooks, HOLD egress, SCOPE auth + relay |
+| `cicd-pipeline-agent.yaml` | DENY HTTP bypass, SCOPE subprocess, HOLD config writes |
+| `code-review-agent.yaml` | DENY tool registration from PR content, SCOPE shell, HOLD URL fetch |
+| `multi-tenant-saas.yaml` | DENY cross-tenant, SCOPE RAG synthesizer, DENY delegation depth > 2 |
+
+**New Makefile targets (camazotz)**
+
+```
+make campaign-print SCENARIO=customer-support-bot
+make campaign       SCENARIO=cicd-pipeline-agent K8S_HOST=192.168.1.85
+make campaign-list
+```
+
+`campaign-print` does a live baseline scan, shows the pre-authored policy,
+but does not apply.  `campaign` is the full round-trip.  `SCENARIO` defaults
+to `customer-support-bot` so a plain `make campaign` always has a meaningful
+demo value.
+
+
 
 Extends the platform's teaching mission with four named deployment personas
 (campaigns) that chain multiple labs into end-to-end attack + defend +

@@ -253,7 +253,16 @@ make feedback-loop-apply
 ## Validation
 
 ```bash
-# Re-scan with policy active; target the policed entry point
+# One-liner: full campaign loop using the pre-authored policy (local Compose)
+make campaign SCENARIO=customer-support-bot
+
+# Preview only — scan + show policy, no apply
+make campaign-print SCENARIO=customer-support-bot
+
+# NUC / k3s
+K8S_HOST=192.168.1.85 make campaign SCENARIO=customer-support-bot
+
+# Manual re-scan with policy active; target the policed entry point
 mcpnuke scan http://localhost:9090 \
   --output json \
   --label "support-bot-policed" \
