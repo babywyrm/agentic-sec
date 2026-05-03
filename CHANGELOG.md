@@ -10,6 +10,70 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05] Teaching Platform Expansion
+
+The platform's primary character as a **teaching platform** for security
+practitioners new to MCP and agentic AI is now expressed across all three
+repos and the docs hub. This milestone delivers the curriculum layer, fills
+two transport-surface lab gaps, and uplifts unit-test coverage in camazotz
+and nullfield.
+
+### agentic-sec (docs hub)
+
+- **`docs/bridge.md`** — New "Bridge Document". Maps REST/API security
+  knowledge (OWASP Top 10, JWT, SSRF, confused deputy) directly to the MCP
+  threat model. Includes an OWASP MCP Top 10 quick-map table, the five
+  transport surface reference with real-world runtimes, and the five-lane
+  identity matrix with security implications.
+- **`docs/learning-path.md`** — Structured curriculum with three tracks:
+  Red Team (~4h), Blue Team (~3h), Full Loop (~3h), each with explicit
+  pre-requisites, step-by-step pointers to walkthroughs and references, and
+  "you will be able to when done" success criteria.
+- **`docs/walkthroughs/beyond-mcp.md`** — Walkthrough 8. Traces a single
+  attack objective across all five transport surfaces (A–E), showing how the
+  attacker's approach, the defender's control point, and the evidence trail
+  change at each layer. Pairs with `langchain_tool_lab` and
+  `agent_http_bypass_lab`.
+- **README.md** — "Start Here" decision table prepended above the main
+  content. Routes practitioners to `bridge.md`, `learning-path.md`, and
+  walkthroughs before they hit the architecture docs. Badge and content
+  references updated from 35 to 37 labs.
+- **`docs/specs/2026-05-03-roadmap-expansion-design.md`** — Design spec
+  for this milestone (Curriculum-First / Bridge-the-Gap approach).
+- **`docs/superpowers/plans/2026-05-03-roadmap-expansion.md`** — Detailed
+  12-task implementation plan.
+
+### camazotz
+
+- **`langchain_tool_lab`** (MCP-T36, Transport C, Lane 2) — New lab covering
+  LangChain `@tool` description injection. Three-tier difficulty: easy
+  (verbatim pass-through), medium (keyword filter), hard (allowlist
+  validation). Includes `scenario.yaml` and 13 unit tests.
+- **`agent_http_bypass_lab`** (MCP-T37, Transport B, Lane 3) — New lab
+  covering machine-agent direct HTTP bypass. Models the vulnerability where
+  an agent calls the tool server's raw HTTP API, evading MCP-layer controls
+  and nullfield policy. Three-tier difficulty: easy (no auth), medium (leaked
+  API key in tool description), hard (mTLS required). Includes `scenario.yaml`
+  and 12 unit tests.
+- **`scripts/qa_runner/checks.py`** — QA harness extended with
+  `test_langchain_tool_lab` and `test_agent_http_bypass_lab` entries.
+- **`scripts/feedback_loop.py`** — Extended with `--scanner` (4-tier
+  discovery), `--apply-backend` (auto-detect docker-compose vs kubectl),
+  `--ssh-key`, `--compose-policy-path`. Full test coverage in
+  `tests/test_feedback_loop.py`.
+- **Unit tests** — New test files for all 8 previously-untested labs:
+  `auth`, `context`, `egress`, `relay`, `secrets`, `comms`, `shadow`, `supply`.
+
+### nullfield
+
+- **`pkg/proxy/handler_test.go`** — New tests for `handler.go` and
+  `gateway.go` (policy dispatch, HOLD/DENY/ALLOW/SCOPE/BUDGET, identity
+  extraction).
+- **`pkg/identity/identity_test.go`** — New tests for `HeaderVerifier`,
+  `NoopVerifier`, `WithIdentity`/`FromContext`, `MultiVerifier`.
+- **`pkg/identity/jwks_test.go`** — New tests for `JWKSVerifier` including
+  `DATA RACE` fix (replaced `bool` with `atomic.Bool` in hot-loader).
+
 ## [2026-04] Ecosystem Alignment Sweep
 
 A coordinated milestone across all four repos: the lane/transport
