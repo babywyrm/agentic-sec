@@ -26,7 +26,7 @@ installed. Python 3.11+. No MCP experience required.
 | 3 | [Walkthrough 4 — AI-Powered Scanning](walkthroughs/ai-powered-scanning.md) — Claude reasoning over findings | 45 min |
 | 4 | [Walkthrough 6 — Delegation Chains](walkthroughs/delegation-chains.md) — multi-agent identity dilution | 45 min |
 | 5 | [Walkthrough 8 — Beyond MCP](walkthroughs/beyond-mcp.md) — same attacks across LangChain, OpenAI, CLI agents | 30 min |
-| 6 | camazotz labs at **hard** difficulty — all 37 labs, any order | 90 min |
+| 6 | camazotz labs at **hard** difficulty — all 39 labs, any order | 90 min |
 
 ---
 
@@ -71,9 +71,31 @@ scan → enforce → validate cycle in their own environment.*
 
 ---
 
-## All Three Tracks Together (~8 hours)
+## Track 4 — Campaign Mode (~5 hours total, ~75 min each)
 
-If you want the full picture — red + blue + loop — do them in order: Red Team
-gives you the attacker's perspective, Blue Team gives you the defender's
-perspective, Full Loop gives you the operator's perspective. Together they
-cover every role in the feedback loop.
+*For practitioners who want to experience the full toolchain through the lens
+of a named real-world deployment. Each campaign chains 4 labs into a complete
+attack → scan → defend → validate narrative.*
+
+**You will be able to when done:**
+- Threat-model a named deployment from first principles (support bot, CI/CD agent, code review agent, multi-tenant SaaS)
+- Run a multi-step attack chain across labs using the full ecosystem together
+- Author a deployment-specific nullfield policy that addresses the actual finding set
+- Validate that controls hold against re-scan at hard difficulty
+
+| Campaign | Persona | Key Labs | Time |
+|----------|---------|----------|------|
+| [Customer Support Bot](campaigns/customer-support-bot.md) | FinTech AI support agent | `context_lab` → `secrets_lab` → `egress_lab` → `shadow_lab` | ~60 min |
+| [CI/CD Pipeline Agent](campaigns/cicd-pipeline-agent.md) | Platform deployment bot (Lane 3) | `subprocess_lab` → `agent_http_bypass_lab` → `config_lab` → `attribution_lab` | ~75 min |
+| [Code Review Agent](campaigns/code-review-agent.md) | Cursor/Copilot-style review agent | `code_review_agent_lab` → `indirect_lab` → `langchain_tool_lab` → `cost_exhaustion_lab` | ~75 min |
+| [Multi-Tenant SaaS AI](campaigns/multi-tenant-saas.md) | B2B AI feature, 50 tenants, shared RAG | `tenant_lab` → `rag_injection_lab` → `delegation_chain_lab` → `attribution_lab` | ~75 min |
+
+**Prerequisite:** Complete any one of Tracks 1–3 first, or read `bridge.md` and complete Walkthrough 1.
+
+---
+
+## All Tracks Together (~13 hours)
+
+If you want the full picture: Tracks 1–3 build the mental model and tool fluency.
+Track 4 (campaigns) puts it all together in real-world deployment contexts. Do
+them in any order after completing `bridge.md`.

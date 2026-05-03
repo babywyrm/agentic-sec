@@ -10,6 +10,51 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.2] Real-World Scenario Expansion
+
+Extends the platform's teaching mission with four named deployment personas
+(campaigns) that chain multiple labs into end-to-end attack + defend +
+validate narratives, and two new camazotz labs that fill the D/Lane 2 and
+C/Lane 4 matrix gaps.
+
+### agentic-sec (docs hub)
+
+- **`docs/campaigns/`** — New directory. Four campaign documents, each one a
+  named deployment scenario that exercises the full three-tool ecosystem
+  (camazotz + mcpnuke + nullfield) together:
+  - **`customer-support-bot.md`** — FinTech AI support agent (Transport A,
+    Lane 1). Attack chain: `context_lab` → `secrets_lab` → `egress_lab` →
+    `shadow_lab`. Prompt injection → credential exfil → SSRF → persistence.
+  - **`cicd-pipeline-agent.md`** — Platform deployment bot (Transport B+D,
+    Lane 3). Attack chain: `subprocess_lab` → `agent_http_bypass_lab` →
+    `config_lab` → `attribution_lab`. Canonical use of `make feedback-loop-apply`.
+  - **`code-review-agent.md`** — Cursor/Copilot-style review agent (Transport
+    C+D, Lane 1→2). Attack chain: `code_review_agent_lab` → `indirect_lab` →
+    `langchain_tool_lab` → `cost_exhaustion_lab`.
+  - **`multi-tenant-saas.md`** — B2B SaaS AI feature, 50 tenants, shared RAG
+    (Transport C, Lanes 1/2/4). Attack chain: `tenant_lab` →
+    `rag_injection_lab` → `delegation_chain_lab` → `attribution_lab`.
+- **`docs/campaigns/README.md`** — Campaign index with prerequisites, time
+  estimates, and transport/lane coverage per campaign.
+- **`docs/learning-path.md`** — Added Track 4 (Campaign Mode, ~5 hours total)
+  linking all four campaigns.
+- **README.md** — "Run a full deployment scenario" row added to Start Here
+  table. Lab count updated 37 → 39.
+
+### camazotz
+
+- **`code_review_agent_lab`** (MCP-T38, Transport D, Lane 2) — Fills the
+  D/Lane 2 matrix gap. Simulates a Cursor/Copilot-style review agent that
+  shells out using PR content. Shell injection via `extra_args` on easy,
+  env-var injection on medium, sandboxed allowlist on hard. 14 unit tests.
+- **`rag_injection_lab`** (MCP-T39, Transport C, Lane 4) — Fills the C/Lane 4
+  gap. Simulates a two-agent LangChain/LlamaIndex-style RAG pipeline. Poisoned
+  document in shared knowledge base hijacks Synthesizer agent output. Content
+  passed verbatim on easy, chunked on medium, UNTRUSTED-CONTENT fenced on
+  hard. 14 unit tests.
+- **QA harness** updated for both new labs.
+- **Lab count** updated 37 → 39 in badge and text.
+
 ## [2026-05] Teaching Platform Expansion
 
 The platform's primary character as a **teaching platform** for security

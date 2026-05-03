@@ -11,6 +11,7 @@ the labs or tooling.
 |---|---|
 | Understand how MCP/agentic security differs from API security | [`docs/bridge.md`](docs/bridge.md) — *read this first* |
 | Follow a structured curriculum (red team / blue team / full loop) | [`docs/learning-path.md`](docs/learning-path.md) |
+| Run a full deployment scenario (support bot, CI/CD, code review, SaaS) | [`docs/campaigns/`](docs/campaigns/README.md) — *attack + scan + defend end-to-end* |
 | Attack a vulnerable MCP server | [Walkthrough 1 — The Attack](docs/walkthroughs/attack.md) |
 | Defend with nullfield policy | [Walkthrough 2 — The Defense](docs/walkthroughs/defense.md) |
 | Run the full scan → enforce → validate loop | [Walkthrough 5 — Live Feedback Loop](docs/walkthroughs/live-loop.md) |
@@ -24,7 +25,7 @@ A documentation hub and cross-project reference for a closed-loop security stack
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <a href="https://github.com/babywyrm/camazotz"><img alt="camazotz" src="https://img.shields.io/badge/camazotz-37%20labs-fb923c"></a>
+  <a href="https://github.com/babywyrm/camazotz"><img alt="camazotz" src="https://img.shields.io/badge/camazotz-39%20labs-fb923c"></a>
   <a href="https://github.com/babywyrm/nullfield"><img alt="nullfield" src="https://img.shields.io/badge/nullfield-5%20actions-a78bfa"></a>
   <a href="https://github.com/babywyrm/mcpnuke"><img alt="mcpnuke" src="https://img.shields.io/badge/mcpnuke-scan%20%2B%20generate-34d399"></a>
   <a href="docs/identity-flows.md"><img alt="Identity Flows" src="https://img.shields.io/badge/identity%20lanes-5%20lanes%20×%205%20transports-60a5fa"></a>
@@ -57,7 +58,7 @@ A documentation hub and cross-project reference for a closed-loop security stack
 
 | Project | Role | What it is | Scale today |
 |---------|------|-----------|-------------|
-| **[camazotz](https://github.com/babywyrm/camazotz)** | The vulnerable *target* | Intentionally vulnerable MCP server covering every OWASP MCP Top 10 risk, organized by identity lane | **37 labs**, 5 lanes, 5 transports, 86 tools |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | The vulnerable *target* | Intentionally vulnerable MCP server covering every OWASP MCP Top 10 risk, organized by identity lane | **39 labs**, 5 lanes, 5 transports, 86 tools |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | The *arbiter* | Sidecar proxy in front of any MCP server — the per-call policy layer the LLM cannot override | **5 actions**, 3 new per-rule primitives (2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | The *scanner* | Outside-in MCP security scanner — static, behavioral, and infrastructure probes plus exploit chains | Scan modes: `--fast`, `--no-invoke`, `--claude`; outputs JSON + nullfield policy |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The *lynchpin* | This repo — the framework, the vocabulary, the docs, the walkthroughs | [Identity Flow Framework](docs/identity-flows.md), 6 walkthroughs, golden-path architecture |
@@ -192,7 +193,7 @@ Detail in [`docs/feedback-loop.md`](docs/feedback-loop.md).
 
 ### camazotz — The Vulnerable Target
 
-> **[babywyrm/camazotz](https://github.com/babywyrm/camazotz)** — 37 labs, 5 identity lanes, 5 transport surfaces
+> **[babywyrm/camazotz](https://github.com/babywyrm/camazotz)** — 39 labs, 5 identity lanes, 5 transport surfaces
 
 **What it covers (today):**
 
@@ -390,7 +391,7 @@ Live data from camazotz `GET /api/lanes` (schema v1), rendered as a grid. Green 
 
 ```mermaid
 flowchart TB
-  subgraph grid["Lane × Transport coverage · 37 labs total"]
+  subgraph grid["Lane × Transport coverage · 39 labs total"]
     direction LR
     subgraph lane1["<b>Lane 1 — Human Direct</b>"]
       L1A["T=A · 5 labs"]:::filled
