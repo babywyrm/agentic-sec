@@ -1,5 +1,23 @@
 # agentic-security
 
+## Start Here
+
+MCP and agentic AI patterns are 1-2 year old RFCs — the security conventions
+are still forming. If you know security but are new to this space, the bridge
+document maps your existing knowledge to the new threat model before you touch
+the labs or tooling.
+
+| I want to… | Go here |
+|---|---|
+| Understand how MCP/agentic security differs from API security | [`docs/bridge.md`](docs/bridge.md) — *read this first* |
+| Follow a structured curriculum (red team / blue team / full loop) | [`docs/learning-path.md`](docs/learning-path.md) |
+| Attack a vulnerable MCP server | [Walkthrough 1 — The Attack](docs/walkthroughs/attack.md) |
+| Defend with nullfield policy | [Walkthrough 2 — The Defense](docs/walkthroughs/defense.md) |
+| Run the full scan → enforce → validate loop | [Walkthrough 5 — Live Feedback Loop](docs/walkthroughs/live-loop.md) |
+| Deploy to production securely | [Golden Path](docs/golden-path.md) |
+
+---
+
 **Security architecture for agentic infrastructure — MCP tool execution, machine identity, and automated defense.**
 
 A documentation hub and cross-project reference for a closed-loop security stack protecting AI-agent deployments built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). Three tightly-coupled projects, one shared vocabulary, one feedback loop.
