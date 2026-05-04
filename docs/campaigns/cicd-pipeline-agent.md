@@ -214,16 +214,19 @@ account. Incident response will be chasing the wrong actor.
 ## Scanning with mcpnuke
 
 ```bash
-# Baseline scan — no policy applied
-mcpnuke scan http://localhost:8080 \
-  --output json \
-  --label "cicd-agent-baseline" \
-  | python3 -c "
-import sys, json
-findings = json.load(sys.stdin)['findings']
-for f in sorted(findings, key=lambda x: x['severity'], reverse=True):
-    print(f['severity'].upper(), f['threat_id'], '-', f['title'])
-"
+# Static baseline — all tools, instant, zero API calls
+mcpnuke --targets http://localhost:8080/mcp \
+  --no-invoke --coverage 0 \
+  --profile profiles/camazotz.json \
+  --verbose --json cicd-baseline.json
+
+# Deep Claude scan — top 15 tools, behavioral probing
+mcpnuke --targets http://localhost:8080/mcp \
+  --coverage 15 --claude \
+  --claude-model claude-sonnet-4-20250514 \
+  --profile profiles/camazotz.json \
+  --diff-baseline cicd-baseline.json \
+  --verbose --json cicd-claude.json
 ```
 
 **Expected findings:**
@@ -234,6 +237,10 @@ CRITICAL MCP-T37  Agent HTTP Bypass — Direct Transport B Access
 HIGH     MCP-T09  Agent Config Tampering
 HIGH     MCP-T22  Execution Context Forgery
 MEDIUM   MCP-T18  Bot Identity Theft via tbot Credential Exposure
+
+# Claude behavioral probing may also surface:
+CRITICAL Live env dump: MOCK_AWS_SECRET_ACCESS_KEY present in subprocess stdout
+CRITICAL agent_http_bypass.call_direct returns internal secrets without MCP policy check
 ```
 
 ---
@@ -301,16 +308,24 @@ K8S_HOST=192.168.1.85 make campaign SCENARIO=cicd-pipeline-agent
 # Preview only (no apply)
 K8S_HOST=192.168.1.85 make campaign-print SCENARIO=cicd-pipeline-agent
 
-# Or use the raw feedback loop if you prefer generated policy
-K8S_HOST=192.168.1.85 make feedback-loop-apply
+# Manual baseline then policed re-scan with diff
+mcpnuke --targets http://localhost:8080/mcp \
+  --no-invoke --coverage 0 \
+  --profile profiles/camazotz.json \
+  --json cicd-baseline.json
+
+mcpnuke --targets http://localhost:9090/mcp \
+  --coverage 15 --claude \
+  --claude-model claude-sonnet-4-20250514 \
+  --profile profiles/camazotz.json \
+  --diff-baseline cicd-baseline.json \
+  --json cicd-policed.json --verbose
 ```
 
 **Expected result:** Subprocess with `extra_args` injection is blocked by the
 SCOPE rule. `agent_http_bypass.*` calls return DENY. Config write is HOLDed.
-The `attribution.submit_action` without a verified identity is DENY.
-
-The subprocess `env` dump no longer includes production secrets because the
-SCOPE rule restricts the operation allowlist.
+The `attribution.submit_action` without a verified identity is DENY. The diff
+shows the live credential-inheritance findings as RESOLVED.
 
 ---
 

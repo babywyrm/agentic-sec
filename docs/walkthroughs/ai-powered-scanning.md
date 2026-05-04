@@ -45,10 +45,10 @@ the tools, and real AI analyzing the attack surface.
 
 ## What Claude Finds That Regex Cannot
 
-### Static scan (no Claude): 34 findings in 0.6s
+### Static scan (no Claude): 179 findings in 0.7s
 
 Pattern matching detects dangerous tool names, parameters, and capability
-keywords:
+keywords across all 99 tools:
 
 ```
 [CRITICAL] code_execution: Code execution indicator in 'hallucination.execute_plan'
@@ -60,12 +60,12 @@ keywords:
 These are accurate but shallow — they tell you *what* is dangerous but not
 *why* it matters or *how* an attacker would chain it.
 
-### Claude-powered scan: 44 findings in 23s
+### Claude-powered scan: 96 findings in 184s (top 15 tools, all 3 phases)
 
-Claude adds 10 findings in two categories:
+Claude operates in three phases:
 
-**Per-tool threat analysis** — Claude reads the full tool definition and
-reasons about real-world impact:
+**Phase 1 — Schema analysis** (10 findings): Claude reads each tool's full
+definition and reasons about real-world impact:
 
 ```
 [CRITICAL] [AI] [MCP-T02] Unrestricted command execution via natural language
@@ -87,7 +87,18 @@ reasons about real-world impact:
            monitoring and data theft that persists across sessions.
 ```
 
-**Multi-step attack chain reasoning** — Claude constructs complete kill chains:
+**Phase 2 — Live tool invocation** (10 findings): Claude generates
+semantically adversarial arguments (Tier 2), calls each tool, then analyzes
+the responses. This surface is completely invisible to static analysis:
+
+```
+[CRITICAL] Credential leak in tool 'secrets.leak_config' response: aws_access_key
+[CRITICAL] Live exfil confirmed: 'secrets.leak_config' → 'shadow.register_webhook'
+[CRITICAL] Credential exposed in resource 'tenant://memories/alice': api_key
+```
+
+**Phase 3 — Chain reasoning** (5 insights): Claude reasons across all findings
+to construct complete kill chains:
 
 ```
 [CRITICAL] [AI] [MCP-ATK-001] Full System Compromise via Credential-Assisted Remote Shell
@@ -101,12 +112,6 @@ reasons about real-world impact:
            2. Use secrets.leak_config to extract sensitive data
            3. Use relay.execute_with_context to access stored credentials
            4. All future tool calls automatically forwarded to attacker
-
-[CRITICAL] [AI] [MCP-ATK-007] Supply Chain Poisoning via Configuration Manipulation
-           1. Use prompt injection to manipulate AI responses
-           2. Fetch malicious config via egress.fetch_url
-           3. Execute system modifications via hallucination.execute_plan
-           4. Persist via shadow.register_webhook for ongoing control
 ```
 
 These are the findings you present to your CISO. Static analysis says
@@ -132,73 +137,112 @@ print(f'Brain: {c.get(\"brain_provider\")}')"
 # Expected: Brain: cloud
 ```
 
-### Scan 1: Static only (baseline, instant)
+### The coverage knob
+
+`--coverage N` is the dial between speed and depth. Pick the level that fits
+your time budget:
+
+| Command | Tools sampled | Time | Best for |
+|---------|--------------|------|----------|
+| `--no-invoke --coverage 0` | all 99 | ~1s | Static baseline, CI gate |
+| `--coverage 5` (`--fast`) | top 5 | ~2 min | Quick PR review |
+| `--coverage 15 --claude` | top 15 | ~3 min | Sprint security review |
+| `--coverage 0 --claude` | all 99 | ~30+ min | Full assessment |
+
+### Scan 1: Static baseline (all tools, instant)
 
 ```bash
-$ mcpnuke --targets http://localhost:8080/mcp \
-    --fast --no-invoke --verbose \
-    --save-baseline static-baseline.json
+mcpnuke --targets http://localhost:8080/mcp \
+  --no-invoke --coverage 0 --verbose \
+  --profile profiles/camazotz.json \
+  --json baseline.json
 
-# Results: 34 findings, 0.6s, no API calls
+# Results: 179 findings across 99 tools, 0.7s, zero API calls
 ```
 
-### Scan 2: Claude analysis (deep reasoning, ~25s)
+### Scan 2: Claude analysis (top 15 tools, ~3 min)
 
 ```bash
-$ mcpnuke --targets http://localhost:8080/mcp \
-    --fast --no-invoke --claude \
-    --claude-max-tools 5 \
-    --verbose \
-    --json claude-report.json \
-    --generate-policy fix.yaml
+mcpnuke --targets http://localhost:8080/mcp \
+  --coverage 15 --claude \
+  --claude-model claude-sonnet-4-20250514 \
+  --profile profiles/camazotz.json \
+  --diff-baseline baseline.json \
+  --verbose \
+  --json claude-report.json
 
-# Results: 44 findings (34 static + 10 AI), ~25s
+# Results: 96 findings (15 tools scanned), ~184s
+# Phase 1: 10 AI schema findings
+# Phase 2: 10 live invocation findings
+# Phase 3: 5 chain reasoning insights
 ```
 
-### Scan 3: Full behavioral + Claude (deepest, ~90-120s)
+### Reading the diff output
+
+When `--diff-baseline` is set, the terminal shows (and `claude-report.json`
+includes) a diff block:
+
+```
+── Diff vs baseline ──
+NEW (47):
+  + [CRITICAL] Live exfil confirmed: 'secrets.leak_config' → 'shadow.register_webhook'
+  + [CRITICAL] Credential exposed in resource 'tenant://memories/alice': api_key
+  + [CRITICAL] Credential leak in tool 'secrets.leak_config' response: aws_access_key
+  + [MEDIUM]   SSRF surface: tool 'egress.fetch_url' accepts URL params and fetches content
+  + [CRITICAL] Attack chain: response_credentials → token_theft (auth.issue_token, ...)
+  ... 42 more
+
+46 unchanged finding(s) carried over.
+```
+
+The **NEW** findings are what Claude's behavioral probes discovered that
+regex could not. The **unchanged** findings are where both methods agree —
+those are your highest-confidence signals.
+
+### Scan 3: Standalone diff (any two JSON files)
 
 ```bash
-$ mcpnuke --targets http://localhost:8080/mcp \
-    --fast --claude \
-    --claude-max-tools 5 \
-    --probe-workers 2 \
-    --verbose \
-    --json full-report.json
-
-# Results: 50+ findings, includes tool invocation responses
-# Note: each tool call triggers a Claude API call in camazotz,
-# so this is the slowest but most realistic scan mode
+# Compare any two saved reports — no live target needed
+mcpnuke diff baseline.json claude-report.json
 ```
+
+Exit code is 1 when new findings exist — use this in CI pipelines.
 
 ### Scan against a cluster (same commands, different target)
 
 ```bash
-# K3s / self-hosted
-$ mcpnuke --targets http://192.168.1.85:30080/mcp \
-    --fast --no-invoke --claude --verbose
+# K3s / self-hosted NUC
+mcpnuke --targets http://192.168.1.85:30080/mcp \
+  --coverage 15 --claude \
+  --claude-model claude-sonnet-4-20250514 \
+  --profile profiles/camazotz.json \
+  --diff-baseline baseline.json \
+  --json cluster-report.json --verbose
 
 # EKS / cloud (with auth)
-$ mcpnuke --targets https://mcp.internal.example.com/mcp \
-    --fast --no-invoke --claude \
-    --auth-token "$MCP_TOKEN" \
-    --tls-verify --verbose
+mcpnuke --targets https://mcp.internal.example.com/mcp \
+  --coverage 15 --claude \
+  --auth-token "$MCP_TOKEN" \
+  --tls-verify --verbose
 ```
 
 ---
 
 ## Understanding Scan Modes
 
-| Mode | Findings | Time | API Calls | Best For |
-|------|----------|------|-----------|----------|
-| `--fast --no-invoke` | 34 | 0.6s | 0 | Quick audit, CI/CD gates |
-| `--fast --no-invoke --claude` | 44 | 25s | 2-3 (Claude analysis) | Security review, reporting |
-| `--fast --claude` | 50+ | 90-120s | Many (tools + analysis) | Deep investigation |
-| Full (no --fast) | 60+ | 10+ min | Many | Comprehensive assessment |
+| Mode | Tools | Findings | Time | API Calls | Best For |
+|------|-------|----------|------|-----------|----------|
+| `--no-invoke --coverage 0` | all 99 | 179 | ~1s | 0 | CI baseline, instant audit |
+| `--fast` (= `--coverage 5`) | top 5 | ~40 | ~2 min | 0 | Quick PR check |
+| `--coverage 15 --claude` | top 15 | ~96 | ~3 min | Many | Sprint review, reporting |
+| `--coverage 0 --claude` | all 99 | 200+ | ~30+ min | Many | Full assessment |
 
-**Cost estimate** (Claude API):
+Numbers above reflect a full camazotz deployment (99 tools). Results scale with server size.
+
+**Cost estimate** (Claude API, `claude-sonnet-4-20250514`):
 - Static scan: $0.00 (no API calls)
-- `--claude` analysis: ~$0.02-0.05 per scan (2-3 Claude calls)
-- Full behavioral: ~$0.10-0.30 per scan (depends on tool count)
+- `--coverage 15 --claude`: ~$0.05–0.10 per scan
+- Full behavioral + Claude: ~$0.30–0.60 per scan (depends on tool count)
 
 ---
 
@@ -265,9 +309,7 @@ When presenting AI-powered scan results to stakeholders:
 1. **Lead with the attack chains.** Claude's `MCP-ATK-*` findings describe
    complete kill chains in language non-technical reviewers can understand.
 
-2. **Show the delta.** "Static analysis found 34 issues. AI reasoning found
-   10 additional scenarios including a persistent backdoor chain." This
-   demonstrates the value of AI-assisted security analysis.
+2. **Show the delta.** "Static analysis found 179 issues across 99 tools. AI reasoning on the top 15 tools found 47 additional scenarios including live credential exposure and a persistent exfiltration backdoor." The diff output is ready-made for this — copy the NEW block directly into your report.
 
 3. **Include the generated policy.** The `fix.yaml` is a concrete, actionable
    deliverable — not just a list of problems but a ready-to-apply solution.

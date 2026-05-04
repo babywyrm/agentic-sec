@@ -174,16 +174,19 @@ long after the initial ticket is closed.
 ## Scanning with mcpnuke
 
 ```bash
-# Run mcpnuke against the support agent's MCP surface
-mcpnuke scan http://localhost:8080 \
-  --output json \
-  --label "support-bot-baseline" \
-  | python3 -c "
-import sys, json
-findings = json.load(sys.stdin)['findings']
-for f in findings:
-    print(f['severity'].upper(), f['threat_id'], '-', f['title'])
-"
+# Static baseline — all tools, instant, zero API calls
+mcpnuke --targets http://localhost:8080/mcp \
+  --no-invoke --coverage 0 \
+  --profile profiles/camazotz.json \
+  --verbose --json support-bot-baseline.json
+
+# Deep Claude scan — top 15 tools, behavioral probing
+mcpnuke --targets http://localhost:8080/mcp \
+  --coverage 15 --claude \
+  --claude-model claude-sonnet-4-20250514 \
+  --profile profiles/camazotz.json \
+  --diff-baseline support-bot-baseline.json \
+  --verbose --json support-bot-claude.json
 ```
 
 **Expected findings for this deployment:**
@@ -194,6 +197,10 @@ CRITICAL MCP-T06  SSRF via Tool (egress.fetch_url)
 HIGH     MCP-T07  Secrets in Tool Output
 HIGH     MCP-T14  Persistence via Webhook
 MEDIUM   MCP-T04  Confused Deputy / Token Theft
+
+# Claude behavioral probing may also surface:
+CRITICAL Live credential leak confirmed: secrets.leak_config → aws_secret_access_key
+CRITICAL Webhook registration accepted without identity verification
 ```
 
 ---
@@ -262,25 +269,26 @@ make campaign-print SCENARIO=customer-support-bot
 # NUC / k3s
 K8S_HOST=192.168.1.85 make campaign SCENARIO=customer-support-bot
 
-# Manual re-scan with policy active; target the policed entry point
-mcpnuke scan http://localhost:9090 \
-  --output json \
-  --label "support-bot-policed" \
-  | python3 -c "
-import sys, json
-findings = json.load(sys.stdin)['findings']
-blocked = [f for f in findings if f.get('blocked')]
-print(f'Total findings: {len(findings)}')
-print(f'Blocked by policy: {len(blocked)}')
-for f in blocked:
-    print('  BLOCKED:', f['threat_id'], f['title'])
-"
+# Manual baseline scan with profile
+mcpnuke --targets http://localhost:8080/mcp \
+  --no-invoke --coverage 0 \
+  --profile profiles/camazotz.json \
+  --json support-bot-baseline.json
+
+# Re-scan with policy active; target the policed entry point and diff vs baseline
+mcpnuke --targets http://localhost:9090/mcp \
+  --coverage 15 --claude \
+  --claude-model claude-sonnet-4-20250514 \
+  --profile profiles/camazotz.json \
+  --diff-baseline support-bot-baseline.json \
+  --json support-bot-policed.json --verbose
 ```
 
 **Expected result:** `secrets.*`, `shadow.register_webhook`, and out-of-scope
-`egress.fetch_url` calls are all blocked. The `SSRF` and `Persistence` findings
-show `blocked: true`. Prompt injection risk remains (it cannot be eliminated
-by policy alone — requires input validation in the application layer).
+`egress.fetch_url` calls are all blocked. The diff output shows the formerly
+NEW live-exfil findings are now RESOLVED. Prompt injection risk remains (it
+cannot be eliminated by policy alone — requires input validation in the
+application layer).
 
 ---
 

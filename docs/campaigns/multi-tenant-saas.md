@@ -232,15 +232,19 @@ investigate the wrong tenant.
 ## Scanning with mcpnuke
 
 ```bash
-mcpnuke scan http://localhost:8080 \
-  --output json \
-  --label "multitenant-saas-baseline" \
-  | python3 -c "
-import sys, json
-findings = json.load(sys.stdin)['findings']
-for f in findings:
-    print(f['severity'].upper(), f['threat_id'], '-', f['title'])
-"
+# Static baseline — all tools, instant, zero API calls
+mcpnuke --targets http://localhost:8080/mcp \
+  --no-invoke --coverage 0 \
+  --profile profiles/camazotz.json \
+  --verbose --json multitenant-baseline.json
+
+# Deep Claude scan — top 15 tools, behavioral probing
+mcpnuke --targets http://localhost:8080/mcp \
+  --coverage 15 --claude \
+  --claude-model claude-sonnet-4-20250514 \
+  --profile profiles/camazotz.json \
+  --diff-baseline multitenant-baseline.json \
+  --verbose --json multitenant-claude.json
 ```
 
 **Expected findings:**
@@ -251,6 +255,10 @@ CRITICAL MCP-T39  RAG Pipeline Injection
 HIGH     MCP-T25  Agent Delegation Chain Abuse
 HIGH     MCP-T22  Execution Context Forgery
 MEDIUM   MCP-T32  Delegation Depth — Multi-Agent Identity Dilution
+
+# Claude behavioral probing may also surface:
+CRITICAL Cross-tenant data exposed in resource 'tenant://memories/alice': api_key
+CRITICAL RAG synthesis follows injected directive — trust boundary bypassed
 ```
 
 ---
@@ -316,6 +324,19 @@ make campaign SCENARIO=multi-tenant-saas
 
 # NUC / k3s
 K8S_HOST=192.168.1.85 make campaign SCENARIO=multi-tenant-saas
+
+# Manual baseline then policed re-scan with diff
+mcpnuke --targets http://localhost:8080/mcp \
+  --no-invoke --coverage 0 \
+  --profile profiles/camazotz.json \
+  --json multitenant-baseline.json
+
+mcpnuke --targets http://localhost:9090/mcp \
+  --coverage 15 --claude \
+  --claude-model claude-sonnet-4-20250514 \
+  --profile profiles/camazotz.json \
+  --diff-baseline multitenant-baseline.json \
+  --json multitenant-policed.json --verbose
 
 # Switch to hard difficulty
 curl -sf http://localhost:8080/config -H 'Content-Type: application/json' \
