@@ -10,6 +10,13 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.4] Docs polish — README, CONTRIBUTING, walkthrough fixes
+
+- **README rewrite:** Trimmed from 608 → ~200 lines. Deep content (architecture diagrams, coverage matrix, per-project deep dives) now lives in `docs/ecosystem.md` where it belongs. README is now a clean landing page.
+- **CONTRIBUTING.md:** Added. Covers walkthroughs, campaign scenarios, reference updates, vocabulary/taxonomy changes, style guide.
+- **Walkthrough fixes (WARBIRD):** Updated Phase 3 WAR deployment steps — explicit `msfvenom` payload requirement (auto-fires on load), `ncat -k` listener for persistence, Gunicorn single-worker deadlock warning for `/download/register` (must be called from attacker machine, not from inside YAML RCE chain).
+- **mcpnuke reference:** Coverage, diff, and profile system docs added in previous release; walkthrough and campaign docs updated to match.
+
 ## [2026-05 pt.3] Ecosystem Feedback Loop — Scenario Flag + Persistent Policies
 
 Closes the two ecosystem integration gaps identified during the Campaign A
