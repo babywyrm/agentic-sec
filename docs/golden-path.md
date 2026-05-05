@@ -81,9 +81,9 @@ PHASE 0 — BOOTSTRAP (one-time per client install)
        |       token_endpoint,                            |
        |       scopes_supported ... }                     |
        |                                                  |
-       |  4. Client is pre-registered (golden path).     |
-       |     client_id already exists. Skip DCR.         |
-       |     New teams: request to Platform Security.    |
+       |  4. Client is pre-registered (golden path).      |
+       |     client_id already exists. Skip DCR.          |
+       |     New teams: request to Platform Security.     |
 
 
 PHASE 0b — AGENT AUTHENTICATION (MACHINE IDENTITY)
@@ -95,28 +95,28 @@ PHASE 0b — AGENT AUTHENTICATION (MACHINE IDENTITY)
 
   [tbot agent]                          [Teleport Auth]              [MCP Gateway]
        |                                      |                           |
-       |  1. tbot runs in-cluster.           |                           |
+       |  1. tbot runs in-cluster.            |                           |
        |     Authenticates via K8s SA JWT.    |                           |
        |------------------------------------->|                           |
        |     join_method: kubernetes          |                           |
        |                                      |                           |
-       |  2. Auth issues short-lived X.509   |                           |
-       |     cert (1h TTL, auto-renewed).    |                           |
+       |  2. Auth issues short-lived X.509    |                           |
+       |     cert (1h TTL, auto-renewed).     |                           |
        |<-------------------------------------|                           |
        |     Cert carries: bot identity,      |                           |
        |     roles, cluster name              |                           |
        |                                      |                           |
-       |  3. Agent uses cert to access       |                           |
-       |     MCP server through Teleport     |                           |
-       |     proxy (App Access) or K8s API   |                           |
-       |     (Kube Access).                  |                           |
-       |------------------------------------------------------>         |
-       |     tsh mcp connect / kubeconfig    |                           |
+       |  3. Agent uses cert to access        |                           |
+       |     MCP server through Teleport      |                           |
+       |     proxy (App Access) or K8s API    |                           |
+       |     (Kube Access).                   |                           |
+       |------------------------------------------------------>           |
+       |     tsh mcp connect / kubeconfig     |                           |
        |                                      |                           |
-       |  4. nullfield validates the cert-   |                           |
-       |     based identity against policy.  |                           |
-       |     Session binding prevents cert   |                           |
-       |     theft / replay.                 |                           |
+       |  4. nullfield validates the cert-    |                           |
+       |     based identity against policy.   |                           |
+       |     Session binding prevents cert    |                           |
+       |     theft / replay.                  |                           |
 
   Key differences from the human (Okta) flow:
   - No browser, no consent screen, no refresh tokens
@@ -136,7 +136,7 @@ PHASE 1 — USER AUTHENTICATION & CONSENT
 
   [MCP Client] ---------------------------------->  [OKTA]
        |                                              |
-       |  5. Authorization Code Grant (PKCE)         |     User sees:
+       |  5. Authorization Code Grant (PKCE)          |     User sees:
        |     /authorize?                              |     +------------------+
        |       response_type=code                     |     | Okta Login       |
        |       client_id=<pre-registered>             |     | + MFA            |
@@ -145,27 +145,27 @@ PHASE 1 — USER AUTHENTICATION & CONSENT
        |       code_challenge=<S256>                  |
        |       resource=https://mcp.internal.co       |     RFC 8707 Resource Indicator
        |                                              |     binds token to specific MCP server
-       |  6. User authenticates (SSO + MFA).         |
-       |     User consents to scopes.                |
-       |     Okta checks group membership.           |
-       |     (only eng-sre can consent mcp:admin)    |
+       |  6. User authenticates (SSO + MFA).          |
+       |     User consents to scopes.                 |
+       |     Okta checks group membership.            |
+       |     (only eng-sre can consent mcp:admin)     |
        |                                              |
-       |  7. Okta redirects with auth code.          |
+       |  7. Okta redirects with auth code.           |
        |<------------------------------------------   |
-       |     /cb?code=AUTH_CODE&state=xyz              |
+       |     /cb?code=AUTH_CODE&state=xyz             |
        |                                              |
-       |  8. Client exchanges code for tokens.       |
-       |-------------------------------------------->  |
+       |  8. Client exchanges code for tokens.        |
+       |--------------------------------------------> |
        |     POST /token                              |     Okta mints:
        |     { grant_type=authorization_code,         |     +------------------------------+
-       |       code=AUTH_CODE,                         |     | access_token (JWT, 15 min)   |
-       |       code_verifier=<pkce>,                  |     |   iss: okta.com/oauth2/...    |
-       |       resource=https://mcp.internal.co }     |     |   aud: https://mcp.internal   |
-       |<------------------------------------------   |     |   sub: user@company.com       |
-       |                                              |     |   scp: [mcp:read, mcp:write]  |
-       |  Client stores:                              |     |   exp: now + 900s             |
-       |  - access_token  (memory only, never disk)  |     | refresh_token (encrypted)     |
-       |  - refresh_token (encrypted secure storage) |     +------------------------------+
+       |       code=AUTH_CODE,                        |     | access_token (JWT, 15 min)   |
+       |       code_verifier=<pkce>,                  |     |   iss: okta.com/oauth2/...   |
+       |       resource=https://mcp.internal.co }     |     |   aud: https://mcp.internal  |
+       |<------------------------------------------   |     |   sub: user@company.com      |
+       |                                              |     |   scp: [mcp:read, mcp:write] |
+       |  Client stores:                              |     |   exp: now + 900s            |
+       |  - access_token  (memory only, never disk)   |     | refresh_token (encrypted)    |
+       |  - refresh_token (encrypted secure storage)  |    +------------------------------+
 
 
 PHASE 2 — MCP SESSION INITIALIZATION
@@ -271,7 +271,7 @@ PHASE 3b — HITL PATH (write/admin tools)
   [MCP Client]                    [MCP Gateway]    [HITL Gate]    [Approver]
        |                               |               |              |
        |  tools/call                   |               |              |
-       |  { name: "k8s-helper",       |               |              |
+       |  { name: "k8s-helper",        |               |              |
        |    arguments: {               |               |              |
        |      action: "delete_pod" } } |               |              |
        |------------------------------>|               |              |
@@ -316,31 +316,31 @@ PHASE 4 — TOKEN REFRESH & REVOCATION
 
   [MCP Client]                                         [MCP Gateway]    [OKTA]
        |                                                     |            |
-       |  11. access_token nearing expiry                   |            |
-       |      OR client receives 401.                       |            |
+       |  11. access_token nearing expiry                    |            |
+       |      OR client receives 401.                        |            |
        |                                                     |            |
-       |  Client silently refreshes:                        |            |
-       |-------------------------------------------------------->        |
-       |     POST /token                                     |           |
-       |     { grant_type=refresh_token,                     |           |
-       |       refresh_token=<stored>,                       |           |
-       |       resource=https://mcp.internal.co }            |           |
-       |<--------------------------------------------------------        |
-       |     { new access_token, new refresh_token }         |           |
-       |     (rotate both; old refresh invalidated)          |           |
-       |     (cached tool-exchange tokens also expire)       |           |
+       |  Client silently refreshes:                         |            |
+       |-------------------------------------------------------->         |
+       |     POST /token                                     |            |
+       |     { grant_type=refresh_token,                     |            |
+       |       refresh_token=<stored>,                       |            |
+       |       resource=https://mcp.internal.co }            |            |
+       |<--------------------------------------------------------         |
+       |     { new access_token, new refresh_token }         |            |
+       |     (rotate both; old refresh invalidated)          |            |
+       |     (cached tool-exchange tokens also expire)       |            |
        |                                                     |            |
-       |  12. REVOCATION (offboarding / compromise):        |            |
+       |  12. REVOCATION (offboarding / compromise):         |            |
        |      Okta admin revokes user or client.             |            |
-       |      Gateway calls introspection on next request.  |            |
+       |      Gateway calls introspection on next request.   |            |
        |      Stale JWT rejected even if sig valid.          |            |
        |      Session killed; all tool-exchange tokens void. |            |
        |                                                     |            |
-       |  Revocation propagation time:                      |            |
-       |    JWT expiry-based: up to 15 min (token TTL)      |            |
+       |  Revocation propagation time:                       |            |
+       |    JWT expiry-based: up to 15 min (token TTL)       |            |
        |    Introspection-based: near-instant (<1s)          |            |
        |    Recommendation: introspect on every tool call    |            |
-       |    for high-risk tools (mcp:admin, mcp:write).     |            |
+       |    for high-risk tools (mcp:admin, mcp:write).      |            |
 
 
 PHASE 5 — DETECTION & RESPONSE
@@ -356,7 +356,7 @@ PHASE 5 — DETECTION & RESPONSE
        |                          (confused deputy)        |               |
        |                          Canary in response       |               |
        |                          Audience mismatch        |               |
-       |                          SSRF to 169.254.x.x     |               |
+       |                          SSRF to 169.254.x.x      |               |
        |                          Pod escape syscall       |               |
        |                          Revoked token used       |               |
        |                                                   |               |
@@ -463,7 +463,7 @@ TOOL CALL REQUEST
 |                                                    |
 |  * TLS/HTTPS valid cert                            |
 |  * WAF: payload size within cap                    |
-|  * WAF: schema matches MCP spec                   |
+|  * WAF: schema matches MCP spec                    |
 |  * WAF: rate limit not exceeded                    |
 |                                                    |
 |  FAIL --> 400 / 429 / 502                          |
@@ -532,7 +532,7 @@ TOOL CALL REQUEST
 |    ai_verdict deny --> BLOCK tool execution        |
 |                                                    |
 |  ALWAYS: ai_deny + tool_grant =                    |
-|    emit HIGH signal confused_deputy alert           |
+|    emit HIGH signal confused_deputy alert          |
 |                                                    |
 |  FAIL (enforce) --> 403  (reason: ai_policy)       |
 +------------------------+--------------------------+
@@ -934,8 +934,8 @@ Cut this down to a single-page reference for every team:
 |             Tokens live 15 min. Refresh tokens rotate.           |
 |             Revoked tokens caught via introspection.             |
 |                                                                  |
-|  TOOLS      Every tool: registered, signed, digest-pinned.      |
-|             Every tool has an explicit egress allowlist.          |
+|  TOOLS      Every tool: registered, signed, digest-pinned.       |
+|             Every tool has an explicit egress allowlist.         |
 |             Write/delete tools require HITL approval.            |
 |             Delegation depth bounded (default: 3).               |
 |                                                                  |
@@ -960,7 +960,7 @@ Cut this down to a single-page reference for every team:
 |             with ai_verdict, signal_tier, reason_code.           |
 |             Tokens + secrets redacted before shipping.           |
 |             Canaries in every tenant data store.                 |
-|             Signal tiers: HIGH (P0) / MEDIUM (P1) / LOW.        |
+|             Signal tiers: HIGH (P0) / MEDIUM (P1) / LOW.         |
 |                                                                  |
 |  RESPOND    Kill switches defined and tested before go-live.     |
 |             Runbook per tool. Runbook per alert.                 |
