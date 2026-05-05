@@ -46,10 +46,10 @@ If the agent is manipulated, it acts with the developer's permissions.
 
 ## Threat Model
 
-| Step | Lab | Threat | OWASP MCP |
+| Step | Lab | Threat | Threat ID |
 |------|-----|--------|-----------|
 | 1 | `code_review_agent_lab` | Shell injection via PR title/description; subprocess inherits CI secrets | MCP-T38 |
-| 2 | `indirect_lab` | Indirect injection: README.md in the repo contains hidden directives the agent follows | MCP02 |
+| 2 | `indirect_lab` | Indirect injection: README.md in the repo contains hidden directives the agent follows | MCP-T02 |
 | 3 | `langchain_tool_lab` | LangChain test-runner tool description poisoned to exfiltrate test output | MCP-T36 |
 | 4 | `cost_exhaustion_lab` | Injected loop directive triggers repeated LLM invocations → cost explosion | MCP-T27 |
 

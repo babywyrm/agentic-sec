@@ -59,8 +59,6 @@ but does not apply.  `campaign` is the full round-trip.  `SCENARIO` defaults
 to `customer-support-bot` so a plain `make campaign` always has a meaningful
 demo value.
 
-
-
 Extends the platform's teaching mission with four named deployment personas
 (campaigns) that chain multiple labs into end-to-end attack + defend +
 validate narratives, and two new camazotz labs that fill the D/Lane 2 and

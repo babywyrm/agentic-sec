@@ -1045,9 +1045,9 @@ The diagrams above are living documents. As you add tools, update the trust map 
 
 For hands-on validation of the attack patterns this golden path defends against:
 
-- **[Camazotz](https://github.com/babywyrm/camazotz)** — MCP security playground with 35 labs covering every threat in the mapping table above. The `/identity` dashboard shows live ZITADEL integration status. Run the labs against your staging gateway to validate gate enforcement.
+- **[Camazotz](https://github.com/babywyrm/camazotz)** — MCP security playground with 39 labs covering every threat in the mapping table above. The `/identity` dashboard shows live ZITADEL integration status. Run the labs against your staging gateway to validate gate enforcement.
 - **[mcpnuke](https://github.com/babywyrm/mcpnuke)** — automated MCP security scanner. Run against your staging deployment as part of the tool onboarding path (Step 3) and as a recurring regression check.
-- **[MCP Security Assessment Framework](https://github.com/babywyrm/mcpnuke/docs/mcp-security-assessment-framework.md)** — vendor-neutral assessment matrix mapping 25 risks to pentest checks with MCP JSON-RPC examples.
+- **[MCP Security Assessment Framework](https://github.com/babywyrm/mcpnuke/blob/main/docs/mcp-security-assessment-framework.md)** — vendor-neutral assessment matrix mapping 25 risks to pentest checks with MCP JSON-RPC examples.
 
 ---
 

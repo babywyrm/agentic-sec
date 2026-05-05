@@ -274,7 +274,7 @@ camazotz lab today; empty cells are coverage gaps surfaced by `/api/lanes`.
 | Lane ↓ / Transport →             | **A. MCP**                                   | **B. Direct API**                                | **C. In‑Process SDK**                            | **D. Subprocess**                                | **E. Native Function‑Calling**                   |
 |----------------------------------|----------------------------------------------|--------------------------------------------------|--------------------------------------------------|--------------------------------------------------|--------------------------------------------------|
 | **1. Human Direct**              | OIDC bearer + DPoP, MCP session              | OIDC bearer to upstream                          | Local cache + sig validation (`sdk_tamper_lab`)  | Curated env + arg allowlist                      | Out‑of‑band user identity                        |
-| **2. Human → Agent (Delegated)** | Token exchange (8693) + Resource Ind. (8707) | On‑behalf‑of token, downscoped (`egress_lab`)    | SDK passes user token, never claims it           | Pass act‑claim through env explicitly             | act_chain in dispatch (`function_calling_lab`)   |
+| **2. Human → Agent (Delegated)** | Token exchange (8693) + Resource Ind. (8707) | On‑behalf‑of token, downscoped (`egress_lab`)    | SDK passes user token, never claims it           | Pass act‑claim through env explicitly            | act_chain in dispatch (`function_calling_lab`)   |
 | **3. Machine Identity**          | Teleport bot cert / SPIFFE JWT               | mTLS, IAM workload identity                      | Mounted SA token, credential helper (`supply_lab`) | Strip secrets from child env (`subprocess_lab`)  | Provider key isolated per workload               |
 | **4. Agent → Agent**             | Chained token exchange, depth‑bounded        | Same chained token, audience pinned per hop      | SDK `act` propagation, never re‑claim `sub`      | Refuse subprocess for delegated calls             | Refuse function‑calling for delegated chains     |
 | **5. Anonymous**                 | Discovery + healthz only                     | Public read endpoints (rate‑limited)             | Process boot, before any cred is loaded          | n/a (anonymous calls do not spawn child procs)   | n/a (anonymous calls do not invoke functions)    |
@@ -393,7 +393,7 @@ This is where each project in the ecosystem actually lives.
 
 ### camazotz — Per‑Lane Lab Coverage
 
-Complete distribution across all 35 labs (as of 2026-04-29). The `T`
+Complete distribution across all 39 labs (as of 2026-04-29). The `T`
 column is the primary transport surface each lab targets — see "The Five
 Transport Surfaces" above for code definitions. `+N` in "Secondary" means
 that lab's *also* a touchpoint on another lane.
@@ -471,7 +471,7 @@ don't care about the new surfaces.
 
 #### Browsing the coverage
 
-The camazotz portal ships two parallel views of the same 35 labs:
+The camazotz portal ships two parallel views of the same 39 labs:
 
 - `GET /threat-map` — lab grid organized by *attack category* (best for
   learners asking "what kind of attack is this?").

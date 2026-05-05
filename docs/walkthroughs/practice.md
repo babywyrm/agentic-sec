@@ -59,9 +59,7 @@ The LLM evaluates your policy and responds with a score and feedback:
   "evaluation": {
     "valid": true,
     "score": 95,
-    "feedback": "Excellent policy implementation. HOLD for execute_plan with
-      DENY timeout, explicit DENY for register_webhook, and SCOPE with
-      redaction for execute_with_context. Default DENY catches everything else."
+    "feedback": "Excellent policy. HOLD for execute_plan, DENY for register_webhook, SCOPE with redaction for execute_with_context. Default DENY catches everything else."
   },
   "_defense_status": "ATTACK CHAIN BLOCKED"
 }

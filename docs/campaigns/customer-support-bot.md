@@ -44,7 +44,7 @@ the customer issued the token, but the agent decides how to spend it.
 
 ## Threat Model
 
-| Step | Lab | Threat | OWASP MCP |
+| Step | Lab | Threat | Threat ID |
 |------|-----|--------|-----------|
 | 1 | `context_lab` | Prompt injection via ticket text | MCP01 |
 | 2 | `secrets_lab` | Agent directed to return DB credentials in response | MCP06 |

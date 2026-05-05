@@ -43,12 +43,12 @@ catch anomalies in real time.
 
 ## Threat Model
 
-| Step | Lab | Threat | OWASP MCP |
+| Step | Lab | Threat | Threat ID |
 |------|-----|--------|-----------|
-| 1 | `subprocess_lab` | Dockerfile `RUN` step inherits CI agent's env vars (AWS keys, deploy tokens) | MCP04 |
-| 2 | `agent_http_bypass_lab` | Agent calls Helm HTTP API directly, bypassing MCP and nullfield controls | MCP05 |
-| 3 | `config_lab` | Attacker tampers with agent config to redirect image pulls to malicious registry | MCP09 |
-| 4 | `attribution_lab` | Audit entries forged to attribute malicious deployment to a different identity | MCP22 |
+| 1 | `subprocess_lab` | Dockerfile `RUN` step inherits CI agent's env vars (AWS keys, deploy tokens) | MCP-T34 |
+| 2 | `agent_http_bypass_lab` | Agent calls Helm HTTP API directly, bypassing MCP and nullfield controls | MCP-T37 |
+| 3 | `config_lab` | Attacker tampers with agent config to redirect image pulls to malicious registry | MCP-T09 |
+| 4 | `attribution_lab` | Audit entries forged to attribute malicious deployment to a different identity | MCP-T22 |
 
 ---
 

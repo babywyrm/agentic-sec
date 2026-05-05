@@ -138,6 +138,7 @@ For Kubernetes, Helm, and Teleport deployment options see [`docs/deployment-guid
 | 5 | [Live Feedback Loop](docs/walkthroughs/live-loop.md) | Automated scan → generate → apply → validate with one script | 20m |
 | 6 | [Delegation Chain Attacks](docs/walkthroughs/delegation-chains.md) | Multi-agent identity dilution — Agent A → B → C loses authorization | 45m |
 | 7 | [Flow Types in Practice](docs/walkthroughs/flow-types-in-practice.md) | All five lanes end-to-end with `--by-lane` + `--coverage-report` | 60m |
+| 8 | [Beyond MCP](docs/walkthroughs/beyond-mcp.md) | Same attacks across LangChain, OpenAI Assistants, and CLI agents — not just MCP | 30m |
 
 ---
 

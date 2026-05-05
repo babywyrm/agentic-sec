@@ -514,7 +514,7 @@ Uncategorized (no lane scope — 13 finding(s))
     [...excessive_permissions findings — tool-specific, not yet auto-tagged...]
 
 ── Cross-project coverage report (vs camazotz) ──
-  camazotz: 35 labs across 5 lanes  ← sdk_tamper_lab + 2 more added since 2026-04-28
+  camazotz: 39 labs across 5 lanes  ← sdk_tamper_lab + 2 more added since 2026-04-28
   mcpnuke covered 4/5 lanes on this scan
   widest gap: Lane 1 (human-direct) — camazotz declares labs, mcpnuke fired none (SDK-path detection TBD)
 

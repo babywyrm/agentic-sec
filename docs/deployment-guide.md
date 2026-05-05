@@ -9,7 +9,7 @@ characteristics, brain provider options, and recommended scan configurations.
 
 ## Deployment Comparison
 
-| | Local (Docker Compose) | Self-Hosted Cluster (K3s/K8s) | Cloud (EKS/GKE/AKS) |
+| Dimension | Local (Docker Compose) | Self-Hosted Cluster (K3s/K8s) | Cloud (EKS/GKE/AKS) |
 |---|---|---|---|
 | **Setup time** | 2 minutes | 15 minutes | 30+ minutes |
 | **Brain provider** | Claude API or Ollama | Claude API, Ollama, or Bedrock | Bedrock (recommended) |

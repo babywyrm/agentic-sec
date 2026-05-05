@@ -21,7 +21,7 @@ brokers, webhook registrations. Every `tools/call` is a function invocation with
 side effects, triggered by an LLM that cannot be trusted to make authorization
 decisions.
 
-The attack surface is not theoretical. Camazotz demonstrates 35 distinct
+The attack surface is not theoretical. Camazotz demonstrates 39 distinct
 vulnerability patterns spanning five agentic-identity lanes and five transport
 surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM
 function-calling — see [ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md))
@@ -150,7 +150,7 @@ flowchart LR
     TELEPORT["<b>Teleport Proxy</b> :443<br/>identity layer"]
     K8S["K8s API<br/>(RBAC: agent-readonly)"]
     NF["<b>nullfield sidecar</b> :9090<br/>identity → registry → integrity →<br/>circuit → policy → budget → audit"]
-    GW["<b>brain-gateway</b> :8080<br/>35 vulnerable MCP labs<br/>(5 lanes × 5 transports)"]
+    GW["<b>brain-gateway</b> :8080<br/>39 vulnerable MCP labs<br/>(5 lanes × 5 transports)"]
   end
 
   BOT -->|short-lived cert| TELEPORT
@@ -179,7 +179,7 @@ INFO findings ("defense held"), you're in good shape.
 
 ### The Lane View — `/lanes` UI + `/api/lanes` JSON contract
 
-Camazotz ships two parallel views over the 35 labs: `/threat-map` groups
+Camazotz ships two parallel views over the 39 labs: `/threat-map` groups
 by attack category, **`/lanes` groups by identity lane** (Lane 1 Human
 Direct → Lane 5 Anonymous, with the per-lane flow diagram, default
 nullfield action, covering mcpnuke checks, and coverage gaps inline).
@@ -201,7 +201,7 @@ This is the honest boundary of the ecosystem as of 2026-04-26.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
-| **[camazotz](https://github.com/babywyrm/camazotz)** | 35 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | 39 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
@@ -330,7 +330,7 @@ secrets, full audit). Together they implement the golden path: every request
 carries identity, every tool is registered and scoped, every secret lives in a
 secret manager, and the AI's output is never trusted as authorization.
 
-**The validation:** camazotz provides 35 intentionally vulnerable labs
+**The validation:** camazotz provides 39 intentionally vulnerable labs
 covering every OWASP MCP Top 10 risk and every one of the five
 agentic-identity lanes. mcpnuke automates the attack sequences and
 reports whether your defenses hold. Run mcpnuke on hard difficulty — if the

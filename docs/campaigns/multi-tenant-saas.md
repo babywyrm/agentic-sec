@@ -47,9 +47,9 @@ fails — or if a document bypasses it — cross-tenant data exposure occurs.
 
 ## Threat Model
 
-| Step | Lab | Threat | OWASP MCP |
+| Step | Lab | Threat | Threat ID |
 |------|-----|--------|-----------|
-| 1 | `tenant_lab` | Cross-tenant memory leak — Tenant A's session context bleeds into Tenant B's query | MCP11 |
+| 1 | `tenant_lab` | Cross-tenant memory leak — Tenant A's session context bleeds into Tenant B's query | MCP-T11 |
 | 2 | `rag_injection_lab` | Poisoned document in shared knowledge base hijacks Synthesizer for all tenants | MCP-T39 |
 | 3 | `delegation_chain_lab` | Customer agent escalates from tenant scope to cross-tenant admin via delegation chain | MCP-T25 |
 | 4 | `attribution_lab` | Usage and billing events forged — attacker's queries attributed to victim tenant | MCP-T22 |
