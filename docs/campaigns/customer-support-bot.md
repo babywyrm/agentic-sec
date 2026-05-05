@@ -267,7 +267,7 @@ make campaign SCENARIO=customer-support-bot
 make campaign-print SCENARIO=customer-support-bot
 
 # NUC / k3s
-K8S_HOST=192.168.1.85 make campaign SCENARIO=customer-support-bot
+K8S_HOST=<NODE_IP> make campaign SCENARIO=customer-support-bot
 
 # Manual baseline scan with profile
 mcpnuke --targets http://localhost:8080/mcp \

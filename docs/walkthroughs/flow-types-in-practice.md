@@ -87,7 +87,7 @@ sdk_tamper_lab  (MCP-T33)                                         (Transport C)
 
 ```bash
 # Attack against the running NUC deployment on easy difficulty
-curl -sS -X POST http://192.168.1.85:30080/mcp \
+curl -sS -X POST http://<NODE_IP>:30080/mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
        "params":{"name":"auth.issue_token",
@@ -368,7 +368,7 @@ $ kubectl get configmap nullfield-active-policy -n camazotz -o jsonpath='{.metad
   "nullfield.io/sidecar-for":"brain-gateway"
 }
 
-$ curl -X POST http://192.168.1.85:30080/mcp \\
+$ curl -X POST http://<NODE_IP>:30080/mcp \\
     -H 'Content-Type: application/json' \\
     -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
          "params":{"name":"auth.issue_token","arguments":{"username":"alice"}}}'
@@ -400,7 +400,7 @@ green; the controller stays deployed and continues maintaining the
 The sidecar is active with the chart-shipped policy:
 
 ```
-$ curl -sS -X POST http://192.168.1.85:30080/mcp \
+$ curl -sS -X POST http://<NODE_IP>:30080/mcp \
     -H 'Content-Type: application/json' \
     -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
          "params":{"name":"shadow.register_webhook",
@@ -480,10 +480,10 @@ Any `tools/call` from an anonymous caller that isn't on the allowlist gets rejec
 Running `mcpnuke --coverage-report` against the live NUC camazotz gives us the honest picture of *where the lanes are covered by scanning today*. Captured 2026-04-27 after the lane-tag backfill across 10 check modules:
 
 ```
-$ python3 -m mcpnuke --targets http://192.168.1.85:30080/mcp \
+$ python3 -m mcpnuke --targets http://<NODE_IP>:30080/mcp \
     --fast --no-invoke \
     --by-lane \
-    --coverage-report http://192.168.1.85:3000
+    --coverage-report http://<NODE_IP>:3000
 
 ── Findings grouped by identity lane (34 total) ──
 

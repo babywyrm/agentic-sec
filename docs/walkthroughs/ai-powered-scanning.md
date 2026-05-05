@@ -212,7 +212,7 @@ Exit code is 1 when new findings exist — use this in CI pipelines.
 
 ```bash
 # K3s / self-hosted NUC
-mcpnuke --targets http://192.168.1.85:30080/mcp \
+mcpnuke --targets http://<NODE_IP>:30080/mcp \
   --coverage 15 --claude \
   --claude-model claude-sonnet-4-20250514 \
   --profile profiles/camazotz.json \

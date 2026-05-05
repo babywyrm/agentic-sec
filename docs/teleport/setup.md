@@ -15,7 +15,7 @@ with no external domain. Everything runs on your local network.
 - `helm` v3.4+
 - `kubectl` with cluster-admin access
 - Camazotz deployed (brain-gateway running)
-- The cluster node IP (this guide uses `192.168.1.85`)
+- The cluster node IP (this guide uses `<NODE_IP>`)
 
 ---
 

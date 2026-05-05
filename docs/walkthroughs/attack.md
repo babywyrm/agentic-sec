@@ -3,7 +3,7 @@
 Scan an MCP server, understand the findings, and map attack chains.
 
 **Time:** 10 minutes
-**Tested on:** Docker Compose (localhost:8080), K3s cluster (192.168.1.85:30080)
+**Tested on:** Docker Compose (localhost:8080), K3s cluster (<NODE_IP>:30080)
 
 ---
 
@@ -18,7 +18,7 @@ $ mcpnuke --targets http://localhost:8080/mcp --fast --no-invoke --verbose
 ### Kubernetes (through nullfield sidecar)
 
 ```bash
-$ mcpnuke --targets http://192.168.1.85:30080/mcp --fast --no-invoke --verbose
+$ mcpnuke --targets http://<NODE_IP>:30080/mcp --fast --no-invoke --verbose
 ```
 
 Both paths produce the same findings — nullfield passes `tools/list` through,

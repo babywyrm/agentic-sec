@@ -224,40 +224,28 @@ teaches and the concrete next additions as the ecosystem grows.
 
 Three horizons, committed in decreasing order of near-term certainty.
 
-### Near-term (spec'd, implementation pending)
+### Shipped
 
-- **nullfield per-lane policy templates** — five starter policies
-  (`policies/by-lane/lane-N-*.yaml`) + three new primitives:
-  `identity.requireActChain`, `delegation.maxDepth`,
-  `identity.audienceMustNarrow`. Spec: [`nullfield/docs/specs/2026-04-26-per-lane-policy-templates.md`](https://github.com/babywyrm/nullfield/blob/main/docs/specs/2026-04-26-per-lane-policy-templates.md).
-- **mcpnuke `--by-lane` and `--coverage-report <url>`** — lane/transport
-  fields on every Finding; cross-project coverage reports that consume
-  camazotz `/api/lanes` schema v1 directly. Spec:
-  [`mcpnuke/docs/specs/2026-04-26-by-lane-reporting.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/specs/2026-04-26-by-lane-reporting.md).
+- ✅ nullfield per-lane policy templates + three new primitives (`identity.requireActChain`, `delegation.maxDepth`, `identity.audienceMustNarrow`) — *2026-04-26*
+- ✅ mcpnuke `--by-lane` and `--coverage-report` — *2026-04-26*
+- ✅ nullfield CRD watcher + active-policy bridge — *2026-04-27*
+- ✅ Five-transport taxonomy (D = subprocess, E = native LLM function-calling) ratified in camazotz ADR 0001 — *2026-04-28*
+- ✅ `sdk_tamper_lab` (Lane 1 / Transport C), `subprocess_lab` (Lane 3 / Transport D), `function_calling_lab` (Lane 2 / Transport E) — *2026-04-28/29*
+- ✅ mcpnuke `--coverage N`, `--diff-baseline`, `--profile` — *2026-05-03*
+- ✅ Campaign scenario system (`make campaign SCENARIO=...`) + four pre-authored NullfieldPolicy CRDs — *2026-05-03*
 
-### Medium-term (fill the visible gaps)
+### Near-term (actively worked)
 
-- New Transport C (SDK) labs for Lanes 1 and 2 — probably shaped like
-  `sdk_supply_lab` and `sdk_delegation_lab`.
-- New Transport B (direct API) labs for Lanes 3 and 4.
-- Nullfield per-lane templates deployed on the reference NUC cluster so
-  the feedback loop's "apply" step closes end-to-end without extra setup.
-- Walkthrough: "Building a Lane 4 defense from scratch" using the new
-  nullfield primitives on the `delegation_depth_lab` and
-  `delegation_chain_lab` labs.
+- Fill remaining baseline transport gaps — Lane 2 / Transport C, Lane 3 / Transport B, Lane 4 / Transport B
+- Walkthrough: "Building a Lane 4 defense from scratch" using `delegation.maxDepth` against `delegation_depth_lab` and `delegation_chain_lab`
+- Lane 4 transport widening — agent chains today are all MCP (Transport A); D and E variants would model real LangChain / OpenAI Assistants chains
 
-### Future (revisit when the three-repo vocabulary diverges)
+### Future (revisit when the vocabulary drifts)
 
-- A central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml`
-  (or JSON schema) that all three tools pull from at build time. Not worth
-  the cross-repo dependency weight today — camazotz/frontend/lane_taxonomy.py
-  is the de-facto source. Revisit if nullfield or mcpnuke start to drift.
-- Per-lane rate-limit primitives in nullfield (distinct from global
-  `maxCallsPerMinute`).
-- mcpnuke `--watch` mode producing continuous lane-coverage deltas against
-  a long-running camazotz target.
-- Integration with external IDPs (Okta, Auth0) beyond ZITADEL to widen
-  Lane 1/2 coverage.
+- Central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml` — only worth the cross-repo dependency if camazotz, nullfield, and mcpnuke start to drift from each other
+- Per-lane rate-limit primitives in nullfield (distinct from global `maxCallsPerMinute`)
+- mcpnuke `--watch` mode producing continuous lane-coverage deltas against a long-running camazotz target
+- Broader IdP support in camazotz labs — Okta and Auth0 alongside ZITADEL to widen Lane 1/2 coverage
 
 ---
 

@@ -2,3 +2,7 @@
 *.pyc
 __pycache__/
 .env
+
+# Internal planning artifacts
+docs/superpowers/
+docs/specs/

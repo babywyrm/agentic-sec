@@ -15,7 +15,7 @@ Watch findings drop as defenses are applied in real-time.
 ./scripts/feedback-loop.sh http://localhost:8080/mcp
 
 # Kubernetes (through nullfield sidecar)
-./scripts/feedback-loop.sh http://192.168.1.85:30080/mcp --k8s camazotz
+./scripts/feedback-loop.sh http://<NODE_IP>:30080/mcp --k8s camazotz
 
 # With Claude AI analysis
 ANTHROPIC_API_KEY=sk-ant-... ./scripts/feedback-loop.sh http://localhost:8080/mcp --claude

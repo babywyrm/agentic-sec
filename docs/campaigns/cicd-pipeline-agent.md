@@ -303,10 +303,10 @@ curl -sf http://localhost:8080/config -H 'Content-Type: application/json' \
 
 # Full campaign loop — scan, apply pre-authored policy, re-scan, diff
 # (uses kube/policies/cicd-pipeline-agent.yaml — no policy generation step)
-K8S_HOST=192.168.1.85 make campaign SCENARIO=cicd-pipeline-agent
+K8S_HOST=<NODE_IP> make campaign SCENARIO=cicd-pipeline-agent
 
 # Preview only (no apply)
-K8S_HOST=192.168.1.85 make campaign-print SCENARIO=cicd-pipeline-agent
+K8S_HOST=<NODE_IP> make campaign-print SCENARIO=cicd-pipeline-agent
 
 # Manual baseline then policed re-scan with diff
 mcpnuke --targets http://localhost:8080/mcp \

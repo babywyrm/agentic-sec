@@ -215,7 +215,7 @@ network.**
   with file‑system access wins.
 - **Standards:** No canonical RFC — this is application code.
 - **Where it lives:** Cursor / Claude Code SDK internals, any agent built
-  on a Python or TypeScript library, the Python harnesses in our repos.
+  on a Python or TypeScript library, and Python harnesses in camazotz.
 
 ### Transport D — Subprocess / Native Binary
 

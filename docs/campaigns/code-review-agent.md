@@ -324,7 +324,7 @@ spec:
 make campaign SCENARIO=code-review-agent
 
 # NUC / k3s
-K8S_HOST=192.168.1.85 make campaign SCENARIO=code-review-agent
+K8S_HOST=<NODE_IP> make campaign SCENARIO=code-review-agent
 
 # Manual baseline then policed re-scan with diff
 mcpnuke --targets http://localhost:8080/mcp \

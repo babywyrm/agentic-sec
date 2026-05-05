@@ -4,7 +4,7 @@ Generate nullfield policy from scan findings, apply it, and prove the
 attacks are blocked.
 
 **Time:** 15 minutes
-**Tested on:** Docker Compose (localhost), K3s cluster (192.168.1.85) with CRDs
+**Tested on:** Docker Compose (localhost), K3s cluster (<NODE_IP>) with CRDs
 
 ---
 

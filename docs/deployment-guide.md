@@ -146,9 +146,9 @@ kubectl -n camazotz get nullfieldpolicies
 - **Auto-inject webhook** — annotate pods with `nullfield.io/inject: "true"`
 - **Scan includes Teleport checks** — proxy discovery, cert validation, bot RBAC
 
-### NUC-specific notes (K3s single-node)
+### K3s single-node notes
 
-Our test cluster runs at `192.168.1.85`:
+For a single-node K3s cluster (replace `<NODE_IP>` with your node's IP):
 
 ```bash
 # NodePorts:
@@ -156,7 +156,7 @@ Our test cluster runs at `192.168.1.85`:
 #   30136 — Teleport proxy
 
 # Scan with Teleport checks (use node IP so proxy discovery works)
-mcpnuke --targets http://192.168.1.85:30080/mcp --fast --no-invoke --verbose
+mcpnuke --targets http://<NODE_IP>:30080/mcp --fast --no-invoke --verbose
 
 # tbot kubeconfig for agent access testing
 kubectl -n teleport get secret tbot-kube -o jsonpath="{.data.kubeconfig\.yaml}" | base64 -d > /tmp/agent-kubeconfig.yaml
