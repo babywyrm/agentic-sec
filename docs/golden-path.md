@@ -1,13 +1,27 @@
-# MCP @ Scale — Golden Path v3
+# MCP @ Scale — Golden Path
 
-> **Purpose:** This is the single reference document that governs how every MCP integration in our EKS cluster is built, secured, and operated.
-> All proposals beneath it are implementation detail. This is the law.
+> **Purpose:** A reference architecture for securing MCP tool execution in production Kubernetes environments. Every design decision here exists to defend against a specific, demonstrated attack class. Use it as a blueprint, a security review checklist, or a deviation baseline.
+
+---
+
+## How the Ecosystem Implements This
+
+The three tools in this ecosystem map directly to the six gates below:
+
+| Gates | Tool | What it does |
+|-------|------|-------------|
+| Gate 3–5 (runtime policy) | **[nullfield](https://github.com/babywyrm/nullfield)** | Sidecar proxy — intercepts every `tools/call`, enforces ALLOW / DENY / HOLD / SCOPE / BUDGET before forwarding |
+| Gate 2 (identity) | **ZITADEL** (human) · **Teleport tbot** (machine) | JWT + X.509 identity for human and agent callers respectively |
+| All gates (validation) | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scans your staging deployment against the attack patterns the gates defend; use in CI and as part of tool onboarding |
+| All gates (lab validation) | **[camazotz](https://github.com/babywyrm/camazotz)** | 39 intentionally vulnerable labs — one per threat. Run these against your gate implementations to confirm they hold. |
+
+The examples in this document use Okta as the human IdP. ZITADEL is the reference implementation used in camazotz and can substitute directly. Any OAuth 2.0 / OIDC-compliant IdP works for the human flow; Teleport handles machine identity regardless of which human IdP you use.
 
 ---
 
 ## What "Golden Path" Means Here
 
-A golden path is an **opinionated, pre-approved route** that any team can follow to ship an MCP integration without reinventing security decisions. If you follow this path, you are considered compliant. If you deviate, you need a security review.
+A golden path is an **opinionated, pre-approved route** that any team can follow to ship an MCP integration without reinventing security decisions. If you follow this path, you are on solid ground. If you deviate, document why — deviations become the debt that attackers find first.
 
 Four rules that never bend:
 
@@ -34,10 +48,10 @@ These are important but governed by separate policies. This document covers the 
 
 ## The Master Session Flow
 
-This covers a complete user-initiated MCP session from browser/client to tool execution and back. Read each phase top to bottom.
+This covers a complete user-initiated MCP session from browser/client to tool execution and back. Read each phase top to bottom. Okta is used as the IdP example throughout; substitute ZITADEL, Auth0, or any OIDC-compliant IdP for the human flow.
 
 ```text
-LAYER        USER DEVICE            OKTA               INTERNET EDGE            EKS CLUSTER
+LAYER        USER DEVICE            IdP (Okta/ZITADEL)  INTERNET EDGE            K8s CLUSTER
 =============================================================================================================
 
 PHASE 0 — BOOTSTRAP (one-time per client install)
@@ -1037,5 +1051,6 @@ For hands-on validation of the attack patterns this golden path defends against:
 
 ---
 
-*Golden Path version: 3.0 — 2026-04-12*
+*Golden Path version: 3.1 — 2026-05-04*
 *Mapped to OWASP MCP Top 10 (2025) and MCP Red Team Playbook*
+*nullfield implements Gates 3–5. mcpnuke validates. camazotz demonstrates.*
