@@ -26,6 +26,7 @@ installed. Python 3.11+. No MCP experience required.
 | 3 | [Walkthrough 4 — AI-Powered Scanning](walkthroughs/ai-powered-scanning.md) — Claude reasoning over findings | 45 min |
 | 4 | [Walkthrough 6 — Delegation Chains](walkthroughs/delegation-chains.md) — multi-agent identity dilution | 45 min |
 | 5 | [Walkthrough 8 — Beyond MCP](walkthroughs/beyond-mcp.md) — same attacks across LangChain, OpenAI, CLI agents | 30 min |
+| 6 | [Walkthrough 9 — AI Governance Infrastructure](walkthroughs/ai-governance-infrastructure.md) — AI gate bypass via open redirect | 45 min |
 | 6 | camazotz labs at **hard** difficulty — all 39 labs, any order | 90 min |
 
 ---

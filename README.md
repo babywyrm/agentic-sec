@@ -139,6 +139,7 @@ For Kubernetes, Helm, and Teleport deployment options see [`docs/deployment-guid
 | 6 | [Delegation Chain Attacks](docs/walkthroughs/delegation-chains.md) | Multi-agent identity dilution — Agent A → B → C loses authorization | 45m |
 | 7 | [Flow Types in Practice](docs/walkthroughs/flow-types-in-practice.md) | All five lanes end-to-end with `--by-lane` + `--coverage-report` | 60m |
 | 8 | [Beyond MCP](docs/walkthroughs/beyond-mcp.md) | Same attacks across LangChain, OpenAI Assistants, and CLI agents — not just MCP | 30m |
+| 9 | [AI Governance Infrastructure as Attack Surface](docs/walkthroughs/ai-governance-infrastructure.md) | How AI governance gates can be bypassed structurally via open redirect — not prompt injection | 45m |
 
 ---
 
