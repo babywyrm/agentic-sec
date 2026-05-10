@@ -514,7 +514,7 @@ Uncategorized (no lane scope — 13 finding(s))
     [...excessive_permissions findings — tool-specific, not yet auto-tagged...]
 
 ── Cross-project coverage report (vs camazotz) ──
-  camazotz: 39 labs across 5 lanes  ← sdk_tamper_lab + 2 more added since 2026-04-28
+  camazotz: 43 labs across 5 lanes  ← sdk_tamper_lab + 2 more added since 2026-04-28
   mcpnuke covered 4/5 lanes on this scan
   widest gap: Lane 1 (human-direct) — camazotz declares labs, mcpnuke fired none (SDK-path detection TBD)
 
@@ -662,7 +662,7 @@ Concrete work items surfaced by this walkthrough, in rough value order:
 
 1. ✅ **`nullfield-controller` deployed to the reference cluster with the active-policy bridge.** Done 2026-04-27 — see the captured controller log + curl output above. The five installed `NullfieldPolicy` CRDs are now consumable by the sidecar via the `activePolicySource` chart values knob.
 2. ✅ **Lane/transport backfill across `mcpnuke` checks.** Done — 10 modules / 46 emission sites now lane-tagged. Coverage went from 0/5 lanes covered to 4/5. The remaining `excessive_permissions` findings need a per-tool lookup because the lane lives on the tool, not the check — explicitly deferred as a follow-up.
-3. ✅ **Fill a transport gap with a camazotz lab.** Done 2026-04-28 — `sdk_tamper_lab` (MCP-T33, Lane 1 / Transport C) added. An MCP SDK wrapper caches JWTs without re-validating the signature; three difficulty tiers model the blind-trust → expiry-only → full HS256 verification progression. 15 tests, 800 total passing. Lane 1's Transport C cell is now green in the coverage grid.
+3. ✅ **Fill a transport gap with a camazotz lab.** Done 2026-04-28 — `sdk_tamper_lab` (MCP-T33, Lane 1 / Transport C) added. An MCP SDK wrapper caches JWTs without re-validating the signature; three difficulty tiers model the blind-trust → expiry-only → full HS256 verification progression. 43 labs, 1090 tests passing. Lane 1's Transport C cell is now green in the coverage grid.
 4. ✅ **Per-lane attack→deny captures.** Done 2026-04-28 — Lanes 1/2/3/5 cycled via `kubectl label` on the NUC. All four return `identity verification failed` from the nullfield proxy, confirming enforcement is live. Lane 4 remains the canonical rule-level capture (act chain check fires post-identity). Results and analysis in the section above.
 5. ✅ **Sidecar hot-reload timing measured.** Done 2026-04-28 — Stage 1 (controller sync): 4–13 s. Stage 2 (kubelet propagation): ~30–90 s (dominant; tunable). Stage 3 (fsnotify reload): < 1 s. Full breakdown in the section above.
 

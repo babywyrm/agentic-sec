@@ -1,6 +1,6 @@
 # camazotz Quick Reference
 
-MCP security playground — 39 intentionally vulnerable labs.
+MCP security playground — 43 intentionally vulnerable labs.
 
 **Repo:** [github.com/babywyrm/camazotz](https://github.com/babywyrm/camazotz)
 
@@ -14,11 +14,11 @@ Per‑Lane Lab Coverage" table for the explicit mapping.
 | Category | Labs | What They Teach |
 |----------|------|----------------|
 | **Auth** | auth_lab, oauth_delegation_lab, revocation_lab, rbac_lab | Token theft, audience bypass, revocation gaps, RBAC bypass |
-| **Injection** | context_lab, indirect_lab, config_lab | Prompt injection, indirect injection, config tampering |
+| **Injection** | context_lab, indirect_lab, config_lab, blocklist_bypass_lab | Prompt injection, indirect injection, config tampering, incomplete input filter bypass |
 | **Exfiltration** | secrets_lab, egress_lab, comms_lab, shadow_lab | Secret leakage, SSRF, multi-step exfil, webhook persistence |
-| **Governance** | tool_lab, hallucination_lab, delegation_chain_lab, supply_lab | Rug-pull, HITL bypass, delegation depth, supply chain |
+| **Governance** | tool_lab, hallucination_lab, delegation_chain_lab, supply_lab, ai_governance_bypass_lab | Rug-pull, HITL bypass, delegation depth, supply chain, AI gate structural bypass |
 | **Operations** | cost_exhaustion_lab, attribution_lab, error_lab, temporal_lab | Cost abuse, attribution forging, error disclosure, temporal drift |
-| **Identity** | tenant_lab, credential_broker_lab, pattern_downgrade_lab, notification_lab | Cross-tenant, credential theft, auth downgrade, malicious notifications |
+| **Identity** | tenant_lab, credential_broker_lab, pattern_downgrade_lab, notification_lab, shared_idp_pollution_lab, dpop_forgery_lab | Cross-tenant, credential theft, auth downgrade, malicious notifications, shared IdP cross-pollution, DPoP forgery |
 | **Teleport** | bot_identity_theft_lab, teleport_role_escalation_lab, cert_replay_lab | Bot cert theft, role escalation, expired cert replay |
 | **Defense** | policy_authoring_lab, response_inspection_lab, budget_tuning_lab | Write nullfield policy, craft redaction rules, tune rate limits |
 

@@ -13,7 +13,7 @@ The three tools in this ecosystem map directly to the six gates below:
 | Gate 3–5 (runtime policy) | **[nullfield](https://github.com/babywyrm/nullfield)** | Sidecar proxy — intercepts every `tools/call`, enforces ALLOW / DENY / HOLD / SCOPE / BUDGET before forwarding |
 | Gate 2 (identity) | **ZITADEL** (human) · **Teleport tbot** (machine) | JWT + X.509 identity for human and agent callers respectively |
 | All gates (validation) | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scans your staging deployment against the attack patterns the gates defend; use in CI and as part of tool onboarding |
-| All gates (lab validation) | **[camazotz](https://github.com/babywyrm/camazotz)** | 39 intentionally vulnerable labs — one per threat. Run these against your gate implementations to confirm they hold. |
+| All gates (lab validation) | **[camazotz](https://github.com/babywyrm/camazotz)** | 43 intentionally vulnerable labs — each lab demonstrates a specific threat class. Run these against your gate implementations to confirm they hold. |
 
 The examples in this document use Okta as the human IdP. ZITADEL is the reference implementation used in camazotz and can substitute directly. Any OAuth 2.0 / OIDC-compliant IdP works for the human flow; Teleport handles machine identity regardless of which human IdP you use.
 
@@ -916,6 +916,11 @@ Each golden path gate maps to specific [Camazotz](https://github.com/babywyrm/ca
 | RBAC escalation | `teleport_role_escalation_lab` | MCP-T20 | Bot self-escalates via misconfigured tool |
 | Cert replay | `cert_replay_lab` | MCP-T26 | Expired short-lived cert replayed in grace window |
 
+| Gate 5: AI policy | `ai_governance_bypass_lab` | MCP-T41 | AI-approved "trusted" URL flow bypassed via HTTP redirect — structural bypass, not prompt injection |
+| Gate 2: Shared IdP | `shared_idp_pollution_lab` | MCP-T42 | Leaked agent OAuth client credentials mint privileged tokens in shared issuer realm |
+| Gate 2: DPoP binding | `dpop_forgery_lab` | MCP-T43 | Exposed DPoP private key enables proof forgery with correct htm/htu binding |
+| Gate 3: Input validation | `blocklist_bypass_lab` | MCP-T44 | Incomplete shell/query blocklist misses alternate interpreter execution paths |
+
 Run `mcpnuke` against your staging gateway to validate that your gate implementations actually block these attack patterns.
 
 ---
@@ -1045,7 +1050,7 @@ The diagrams above are living documents. As you add tools, update the trust map 
 
 For hands-on validation of the attack patterns this golden path defends against:
 
-- **[Camazotz](https://github.com/babywyrm/camazotz)** — MCP security playground with 39 labs covering every threat in the mapping table above. The `/identity` dashboard shows live ZITADEL integration status. Run the labs against your staging gateway to validate gate enforcement.
+- **[Camazotz](https://github.com/babywyrm/camazotz)** — MCP security playground with 43 labs covering the threat classes in the mapping table above (including MCP-T41–MCP-T44). The `/identity` dashboard shows live ZITADEL integration status. Run the labs against your staging gateway to validate gate enforcement.
 - **[mcpnuke](https://github.com/babywyrm/mcpnuke)** — automated MCP security scanner. Run against your staging deployment as part of the tool onboarding path (Step 3) and as a recurring regression check.
 - **[MCP Security Assessment Framework](https://github.com/babywyrm/mcpnuke/blob/main/docs/mcp-security-assessment-framework.md)** — vendor-neutral assessment matrix mapping 25 risks to pentest checks with MCP JSON-RPC examples.
 

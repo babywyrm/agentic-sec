@@ -10,6 +10,17 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.5] Camazotz — four new labs, 43 total, 1090 tests
+
+Four new camazotz labs shipped, covering real vulnerability classes from production agentic deployments:
+
+- **`ai_governance_bypass_lab`** (MCP-T41, Lane 2 / Transport A) — AI governance gates that validate URL hostnames can be bypassed via open redirect on a trusted host. The AI approves the initial hostname; the underlying resolution follows the redirect. Structural bypass, not prompt injection.
+- **`shared_idp_pollution_lab`** (MCP-T42, Lanes 1+2 / Transport A) — When multiple OAuth clients share the same identity realm, JWKS, and MCP endpoint, a leaked agent `client_secret` bridges user-land to agent-land via a standard `client_credentials` grant.
+- **`dpop_forgery_lab`** (MCP-T43, Lane 3 / Transport A) — DPoP (RFC 9449) proof-of-possession only works when the private key stays private. When exposed via a config or actuator endpoint, an attacker can forge proofs with correct `htm`/`htu` binding. Iterative 401 error discovery teaches the required claim structure.
+- **`blocklist_bypass_lab`** (MCP-T44, Lane 2 / Transport A) — Incomplete server-side blocklists invite bypass research. The filter blocks common shells and metacharacters but misses `perl` (easy/medium) and `awk` (hard). Safe-character encoding bypasses (`qq{}`, `sysopen`, numeric flags) achieve execution through allowed paths.
+
+Hub docs updated: README badge (39→43), `docs/ecosystem.md` (shipped roadmap, coverage gaps, near-term), `docs/golden-path.md` (validation mapping +4 rows, lab count), `docs/reference/camazotz.md` (categories table), `docs/identity-flows.md`, `docs/walkthroughs/flow-types-in-practice.md`.
+
 ## [2026-05 pt.4] Docs polish — README, CONTRIBUTING, walkthrough fixes
 
 - **README rewrite:** Trimmed from 608 → ~200 lines. Deep content (architecture diagrams, coverage matrix, per-project deep dives) now lives in `docs/ecosystem.md` where it belongs. README is now a clean landing page.

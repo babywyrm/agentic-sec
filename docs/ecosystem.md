@@ -150,7 +150,7 @@ flowchart LR
     TELEPORT["<b>Teleport Proxy</b> :443<br/>identity layer"]
     K8S["K8s API<br/>(RBAC: agent-readonly)"]
     NF["<b>nullfield sidecar</b> :9090<br/>identity → registry → integrity →<br/>circuit → policy → budget → audit"]
-    GW["<b>brain-gateway</b> :8080<br/>39 vulnerable MCP labs<br/>(5 lanes × 5 transports)"]
+    GW["<b>brain-gateway</b> :8080<br/>43 vulnerable MCP labs<br/>(5 lanes × 5 transports)"]
   end
 
   BOT -->|short-lived cert| TELEPORT
@@ -179,7 +179,7 @@ INFO findings ("defense held"), you're in good shape.
 
 ### The Lane View — `/lanes` UI + `/api/lanes` JSON contract
 
-Camazotz ships two parallel views over the 39 labs: `/threat-map` groups
+Camazotz ships two parallel views over the 43 labs: `/threat-map` groups
 by attack category, **`/lanes` groups by identity lane** (Lane 1 Human
 Direct → Lane 5 Anonymous, with the per-lane flow diagram, default
 nullfield action, covering mcpnuke checks, and coverage gaps inline).
@@ -201,7 +201,7 @@ This is the honest boundary of the ecosystem as of 2026-04-26.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
-| **[camazotz](https://github.com/babywyrm/camazotz)** | 39 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | 43 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
@@ -209,11 +209,11 @@ This is the honest boundary of the ecosystem as of 2026-04-26.
 **Coverage gaps acknowledged in the current corpus** (surfaced by
 camazotz `/api/lanes` as machine-readable `gaps`):
 
-- Lane 1 (Human Direct) — no Transport C (SDK) lab yet
-- Lane 2 (Delegated) — no Transport C lab yet
-- Lane 3 (Machine) — no Transport B (direct API) lab yet
+- Lane 2 (Delegated) — no Transport C (SDK) lab yet
 - Lane 4 (Agent → Agent) — no Transport B or C lab yet
 - Lane 5 (Anonymous) — has no transport notion by design (pre-auth)
+
+*(Lane 1 / Transport C filled by `sdk_tamper_lab`; Lane 3 / Transport B filled by `agent_http_bypass_lab`; Lane 3 / Transport A expanded with `dpop_forgery_lab` MCP-T43.)*
 
 These aren't failures; they are the honest boundary of what the lab corpus
 teaches and the concrete next additions as the ecosystem grows.
@@ -233,10 +233,11 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ `sdk_tamper_lab` (Lane 1 / Transport C), `subprocess_lab` (Lane 3 / Transport D), `function_calling_lab` (Lane 2 / Transport E) — *2026-04-28/29*
 - ✅ mcpnuke `--coverage N`, `--diff-baseline`, `--profile` — *2026-05-03*
 - ✅ Campaign scenario system (`make campaign SCENARIO=...`) + four pre-authored NullfieldPolicy CRDs — *2026-05-03*
+- ✅ `ai_governance_bypass_lab` (MCP-T41, Lane 2 / Transport A), `shared_idp_pollution_lab` (MCP-T42, Lanes 1+2 / Transport A), `dpop_forgery_lab` (MCP-T43, Lane 3 / Transport A), `blocklist_bypass_lab` (MCP-T44, Lane 2 / Transport A) — *2026-05-10*
 
 ### Near-term (actively worked)
 
-- Fill remaining baseline transport gaps — Lane 2 / Transport C, Lane 3 / Transport B, Lane 4 / Transport B
+- Fill remaining baseline transport gaps — Lane 2 / Transport C, Lane 4 / Transport B, Lane 4 / Transport C
 - Walkthrough: "Building a Lane 4 defense from scratch" using `delegation.maxDepth` against `delegation_depth_lab` and `delegation_chain_lab`
 - Lane 4 transport widening — agent chains today are all MCP (Transport A); D and E variants would model real LangChain / OpenAI Assistants chains
 
@@ -318,7 +319,7 @@ secrets, full audit). Together they implement the golden path: every request
 carries identity, every tool is registered and scoped, every secret lives in a
 secret manager, and the AI's output is never trusted as authorization.
 
-**The validation:** camazotz provides 39 intentionally vulnerable labs
+**The validation:** camazotz provides 43 intentionally vulnerable labs
 covering every OWASP MCP Top 10 risk and every one of the five
 agentic-identity lanes. mcpnuke automates the attack sequences and
 reports whether your defenses hold. Run mcpnuke on hard difficulty — if the
