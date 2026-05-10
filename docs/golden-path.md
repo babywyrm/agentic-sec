@@ -920,6 +920,7 @@ Each golden path gate maps to specific [Camazotz](https://github.com/babywyrm/ca
 | Gate 2: Shared IdP | `shared_idp_pollution_lab` | MCP-T42 | Leaked agent OAuth client credentials mint privileged tokens in shared issuer realm |
 | Gate 2: DPoP binding | `dpop_forgery_lab` | MCP-T43 | Exposed DPoP private key enables proof forgery with correct htm/htu binding |
 | Gate 3: Input validation | `blocklist_bypass_lab` | MCP-T44 | Incomplete shell/query blocklist misses alternate interpreter execution paths |
+| Gate 2: Agent chain | `agent_chain_direct_api_lab` | MCP-T45 | Agent-to-agent credential forwarding without act-chain or audience narrowing |
 
 Run `mcpnuke` against your staging gateway to validate that your gate implementations actually block these attack patterns.
 

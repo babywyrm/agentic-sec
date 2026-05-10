@@ -10,6 +10,14 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.6] Ecosystem-wide — five improvements across camazotz, mcpnuke, nullfield, agentic-sec
+
+- **mcpnuke `profiles/camazotz.json`** updated: 70 → 90 tools; 13 new entries for MCP-T41–T44 with lane/transport/notes.
+- **Walkthrough 9** (`docs/walkthroughs/ai-governance-infrastructure.md`): AI Governance Infrastructure as Attack Surface — MCP-T41 pattern, full practitioner walkthrough with mcpnuke scan example.
+- **mcpnuke DPoP enforcement check** (`mcpnuke/checks/dpop_enforcement.py`): three RFC 9449 probes — no DPoP header accepted, malformed DPoP accepted, htm/htu binding not verified. Lane 3 / MCP-T43.
+- **camazotz `agent_chain_direct_api_lab`** (MCP-T45, Lane 4 / Transport B): fills the Lane 4 / Transport B matrix gap. 12 tests. Lab count 43 → 44.
+- **nullfield `scope.request.blockRedirects`**: strips URL-typed arguments before forwarding. MCP-T41 defense at the policy layer.
+
 ## [2026-05 pt.5] Camazotz — four new labs, 43 total, 1090 tests
 
 Four new camazotz labs shipped, covering real vulnerability classes from production agentic deployments:
