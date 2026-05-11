@@ -10,6 +10,16 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.8] Ecosystem-wide — Lane 4 complete across all transports
+
+- **camazotz `agent_subprocess_chain_lab`** (MCP-T48, Lane 4 / Transport D): subprocess spawning does not create a new identity boundary — `AGENT_TOKEN` injected into child env, inherited without re-auth. Hard mode: `read_secrets` blocked, token masked. 14 tests. Lab count 46 → 47.
+- **camazotz `agent_llm_chain_lab`** (MCP-T49, Lane 4 / Transport E): LLM function-calling passes full conversation context — including any credential embedded in the system prompt — to every registered function. Hard mode: `call_with_context` does not echo credential, but `inspect_context` still returns raw context. 14 tests. Lab count 47 → 48.
+- **Lane 4 is now fully covered across all five transports (A/B/C/D/E).** No transport gaps remain in any lane.
+- **Walkthrough 11** (`docs/walkthroughs/lane4-defense.md`): Building a Lane 4 Defense from Scratch — depth limits, scope narrowing, task allowlists, subprocess env control, and LLM context redaction, with a complete nullfield policy and validation test suite for all five transport patterns.
+- **mcpnuke `profiles/camazotz.json`** updated: 96 → 102 tools (MCP-T48/T49 tools added).
+
+---
+
 ## [2026-05 pt.7] Ecosystem-wide — transport matrix complete + Campaign 5 + Walkthrough 10
 
 - **camazotz `delegated_sdk_lab`** (MCP-T46, Lane 2 / Transport C): fills the Lane 2 / Transport C matrix gap. Human delegates to agent via in-process SDK; credential cached in shared process memory; injected `action=dump_cache` exposes it. Hard mode: `dump_cache` blocked by allowlist. 12 tests. Lab count 45 → 46.

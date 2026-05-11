@@ -28,7 +28,8 @@ installed. Python 3.11+. No MCP experience required.
 | 5 | [Walkthrough 8 — Beyond MCP](walkthroughs/beyond-mcp.md) — same attacks across LangChain, OpenAI, CLI agents | 30 min |
 | 6 | [Walkthrough 9 — AI Governance Infrastructure](walkthroughs/ai-governance-infrastructure.md) — AI gate bypass via open redirect | 45 min |
 | 7 | [Walkthrough 10 — Token Cross-Pollution](walkthroughs/token-cross-pollution.md) — shared IdP scope pollution + DPoP forgery | 15 min |
-| 8 | camazotz labs at **hard** difficulty — all 46 labs, any order | 90 min |
+| 8 | [Walkthrough 11 — Lane 4 Defense](walkthroughs/lane4-defense.md) — depth limits, scope narrowing, task allowlists across all 5 transports | 20 min |
+| 9 | camazotz labs at **hard** difficulty — all 48 labs, any order | 90 min |
 
 ---
 

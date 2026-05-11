@@ -179,7 +179,7 @@ INFO findings ("defense held"), you're in good shape.
 
 ### The Lane View — `/lanes` UI + `/api/lanes` JSON contract
 
-Camazotz ships two parallel views over the 46 labs: `/threat-map` groups
+Camazotz ships two parallel views over the 48 labs: `/threat-map` groups
 by attack category, **`/lanes` groups by identity lane** (Lane 1 Human
 Direct → Lane 5 Anonymous, with the per-lane flow diagram, default
 nullfield action, covering mcpnuke checks, and coverage gaps inline).
@@ -201,7 +201,7 @@ This is the honest boundary of the ecosystem as of 2026-04-26.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
-| **[camazotz](https://github.com/babywyrm/camazotz)** | 46 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | 48 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
@@ -240,11 +240,15 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ mcpnuke Spring Actuator Phase 2 exploitation probes (heapdump, env/logger POST write, shutdown gating) — *2026-05-10*
 - ✅ Campaign 5: Enterprise AI-Ops (`docs/campaigns/enterprise-ai-ops.md`) — MCP-T42/T43/T44/T46/T47 chain — *2026-05-10*
 - ✅ Walkthrough 10: Token Cross-Pollution and Shared Identity (`docs/walkthroughs/token-cross-pollution.md`) — MCP-T42/T43 — *2026-05-10*
+- ✅ `agent_subprocess_chain_lab` (MCP-T48, Lane 4 / Transport D) — subprocess env credential injection — *2026-05-10*
+- ✅ `agent_llm_chain_lab` (MCP-T49, Lane 4 / Transport E) — LLM function-calling context leak — *2026-05-10*
+- ✅ **Lane 4 fully complete** across all five transports (A/B/C/D/E) — *2026-05-10*
+- ✅ Walkthrough 11: Building a Lane 4 Defense from Scratch (`docs/walkthroughs/lane4-defense.md`) — *2026-05-10*
 
 ### Near-term (actively worked)
 
-- Walkthrough: "Building a Lane 4 defense from scratch" using `delegation.maxDepth` against `delegation_depth_lab` and `delegation_chain_lab`
-- Lane 4 transport widening — D (subprocess) and E (native LLM function-calling) variants to model real LangChain / OpenAI Assistants chains
+- Lane 5 (Anonymous) transport variants (pre-auth patterns)
+- Central machine-readable taxonomy (`agentic-sec/docs/taxonomy/lanes.yaml`)
 
 ### Future (revisit when the vocabulary drifts)
 
