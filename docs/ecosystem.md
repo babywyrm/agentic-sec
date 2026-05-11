@@ -179,7 +179,7 @@ INFO findings ("defense held"), you're in good shape.
 
 ### The Lane View — `/lanes` UI + `/api/lanes` JSON contract
 
-Camazotz ships two parallel views over the 44 labs: `/threat-map` groups
+Camazotz ships two parallel views over the 46 labs: `/threat-map` groups
 by attack category, **`/lanes` groups by identity lane** (Lane 1 Human
 Direct → Lane 5 Anonymous, with the per-lane flow diagram, default
 nullfield action, covering mcpnuke checks, and coverage gaps inline).
@@ -201,7 +201,7 @@ This is the honest boundary of the ecosystem as of 2026-04-26.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
-| **[camazotz](https://github.com/babywyrm/camazotz)** | 44 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | 46 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
@@ -209,12 +209,12 @@ This is the honest boundary of the ecosystem as of 2026-04-26.
 **Coverage gaps acknowledged in the current corpus** (surfaced by
 camazotz `/api/lanes` as machine-readable `gaps`):
 
-- Lane 2 (Delegated) — no Transport C (SDK) lab yet
-- Lane 4 (Agent → Agent) — no Transport C lab yet (Transport B filled by `agent_chain_direct_api_lab`)
 - Lane 5 (Anonymous) — has no transport notion by design (pre-auth)
+- Lane 4 transport widening — agent chains today are A/B/C; D (subprocess) and E (native LLM function-calling) variants remain for future labs modelling real LangChain / OpenAI Assistants chains
 
-These aren't failures; they are the honest boundary of what the lab corpus
-teaches and the concrete next additions as the ecosystem grows.
+The 5×5 transport matrix is otherwise complete as of 2026-05-10.
+`delegated_sdk_lab` (Lane 2 / Transport C) and `agent_sdk_chain_lab`
+(Lane 4 / Transport C) filled the last two baseline gaps.
 
 ---
 
@@ -235,12 +235,16 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ `agent_chain_direct_api_lab` (MCP-T45, Lane 4 / Transport B) — fills Lane 4 / Transport B gap — *2026-05-10*
 - ✅ mcpnuke DPoP enforcement check (RFC 9449, three probes, Lane 3 / Transport A) — *2026-05-10*
 - ✅ nullfield `scope.request.blockRedirects` primitive (MCP-T41 defense) — *2026-05-10*
+- ✅ `delegated_sdk_lab` (MCP-T46, Lane 2 / Transport C) — fills Lane 2 / Transport C gap — *2026-05-10*
+- ✅ `agent_sdk_chain_lab` (MCP-T47, Lane 4 / Transport C) — fills Lane 4 / Transport C gap; **5×5 transport matrix now complete** — *2026-05-10*
+- ✅ mcpnuke Spring Actuator Phase 2 exploitation probes (heapdump, env/logger POST write, shutdown gating) — *2026-05-10*
+- ✅ Campaign 5: Enterprise AI-Ops (`docs/campaigns/enterprise-ai-ops.md`) — MCP-T42/T43/T44/T46/T47 chain — *2026-05-10*
+- ✅ Walkthrough 10: Token Cross-Pollution and Shared Identity (`docs/walkthroughs/token-cross-pollution.md`) — MCP-T42/T43 — *2026-05-10*
 
 ### Near-term (actively worked)
 
-- Fill remaining baseline transport gaps — Lane 2 / Transport C, Lane 4 / Transport C
 - Walkthrough: "Building a Lane 4 defense from scratch" using `delegation.maxDepth` against `delegation_depth_lab` and `delegation_chain_lab`
-- Lane 4 transport widening — agent chains today are all MCP (Transport A); D and E variants would model real LangChain / OpenAI Assistants chains
+- Lane 4 transport widening — D (subprocess) and E (native LLM function-calling) variants to model real LangChain / OpenAI Assistants chains
 
 ### Future (revisit when the vocabulary drifts)
 

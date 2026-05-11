@@ -18,6 +18,7 @@ platform — and walks through the full three-tool ecosystem:
 | [CI/CD Pipeline Agent](cicd-pipeline-agent.md) | Platform engineering deployment bot — merges to main trigger production deploys | B, D | 3 | `subprocess_lab` → `agent_http_bypass_lab` → `config_lab` → `attribution_lab` | ~75 min |
 | [Code Review Agent](code-review-agent.md) | Cursor/Copilot-style review agent with shell execution and LangChain tools | C, D | 1→2 | `code_review_agent_lab` → `indirect_lab` → `langchain_tool_lab` → `cost_exhaustion_lab` | ~75 min |
 | [Multi-Tenant SaaS AI](multi-tenant-saas.md) | B2B SaaS AI feature serving 50 enterprise customers from one deployment | C | 1, 2, 4 | `tenant_lab` → `rag_injection_lab` → `delegation_chain_lab` → `attribution_lab` | ~75 min |
+| [Enterprise AI-Ops](enterprise-ai-ops.md) | Infrastructure ops platform — shared IdP, DPoP tokens, exec engine, in-process SDK agent chains | A, C | 1, 2, 3, 4 | `shared_idp_pollution_lab` → `dpop_forgery_lab` → `blocklist_bypass_lab` → `delegated_sdk_lab` → `agent_sdk_chain_lab` | ~90 min |
 
 ---
 

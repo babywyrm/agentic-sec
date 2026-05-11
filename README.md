@@ -6,7 +6,7 @@ A documentation hub and cross-project reference for a closed-loop security stack
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <a href="https://github.com/babywyrm/camazotz"><img alt="camazotz" src="https://img.shields.io/badge/camazotz-44%20labs-fb923c"></a>
+  <a href="https://github.com/babywyrm/camazotz"><img alt="camazotz" src="https://img.shields.io/badge/camazotz-46%20labs-fb923c"></a>
   <a href="https://github.com/babywyrm/nullfield"><img alt="nullfield" src="https://img.shields.io/badge/nullfield-5%20actions-a78bfa"></a>
   <a href="https://github.com/babywyrm/mcpnuke"><img alt="mcpnuke" src="https://img.shields.io/badge/mcpnuke-scan%20%2B%20generate-34d399"></a>
 </p>
@@ -33,7 +33,7 @@ MCP and agentic AI patterns are 1–2 year old RFCs — the security conventions
 
 | Tool | Role | What it does |
 |------|------|-------------|
-| **[camazotz](https://github.com/babywyrm/camazotz)** | Vulnerable target | Intentionally vulnerable MCP server — 44 labs across 5 identity lanes and 5 transport surfaces, covering every OWASP MCP Top 10 risk |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | Vulnerable target | Intentionally vulnerable MCP server — 46 labs across 5 identity lanes and 5 transport surfaces, covering every OWASP MCP Top 10 risk |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar proxy that intercepts every MCP `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET policy before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP security scanner — static, behavioral, and AI-assisted probes; outputs findings + nullfield policy |
 
@@ -140,6 +140,7 @@ For Kubernetes, Helm, and Teleport deployment options see [`docs/deployment-guid
 | 7 | [Flow Types in Practice](docs/walkthroughs/flow-types-in-practice.md) | All five lanes end-to-end with `--by-lane` + `--coverage-report` | 60m |
 | 8 | [Beyond MCP](docs/walkthroughs/beyond-mcp.md) | Same attacks across LangChain, OpenAI Assistants, and CLI agents — not just MCP | 30m |
 | 9 | [AI Governance Infrastructure as Attack Surface](docs/walkthroughs/ai-governance-infrastructure.md) | How AI governance gates can be bypassed structurally via open redirect — not prompt injection | 45m |
+| 10 | [Token Cross-Pollution and Shared Identity](docs/walkthroughs/token-cross-pollution.md) | Shared IdP scope pollution (MCP-T42) + DPoP key leak forgery (MCP-T43) — two controls that fail together | 15m |
 
 ---
 

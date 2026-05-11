@@ -10,6 +10,17 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.7] Ecosystem-wide — transport matrix complete + Campaign 5 + Walkthrough 10
+
+- **camazotz `delegated_sdk_lab`** (MCP-T46, Lane 2 / Transport C): fills the Lane 2 / Transport C matrix gap. Human delegates to agent via in-process SDK; credential cached in shared process memory; injected `action=dump_cache` exposes it. Hard mode: `dump_cache` blocked by allowlist. 12 tests. Lab count 45 → 46.
+- **camazotz `agent_sdk_chain_lab`** (MCP-T47, Lane 4 / Transport C): fills the Lane 4 / Transport C matrix gap. **5×5 transport matrix is now complete.** Agent A loads Agent B as in-process SDK library; Agent A's credential forwarded implicitly; Agent B executes `escalate_privilege`; Agent B identity invisible in audit logs. Hard mode: task manifest blocks privilege escalation. 12 tests. Lab count 45 → 46.
+- **mcpnuke Spring Actuator Phase 2 exploitation probes**: passive GET discovery now gates active POST probes — heapdump download (binary size check), env write, logger level override (ROOT + security to TRACE), config refresh, restart, and gated shutdown. Extended passive endpoint list with `/actuator/mappings`, `/actuator/httptrace`, `/actuator/scheduledtasks`, `/actuator/threaddump`. Findings logged under `actuator_exploitation` category.
+- **Makefile convenience targets** in camazotz: `make test-identity`, `test-injection`, `test-secrets`, `test-governance`, `test-defense`, `test-teleport`, `test-infra`, `test-fast` — all keyed to pytest marks.
+- **Campaign 5** (`docs/campaigns/enterprise-ai-ops.md`): Enterprise AI-Ops Platform — 5-step attack chain threading MCP-T42 (shared IdP pollution) → MCP-T43 (DPoP forgery) → MCP-T44 (blocklist bypass) → MCP-T46 (SDK cache exposure) → MCP-T47 (agent chain identity dilution). Full mcpnuke scan block, nullfield policy, and validation test suite.
+- **Walkthrough 10** (`docs/walkthroughs/token-cross-pollution.md`): Token Cross-Pollution and Shared Identity — hands-on 15-minute walkthrough of MCP-T42 + MCP-T43 together. Covers how scope isolation failure and DPoP key leakage compound each other.
+
+---
+
 ## [2026-05 pt.6] Ecosystem-wide — five improvements across camazotz, mcpnuke, nullfield, agentic-sec
 
 - **mcpnuke `profiles/camazotz.json`** updated: 70 → 90 tools; 13 new entries for MCP-T41–T44 with lane/transport/notes.
