@@ -247,15 +247,14 @@ Three horizons, committed in decreasing order of near-term certainty.
 
 ### Near-term (actively worked)
 
-- Lane 5 (Anonymous) transport variants (pre-auth patterns)
-- Central machine-readable taxonomy (`agentic-sec/docs/taxonomy/lanes.yaml`)
+- Lane 5 (Anonymous) purpose-built labs — pre-auth patterns (anon tool enumeration, rate-limit exhaustion, anonymous injection before session establishment)
+- Broader IdP support in camazotz labs — Okta and Auth0 alongside ZITADEL for Lane 1/2 coverage
 
 ### Future (revisit when the vocabulary drifts)
 
 - Central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml` — only worth the cross-repo dependency if camazotz, nullfield, and mcpnuke start to drift from each other
 - Per-lane rate-limit primitives in nullfield (distinct from global `maxCallsPerMinute`)
 - mcpnuke `--watch` mode producing continuous lane-coverage deltas against a long-running camazotz target
-- Broader IdP support in camazotz labs — Okta and Auth0 alongside ZITADEL to widen Lane 1/2 coverage
 
 ---
 
