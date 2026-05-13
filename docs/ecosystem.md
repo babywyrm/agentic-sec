@@ -259,6 +259,35 @@ Three horizons, committed in decreasing order of near-term certainty.
 - Per-lane rate-limit primitives in nullfield (distinct from global `maxCallsPerMinute`)
 - mcpnuke `--watch` mode producing continuous lane-coverage deltas against a long-running camazotz target
 
+### Horizon: Direct CLI Agent Pattern (no MCP layer)
+
+A growing production pattern in platform engineering and DevOps: LLM agents
+that call CLI tools directly via subprocess — `gh`, `jira`, `kubectl`, `helm`,
+`terraform`, `aws-cli`, `gcloud` — **without any MCP server in the path**.
+The agent is given a `run_command` function or a system prompt that describes
+what CLI tools it can use. No `tools/list`. No JSON schema validation. No
+nullfield enforcement point. The LLM constructs command strings and the
+subprocess runs them.
+
+This is Transport D without the MCP wrapper, and it represents a genuinely
+different threat model:
+
+- **No protocol-level enforcement point** — nullfield cannot intercept a subprocess call
+- **No schema boundary** — the agent constructs the command string itself; injection is in the string, not a JSON field
+- **Irreversible blast radius** — `gh pr merge`, `kubectl delete namespace`, `jira transition CLOSE` run immediately with no undo
+- **Sparse audit trail** — CI job logs capture stdout, not a structured trace with principal, tool, and arguments
+- **Prompt injection via data** — injected instructions in a PR description, Jira ticket, or ConfigMap cause the agent to run attacker-controlled CLI commands
+
+Planned work when this pattern becomes common enough to warrant systematic coverage:
+
+1. **`shell_exec_wrap_lab`** (MCP-T53, Transport D) — MCP tool that actually calls `subprocess.run(user_input, shell=True)`; not simulated. mcpnuke behavioral probe sends `; id` and gets real output. Teaching point: the MCP layer was fine — the vulnerability is one level down; nullfield cannot save you.
+
+2. **mcpnuke Transport D behavioral probing** — dedicated check that detects subprocess-wrapping tools by schema signals (`exec`, `run`, `shell`, `command` in name/description; `cmd`, `argv`, `query` as param names) and sends targeted shell injection probes: `` `id` ``, `$(whoami)`, `; sleep 3` (timing-based), `&&echo INJECTED`. Findings tagged `transport: D` with elevated severity when timing or output confirms real execution.
+
+3. **`beyond-mcp.md` expansion** — full side-by-side comparison of the same injection attack against Transport A (MCP `tools/call`), Transport D (LangChain `ShellTool` / direct subprocess), and Transport E (OpenAI/Anthropic function-calling). Same input, three different blast radii and three different defense strategies.
+
+**Trigger:** right-size this work when real incidents surface (`computer_use`, AutoGen code execution, k8s agents with `kubectl` in-PATH) or when the team needs to demo to an audience building platform-engineering AI bots rather than MCP servers. The scaffolding is already in place — Transport D is in the taxonomy, `CODE_EXEC_PATTERNS` is in mcpnuke, `beyond-mcp.md` is the hook.
+
 ---
 
 ## The Teleport Labs — What They Teach
