@@ -255,7 +255,7 @@ Three horizons, committed in decreasing order of near-term certainty.
 
 ### Future (revisit when the vocabulary drifts)
 
-- Central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml` — only worth the cross-repo dependency if camazotz, nullfield, and mcpnuke start to drift from each other
+- Central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml` — ✅ shipped 2026-05-12; drift is now enforced by `test_agentic_sec_taxonomy_in_sync` in camazotz
 - Per-lane rate-limit primitives in nullfield (distinct from global `maxCallsPerMinute`)
 - mcpnuke `--watch` mode producing continuous lane-coverage deltas against a long-running camazotz target
 
