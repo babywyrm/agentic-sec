@@ -10,6 +10,17 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.9] Ecosystem-wide — Lane 5 complete (51 labs)
+
+- **camazotz `anon_schema_harvest_lab`** (MCP-T50, Lane 5 / Transport A): anonymous tool schema over-disclosure — tool descriptions on easy/medium contain internal hostnames, credential patterns, and `CZTZ_SERVICE_KEY` references harvested without any authentication. Hard: catalog sanitized. 14 tests.
+- **camazotz `anon_rate_exhaust_lab`** (MCP-T51, Lane 5 / Transport A): no per-caller accounting for anonymous traffic; anonymous flood exhausts global budget; authenticated callers denied. Hard: separate anonymous bucket protects authenticated quota. 14 tests.
+- **camazotz `preauth_injection_lab`** (MCP-T52, Lane 5 / Transport A): pre-auth guest tool stores metadata raw before identity is established; injected directives are inherited by the authenticated session context and influence post-auth LLM behavior. Hard: sanitized at storage time. 14 tests.
+- **Lane 5 purpose-built labs complete.** All five identity lanes now have dedicated modern labs.
+- **mcpnuke `profiles/camazotz.json`** updated: 102 → 111 tools (MCP-T50/T51/T52 tools added).
+- **Lab count: 48 → 51 labs. Test count: 1164 → 1209 passing.**
+
+---
+
 ## [2026-05 pt.8] Ecosystem-wide — Lane 4 complete across all transports
 
 - **camazotz `agent_subprocess_chain_lab`** (MCP-T48, Lane 4 / Transport D): subprocess spawning does not create a new identity boundary — `AGENT_TOKEN` injected into child env, inherited without re-auth. Hard mode: `read_secrets` blocked, token masked. 14 tests. Lab count 46 → 47.
