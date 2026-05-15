@@ -21,7 +21,7 @@ brokers, webhook registrations. Every `tools/call` is a function invocation with
 side effects, triggered by an LLM that cannot be trusted to make authorization
 decisions.
 
-The attack surface is not theoretical. Camazotz demonstrates 51 distinct
+The attack surface is not theoretical. Camazotz demonstrates 52 distinct
 vulnerability patterns spanning five agentic-identity lanes and five transport
 surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM
 function-calling — see [ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md))
@@ -150,7 +150,7 @@ flowchart LR
     TELEPORT["<b>Teleport Proxy</b> :443<br/>identity layer"]
     K8S["K8s API<br/>(RBAC: agent-readonly)"]
     NF["<b>nullfield sidecar</b> :9090<br/>identity → registry → integrity →<br/>circuit → policy → budget → audit"]
-    GW["<b>brain-gateway</b> :8080<br/>51 vulnerable MCP labs<br/>(5 lanes × 5 transports)"]
+    GW["<b>brain-gateway</b> :8080<br/>52 vulnerable MCP labs<br/>(5 lanes × 5 transports)"]
   end
 
   BOT -->|short-lived cert| TELEPORT
@@ -179,7 +179,7 @@ INFO findings ("defense held"), you're in good shape.
 
 ### The Lane View — `/lanes` UI + `/api/lanes` JSON contract
 
-Camazotz ships two parallel views over the 51 labs: `/threat-map` groups
+Camazotz ships two parallel views over the 52 labs: `/threat-map` groups
 by attack category, **`/lanes` groups by identity lane** (Lane 1 Human
 Direct → Lane 5 Anonymous, with the per-lane flow diagram, default
 nullfield action, covering mcpnuke checks, and coverage gaps inline).
@@ -201,7 +201,7 @@ This is the honest boundary of the ecosystem as of 2026-04-26.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
-| **[camazotz](https://github.com/babywyrm/camazotz)** | 51 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | 52 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
@@ -248,6 +248,9 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ **Lane 5 purpose-built labs complete** — *2026-05-12*
 
 - ✅ **Okta identity provider support** in camazotz — `OidcIdentityProvider` base class extracted, `OktaIdentityProvider` and `ZitadelIdentityProvider` as subclasses, provider-agnostic lab wiring (`is_live_idp()`), `make up-okta` compose profile, 5 Okta flow tests — *2026-05-15*
+- ✅ **nullfield v0.9** — tool lifecycle management with rug-pull detection (`pkg/registry/lifecycle.go`), response inspection pipeline, per-identity cost attribution — *2026-05-15*
+- ✅ `shell_exec_wrap_lab` (MCP-T53, Lane 3 / Transport D) — shell command wrapping injection; MCP tool calls `subprocess.run(user_input, shell=True)`, not simulated. 14 tests. Lab count 51 → 52. — *2026-05-15*
+- ✅ mcpnuke `shell_injection` check — Transport D behavioral probe with 5 metacharacter injection categories and dangerous base command probes. 18 tests. — *2026-05-15*
 
 ### Near-term (actively worked)
 
@@ -280,9 +283,9 @@ different threat model:
 
 Planned work when this pattern becomes common enough to warrant systematic coverage:
 
-1. **`shell_exec_wrap_lab`** (MCP-T53, Transport D) — MCP tool that actually calls `subprocess.run(user_input, shell=True)`; not simulated. mcpnuke behavioral probe sends `; id` and gets real output. Teaching point: the MCP layer was fine — the vulnerability is one level down; nullfield cannot save you.
+1. **`shell_exec_wrap_lab`** (MCP-T53, Transport D) — ✅ Shipped 2026-05-15. MCP tool that actually calls `subprocess.run(user_input, shell=True)`; not simulated. mcpnuke behavioral probe sends `; id` and gets real output. Teaching point: the MCP layer was fine — the vulnerability is one level down; nullfield cannot save you.
 
-2. **mcpnuke Transport D behavioral probing** — dedicated check that detects subprocess-wrapping tools by schema signals (`exec`, `run`, `shell`, `command` in name/description; `cmd`, `argv`, `query` as param names) and sends targeted shell injection probes: `` `id` ``, `$(whoami)`, `; sleep 3` (timing-based), `&&echo INJECTED`. Findings tagged `transport: D` with elevated severity when timing or output confirms real execution.
+2. **mcpnuke Transport D behavioral probing** — ✅ Shipped 2026-05-15. Dedicated `shell_injection` check that detects subprocess-wrapping tools by schema signals (`exec`, `run`, `shell`, `command` in name/description; `cmd`, `argv`, `query` as param names) and sends targeted shell injection probes: `` `id` ``, `$(whoami)`, `; sleep 3` (timing-based), `&&echo INJECTED`. Findings tagged `transport: D` with elevated severity when timing or output confirms real execution.
 
 3. **`beyond-mcp.md` expansion** — full side-by-side comparison of the same injection attack against Transport A (MCP `tools/call`), Transport D (LangChain `ShellTool` / direct subprocess), and Transport E (OpenAI/Anthropic function-calling). Same input, three different blast radii and three different defense strategies.
 
@@ -359,7 +362,7 @@ secrets, full audit). Together they implement the golden path: every request
 carries identity, every tool is registered and scoped, every secret lives in a
 secret manager, and the AI's output is never trusted as authorization.
 
-**The validation:** camazotz provides 51 intentionally vulnerable labs
+**The validation:** camazotz provides 52 intentionally vulnerable labs
 covering every OWASP MCP Top 10 risk and every one of the five
 agentic-identity lanes. mcpnuke automates the attack sequences and
 reports whether your defenses hold. Run mcpnuke on hard difficulty — if the

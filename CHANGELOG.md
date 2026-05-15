@@ -10,6 +10,23 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.13] MCP-T53 Shell Command Wrapping Injection
+
+- **camazotz `shell_exec_wrap_lab`** (MCP-T53, Lane 3 / Transport D): new lab that wraps `subprocess.run(user_input, shell=True)` behind an MCP tool — not simulated. Demonstrates the Transport D threat model where the MCP layer is fine but the vulnerability is one level down in the subprocess call. Shell metacharacter injection via `extra_args` and `base_cmd` parameters. Easy: raw shell=True, no filtering. Medium: basic blocklist, bypassable. Hard: allowlist enforcement blocks injection. 14 tests.
+- **mcpnuke `shell_injection` check** (`mcpnuke/checks/shell_injection.py`): Transport D behavioral probe that detects subprocess-wrapping tools by schema signals and sends targeted shell injection payloads (semicolon chain, subshell expansion, backtick expansion, pipe chain, and-chain). Findings tagged `lane: 3, transport: D` with CRITICAL severity when injected command output is echoed back. Dangerous base command probes (bash, sh) report HIGH. 18 tests.
+- **agentic-sec docs** — lab count updated 51 → 52, threat ID range extended to MCP-T01–MCP-T53 across golden-path, ecosystem, and identity-flows references.
+
+---
+
+## [2026-05 pt.12] nullfield v0.9 — tool lifecycle + rug-pull detection
+
+- **Tool lifecycle management** (`pkg/registry/lifecycle.go`): nullfield now tracks tool registration timestamps and detects mid-session tool mutations (description changes, schema drift, new tools appearing after initialization). Rug-pull attempts that modify tool behavior post-registration are flagged and optionally blocked.
+- **Response inspection pipeline**: nullfield can now inspect tool responses before forwarding to the caller. Pluggable inspectors scan for credential leakage, injection payloads, and oversized responses. Configurable per-tool via `spec.responseInspection` in NullfieldPolicy.
+- **Cost attribution**: per-identity, per-tool cost tracking with configurable budget ceilings. Cost events are emitted to the audit stream with `principal`, `tool`, and `cost_usd` fields. Integrates with nullfield's existing BUDGET action for enforcement.
+- **Tests**: lifecycle and lifecycle_test coverage for registration, mutation detection, and rug-pull blocking.
+
+---
+
 ## [2026-05 pt.11] Camazotz — runtime IdP switching with auto lab reset
 
 - **Runtime IdP override** — `PUT /config { idp: { provider, issuer_url, token_endpoint, ... } }` switches the active identity provider on the fly without restarting services. `set_idp_config()` / `reset_idp_config()` in `config.py` with thread-safe runtime overlay.

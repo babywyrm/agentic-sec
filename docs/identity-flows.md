@@ -393,7 +393,7 @@ This is where each project in the ecosystem actually lives.
 
 ### camazotz — Per‑Lane Lab Coverage
 
-Complete distribution across all 51 labs (as of 2026-05-15). The `T`
+Complete distribution across all 52 labs (as of 2026-05-15). The `T`
 column is the primary transport surface each lab targets — see "The Five
 Transport Surfaces" above for code definitions. `+N` in "Secondary" means
 that lab's *also* a touchpoint on another lane.
@@ -467,7 +467,7 @@ don't care about the new surfaces.
 
 #### Browsing the coverage
 
-The camazotz portal ships two parallel views of the same 51 labs:
+The camazotz portal ships two parallel views of the same 52 labs:
 
 - `GET /threat-map` — lab grid organized by *attack category* (best for
   learners asking "what kind of attack is this?").

@@ -13,7 +13,7 @@ The three tools in this ecosystem map directly to the six gates below:
 | Gate 3–5 (runtime policy) | **[nullfield](https://github.com/babywyrm/nullfield)** | Sidecar proxy — intercepts every `tools/call`, enforces ALLOW / DENY / HOLD / SCOPE / BUDGET before forwarding |
 | Gate 2 (identity) | **ZITADEL** (human) · **Teleport tbot** (machine) | JWT + X.509 identity for human and agent callers respectively |
 | All gates (validation) | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scans your staging deployment against the attack patterns the gates defend; use in CI and as part of tool onboarding |
-| All gates (lab validation) | **[camazotz](https://github.com/babywyrm/camazotz)** | 51 intentionally vulnerable labs — each lab demonstrates a specific threat class. Run these against your gate implementations to confirm they hold. |
+| All gates (lab validation) | **[camazotz](https://github.com/babywyrm/camazotz)** | 52 intentionally vulnerable labs — each lab demonstrates a specific threat class. Run these against your gate implementations to confirm they hold. |
 
 The examples in this document use Okta as the human IdP. ZITADEL is the reference implementation used in camazotz and can substitute directly. Any OAuth 2.0 / OIDC-compliant IdP works for the human flow; Teleport handles machine identity regardless of which human IdP you use.
 
@@ -1051,7 +1051,7 @@ The diagrams above are living documents. As you add tools, update the trust map 
 
 For hands-on validation of the attack patterns this golden path defends against:
 
-- **[Camazotz](https://github.com/babywyrm/camazotz)** — MCP security playground with 51 labs covering the threat classes in the mapping table above (MCP-T01–MCP-T52). The `/identity` dashboard supports runtime IdP switching between mock, ZITADEL, and Okta. Run the labs against your staging gateway to validate gate enforcement.
+- **[Camazotz](https://github.com/babywyrm/camazotz)** — MCP security playground with 52 labs covering the threat classes in the mapping table above (MCP-T01–MCP-T53). The `/identity` dashboard supports runtime IdP switching between mock, ZITADEL, and Okta. Run the labs against your staging gateway to validate gate enforcement.
 - **[mcpnuke](https://github.com/babywyrm/mcpnuke)** — automated MCP security scanner. Run against your staging deployment as part of the tool onboarding path (Step 3) and as a recurring regression check.
 - **[MCP Security Assessment Framework](https://github.com/babywyrm/mcpnuke/blob/main/docs/mcp-security-assessment-framework.md)** — vendor-neutral assessment matrix mapping 25 risks to pentest checks with MCP JSON-RPC examples.
 
