@@ -393,7 +393,7 @@ This is where each project in the ecosystem actually lives.
 
 ### camazotz — Per‑Lane Lab Coverage
 
-Complete distribution across all 44 labs (as of 2026-04-29). The `T`
+Complete distribution across all 51 labs (as of 2026-05-15). The `T`
 column is the primary transport surface each lab targets — see "The Five
 Transport Surfaces" above for code definitions. `+N` in "Secondary" means
 that lab's *also* a touchpoint on another lane.
@@ -410,28 +410,28 @@ flowchart TB
       L1E["T=E · gap"]:::gap
     end
     subgraph lane2["<b>Lane 2 — Human → Agent</b>"]
-      L2A["T=A · 11 labs"]:::filled
+      L2A["T=A · 14 labs"]:::filled
       L2B["T=B · 1 lab"]:::filled
-      L2C["T=C · gap"]:::gap
-      L2D["T=D · gap"]:::gap
+      L2C["T=C · 2 labs"]:::filled
+      L2D["T=D · 1 lab"]:::filled
       L2E["T=E · 1 lab"]:::filled
     end
     subgraph lane3["<b>Lane 3 — Machine</b>"]
-      L3A["T=A · 4 labs"]:::filled
-      L3B["T=B · gap"]:::gap
+      L3A["T=A · 5 labs"]:::filled
+      L3B["T=B · 1 lab"]:::filled
       L3C["T=C · 1 lab"]:::filled
       L3D["T=D · 1 lab"]:::filled
       L3E["T=E · gap"]:::gap
     end
     subgraph lane4["<b>Lane 4 — Agent → Agent</b>"]
       L4A["T=A · 6 labs"]:::filled
-      L4B["T=B · gap"]:::gap
-      L4C["T=C · gap"]:::gap
-      L4D["T=D · gap"]:::gap
-      L4E["T=E · gap"]:::gap
+      L4B["T=B · 1 lab"]:::filled
+      L4C["T=C · 2 labs"]:::filled
+      L4D["T=D · 1 lab"]:::filled
+      L4E["T=E · 1 lab"]:::filled
     end
     subgraph lane5["<b>Lane 5 — Anonymous</b>"]
-      L5["3 labs · no transport notion (pre-auth)"]:::filled
+      L5["6 labs · Transport A (pre-auth surface)"]:::filled
     end
   end
   classDef filled fill:#34d399,stroke:#064e3b,color:#000;
@@ -446,32 +446,28 @@ callers haven't declared a transport yet).
 | Lane | T=A (MCP) | T=B (Direct API) | T=C (In‑Process) | T=D (Subprocess) | T=E (Function‑Calling) | Secondary |
 |------|-----------|------------------|------------------|------------------|------------------------|-----------|
 | **1. Human Direct** (7) | `auth_lab`, `rbac_lab`, `tenant_lab`, `notification_lab`, `temporal_lab` | `secrets_lab` | `sdk_tamper_lab` | — | — | — |
-| **2. Human → Agent** (13) | `oauth_delegation_lab`, `revocation_lab`, `pattern_downgrade_lab`, `credential_broker_lab`, `context_lab`, `comms_lab`, `audit_lab`, `indirect_lab`, `budget_tuning_lab`, `policy_authoring_lab`, `response_inspection_lab` | `egress_lab` | — | — | `function_calling_lab` | `delegation_chain_lab` (from L4), `relay_lab` (from L4) |
-| **3. Machine Identity** (6) | `bot_identity_theft_lab`, `teleport_role_escalation_lab`, `cert_replay_lab`, `config_lab` | — | `supply_lab` | `subprocess_lab` | — | `credential_broker_lab` (from L2) |
-| **4. Agent → Agent** (6) | `delegation_chain_lab`, `delegation_depth_lab`, `hallucination_lab`, `relay_lab`, `attribution_lab`, `cost_exhaustion_lab` | — | — | — | — | `bot_identity_theft_lab` (from L3) |
-| **5. Anonymous** (3) | `tool_lab`, `shadow_lab`, `error_lab` | — | — | — | — | — |
+| **2. Human → Agent** (19) | `oauth_delegation_lab`, `revocation_lab`, `pattern_downgrade_lab`, `credential_broker_lab`, `context_lab`, `comms_lab`, `audit_lab`, `indirect_lab`, `budget_tuning_lab`, `policy_authoring_lab`, `response_inspection_lab`, `ai_governance_bypass_lab`, `shared_idp_pollution_lab`, `blocklist_bypass_lab` | `egress_lab` | `delegated_sdk_lab`, `dpop_forgery_lab` | `code_review_agent_lab` | `function_calling_lab` | `delegation_chain_lab` (from L4), `relay_lab` (from L4) |
+| **3. Machine Identity** (8) | `bot_identity_theft_lab`, `teleport_role_escalation_lab`, `cert_replay_lab`, `config_lab`, `agent_http_bypass_lab` | `agent_http_bypass_lab` | `supply_lab` | `subprocess_lab` | — | `credential_broker_lab` (from L2) |
+| **4. Agent → Agent** (11) | `delegation_chain_lab`, `delegation_depth_lab`, `hallucination_lab`, `relay_lab`, `attribution_lab`, `cost_exhaustion_lab` | `agent_chain_direct_api_lab` | `agent_sdk_chain_lab`, `rag_injection_lab` | `agent_subprocess_chain_lab` | `agent_llm_chain_lab` | `bot_identity_theft_lab` (from L3) |
+| **5. Anonymous** (6) | `tool_lab`, `shadow_lab`, `error_lab`, `anon_schema_harvest_lab`, `anon_rate_exhaust_lab`, `preauth_injection_lab` | — | — | — | — | — |
 
-**Transport coverage gaps** (surfaced by `/api/lanes` as machine-readable
-`gaps` fields — a teaching artifact, not a bug):
+**Remaining transport coverage gaps** (surfaced by `/api/lanes` as
+machine-readable `gaps` fields — a teaching artifact, not a bug):
 
-- **Lane 1**: ✅ all three baseline transports (A/B/C) covered as of
-  2026-04-28; no Transport D or E lab yet.
-- **Lane 2**: no Transport C or D lab yet (E filled by `function_calling_lab`).
-- **Lane 3**: no Transport B or E lab yet.
-- **Lane 4**: no Transport B, C, D, or E lab yet — agent chains today are
-  all MCP-transport in this corpus. The widest open lane.
-- **Lane 5**: no transport notion by design (anonymous pre-auth).
+- **Lane 1**: ✅ A/B/C covered; no Transport D or E lab yet.
+- **Lane 2**: ✅ all five transports covered.
+- **Lane 3**: ✅ A/B/C/D covered; no Transport E lab yet.
+- **Lane 4**: ✅ all five transports covered.
+- **Lane 5**: Transport A only (anonymous pre-auth surface).
 
-These are blind spots worth filling as the lab catalog grows; they also
-define the honest boundary of what camazotz currently teaches. The gap
-detection logic in `lane_taxonomy.coverage_summary` treats D and E as
-**opportunistic** — only flagged on a lane when at least one *other*
+The gap detection logic in `lane_taxonomy.coverage_summary` treats D and E
+as **opportunistic** — only flagged on a lane when at least one *other*
 lane already exercises that transport, avoiding noise on deployments that
 don't care about the new surfaces.
 
 #### Browsing the coverage
 
-The camazotz portal ships two parallel views of the same 44 labs:
+The camazotz portal ships two parallel views of the same 51 labs:
 
 - `GET /threat-map` — lab grid organized by *attack category* (best for
   learners asking "what kind of attack is this?").
