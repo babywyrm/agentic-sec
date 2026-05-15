@@ -10,6 +10,19 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.11] Camazotz — runtime IdP switching with auto lab reset
+
+- **Runtime IdP override** — `PUT /config { idp: { provider, issuer_url, token_endpoint, ... } }` switches the active identity provider on the fly without restarting services. `set_idp_config()` / `reset_idp_config()` in `config.py` with thread-safe runtime overlay.
+- **Auto lab reset** — changing the IdP provider triggers `registry.reset_all()` and rate limiter reset, preventing stale token references from the previous provider.
+- **Health cache invalidation** — `invalidate_idp_health_cache()` in `service.py` clears the 10s health probe cache on every IdP switch.
+- **Identity Dashboard switcher** — full switcher panel on `/identity` with provider dropdown, endpoint fields, client credentials, Apply/Reset buttons.
+- **Global strip IdP popover** — the IdP pill in the global status strip is now clickable with a dropdown for quick mock/zitadel/okta toggling.
+- **Provider-agnostic UI** — identity.html mermaid diagrams, reference tables, and labels generalized from ZITADEL-specific to provider-agnostic.
+- **16 new tests** (`test_runtime_idp_switching.py`) — config overrides, PUT /config integration, health cache invalidation, lab reset on switch, no-op same-provider.
+- **agentic-sec docs** — runtime switching documented in camazotz reference, Okta setup guide (Option B), identity-flows provider table updated.
+
+---
+
 ## [2026-05 pt.10] Ecosystem-wide — Okta identity provider support
 
 - **camazotz `OidcIdentityProvider` base class** extracted from `ZitadelIdentityProvider` — standard OAuth2 RFC logic (client credentials, RFC 8693 exchange, RFC 7662 introspection, revocation) shared across all OIDC providers. `ZitadelIdentityProvider` and `OktaIdentityProvider` are thin subclasses with factory methods.

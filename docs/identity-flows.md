@@ -513,7 +513,7 @@ in lockstep — they are the ecosystem's shared vocabulary.
 | Component | Lanes Served | Notes |
 |-----------|-------------|-------|
 | **ZITADEL** | 1, 2 | OIDC IdP for humans and delegated agents; runs in‑cluster |
-| **Okta** | 1, 2 | External OIDC IdP via `OktaIdentityProvider`; `make up-okta` compose profile |
+| **Okta** | 1, 2 | External OIDC IdP via `OktaIdentityProvider`; compose profile or runtime switch |
 | **Teleport (CE)** | 3, 4 (partial) | Machine ID via `tbot`, K8s + App Access; CE has no JIT access requests |
 | **Kubernetes API** | 3 | Issues SA tokens validated by Teleport's `kubernetes` join |
 | **(Future) SPIRE** | 3, 4 | Considered for native SPIFFE if we outgrow Teleport CE |

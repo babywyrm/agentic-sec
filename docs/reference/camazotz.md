@@ -49,6 +49,38 @@ make helm-deploy
 make up-okta
 ```
 
+## Runtime IdP Switching
+
+The identity provider can be changed at runtime without restarting services,
+via `PUT /config` or the Identity Dashboard UI. Switching provider
+automatically resets all lab state to prevent stale token references.
+
+```bash
+# Switch to Okta at runtime
+curl -s -X PUT http://localhost:8080/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idp": {
+      "provider": "okta",
+      "issuer_url": "https://dev-12345678.okta.com/oauth2/default",
+      "token_endpoint": "https://dev-12345678.okta.com/oauth2/default/v1/token",
+      "introspection_endpoint": "https://dev-12345678.okta.com/oauth2/default/v1/introspect",
+      "revocation_endpoint": "https://dev-12345678.okta.com/oauth2/default/v1/revoke",
+      "client_id": "your-client-id",
+      "client_secret": "your-client-secret"
+    }
+  }'
+
+# Switch back to mock
+curl -s -X PUT http://localhost:8080/config \
+  -H "Content-Type: application/json" \
+  -d '{"idp": {"provider": "mock"}}'
+```
+
+The portal's Identity Dashboard (`/identity`) also exposes a switcher panel
+with dropdown and endpoint fields. The global status strip includes a
+clickable IdP pill for quick mock/zitadel/okta toggling.
+
 ## Key Endpoints
 
 | Endpoint | What |
@@ -56,12 +88,13 @@ make up-okta
 | `http://localhost:3000` | Portal (Web UI) |
 | `http://localhost:3000/challenges` | Challenge grid with flag submission |
 | `http://localhost:3000/operator` | Guided walkthroughs (hidden) |
-| `http://localhost:3000/identity` | Identity dashboard (ZITADEL or Okta) |
+| `http://localhost:3000/identity` | Identity dashboard — status, runtime IdP switcher, architecture reference |
 | `http://localhost:3000/lanes` | **Agentic Lane View** — labs grouped by identity lane (HTML) |
 | `http://localhost:3000/threat-map` | Labs grouped by attack category (HTML) |
 | `http://localhost:8080/mcp` | MCP JSON-RPC endpoint |
 | `http://localhost:8080/api/lanes` | **Lane taxonomy** — schema v1 JSON (consumed by `mcpnuke --coverage-report`) |
 | `http://localhost:8080/health` | Health check |
+| `PUT http://localhost:8080/config` | Runtime config (difficulty, brain model, IdP) |
 | `POST http://localhost:8080/reset` | Reset all lab state |
 
 ### Kubernetes NodePort entry points

@@ -79,12 +79,38 @@ OKTA_CLIENT_SECRET=your-client-secret-here
 
 ## 6. Start camazotz with Okta
 
+### Option A: Compose overlay (persistent)
+
 ```bash
 make up-okta
 ```
 
 This disables the bundled ZITADEL/Postgres containers and points
 brain-gateway at your external Okta org.
+
+### Option B: Runtime switching (on-the-fly)
+
+Start camazotz normally (`make up`) and switch the IdP at runtime via
+`PUT /config` or the Identity Dashboard UI at `/identity`:
+
+```bash
+curl -s -X PUT http://localhost:8080/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idp": {
+      "provider": "okta",
+      "issuer_url": "https://dev-12345678.okta.com/oauth2/default",
+      "token_endpoint": "https://dev-12345678.okta.com/oauth2/default/v1/token",
+      "introspection_endpoint": "https://dev-12345678.okta.com/oauth2/default/v1/introspect",
+      "revocation_endpoint": "https://dev-12345678.okta.com/oauth2/default/v1/revoke",
+      "client_id": "your-client-id",
+      "client_secret": "your-client-secret"
+    }
+  }'
+```
+
+Runtime switching automatically resets all lab state. Switch back to mock
+with `{"idp": {"provider": "mock"}}`.
 
 Verify:
 
