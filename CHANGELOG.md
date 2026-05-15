@@ -10,6 +10,18 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the three sibling repos.
 
+## [2026-05 pt.10] Ecosystem-wide — Okta identity provider support
+
+- **camazotz `OidcIdentityProvider` base class** extracted from `ZitadelIdentityProvider` — standard OAuth2 RFC logic (client credentials, RFC 8693 exchange, RFC 7662 introspection, revocation) shared across all OIDC providers. `ZitadelIdentityProvider` and `OktaIdentityProvider` are thin subclasses with factory methods.
+- **camazotz `OktaIdentityProvider`** — `from_env()` reads `CAMAZOTZ_IDP_*` env vars; supports OIDC discovery via `from_issuer()`. Okta authorization server URL handling (org, default, custom).
+- **Provider-agnostic lab wiring** — `is_live_idp()` helper replaces 60+ `== "zitadel"` checks across `rbac_lab`, `oauth_delegation_lab`, `revocation_lab`, `main.py`, smoke tests, and QA runner.
+- **`make up-okta`** compose profile — disables bundled ZITADEL stack, points brain-gateway at external Okta org. Template: `compose/.env.okta.example`.
+- **5 Okta flow tests** (`test_okta_flows.py`) — exchange, revocation, RBAC, degradation, and `/config` endpoint validation.
+- **agentic-sec docs** — Okta setup guide (`docs/guides/okta-setup.md`), ecosystem roadmap updated, identity-flows and camazotz reference updated.
+- **nullfield and mcpnuke unchanged** — both are already IdP-agnostic.
+
+---
+
 ## [2026-05 pt.9] Ecosystem-wide — Lane 5 complete (51 labs)
 
 - **camazotz `anon_schema_harvest_lab`** (MCP-T50, Lane 5 / Transport A): anonymous tool schema over-disclosure — tool descriptions on easy/medium contain internal hostnames, credential patterns, and `CZTZ_SERVICE_KEY` references harvested without any authentication. Hard: catalog sanitized. 14 tests.

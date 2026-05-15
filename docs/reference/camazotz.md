@@ -42,8 +42,11 @@ make up-local
 # Kubernetes (Helm)
 make helm-deploy
 
-# With ZITADEL identity provider
+# With ZITADEL identity provider (bundled in compose)
 # Set CAMAZOTZ_IDP_PROVIDER=zitadel in values
+
+# With external Okta identity provider
+make up-okta
 ```
 
 ## Key Endpoints
@@ -53,7 +56,7 @@ make helm-deploy
 | `http://localhost:3000` | Portal (Web UI) |
 | `http://localhost:3000/challenges` | Challenge grid with flag submission |
 | `http://localhost:3000/operator` | Guided walkthroughs (hidden) |
-| `http://localhost:3000/identity` | ZITADEL identity dashboard |
+| `http://localhost:3000/identity` | Identity dashboard (ZITADEL or Okta) |
 | `http://localhost:3000/lanes` | **Agentic Lane View** — labs grouped by identity lane (HTML) |
 | `http://localhost:3000/threat-map` | Labs grouped by attack category (HTML) |
 | `http://localhost:8080/mcp` | MCP JSON-RPC endpoint |

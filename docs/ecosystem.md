@@ -249,9 +249,11 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ `preauth_injection_lab` (MCP-T52, Lane 5 / Transport A) — pre-auth input injected before identity established, inherited by session — *2026-05-12*
 - ✅ **Lane 5 purpose-built labs complete** — *2026-05-12*
 
+- ✅ **Okta identity provider support** in camazotz — `OidcIdentityProvider` base class extracted, `OktaIdentityProvider` and `ZitadelIdentityProvider` as subclasses, provider-agnostic lab wiring (`is_live_idp()`), `make up-okta` compose profile, 5 Okta flow tests — *2026-05-15*
+
 ### Near-term (actively worked)
 
-- Broader IdP support in camazotz labs — Okta and Auth0 alongside ZITADEL for Lane 1/2 coverage
+- Auth0 identity provider alongside ZITADEL and Okta for Lane 1/2 coverage (same `OidcIdentityProvider` base, thin subclass)
 
 ### Future (revisit when the vocabulary drifts)
 
