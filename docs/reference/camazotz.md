@@ -1,6 +1,6 @@
 # camazotz Quick Reference
 
-MCP security playground — 43 intentionally vulnerable labs.
+MCP security playground — 52 intentionally vulnerable labs.
 
 **Repo:** [github.com/babywyrm/camazotz](https://github.com/babywyrm/camazotz)
 
