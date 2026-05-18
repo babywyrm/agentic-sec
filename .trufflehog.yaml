@@ -1,0 +1,14 @@
+# TruffleHog v3 configuration for agentic-sec
+# Walkthrough and scenario documents deliberately contain fake credentials
+# as part of the CTF/security-research narrative.
+
+exclude_paths:
+  - 1/
+
+exclude_detectors:
+  - Polygon
+  - Pastebin
+  - URI
+
+# Known-intentional fake credential files:
+#   docs/walkthroughs/practice.md   — CTF walkthrough with example DSNs
