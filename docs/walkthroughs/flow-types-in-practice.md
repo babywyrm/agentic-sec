@@ -516,12 +516,12 @@ Uncategorized (no lane scope — 13 finding(s))
 ── Cross-project coverage report (vs camazotz) ──
   camazotz: 52 labs across 5 lanes  ← 8 more labs added since 2026-04-28
   mcpnuke covered 4/5 lanes on this scan
-  widest gap: Lane 1 (human-direct) — camazotz declares labs, mcpnuke fired none (SDK-path detection TBD)
+  widest gap: Lane 4 (agent-chain) — Transport B and C not covered by camazotz labs yet
 
 Lane 1 — Human Direct
-  camazotz: 7 primary lab(s), transports [A, B, C]  ← Transport C now covered
-  mcpnuke:  0 finding(s) fired (none)
-  camazotz declares 7 primary lab(s); mcpnuke has no check for the SDK cache-tamper path yet — next detection gap
+  camazotz: 7 primary lab(s), transports [A, B, C]
+  mcpnuke:  2 finding(s) fired (CRITICAL=1, HIGH=1), transports [A, C]
+  sdk_cache_tamper (MCP-T33) check probes the SDK cache-tamper path — lane now covered
 
 Lane 2 — Human → Agent
   camazotz: 12 primary lab(s), transports [A, B], gaps: Transport C not covered
@@ -546,8 +546,8 @@ Lane 5 — Anonymous
 
 **What this output actually says:**
 
-- **mcpnuke covered 4/5 lanes** — Lane 5 is fully aligned (3 camazotz labs, 3 findings fired); Lanes 2/3/4 each fire on the relevant attack patterns.
-- **Widest gap: Lane 1 (Human Direct)** — camazotz now has 7 labs (including the new SDK-layer `sdk_tamper_lab`), but no mcpnuke static check probes the SDK cache-tamper path. That's the next actionable detection gap.
+- **mcpnuke now covers 5/5 lanes** — `sdk_cache_tamper` (MCP-T33, 6.12.0) closed the Lane 1 gap. Lane 5 is fully aligned (3 labs, 3 findings fired); Lanes 1/2/3/4 each fire on the relevant attack patterns.
+- **Lane 1 is now green** — `check_sdk_cache_tamper` (static) and `check_sdk_cache_poisoning` (behavioral) probe the SDK cache-tamper path. Static scan emits HIGH + CRITICAL for the write/invoke tool pair; behavioral scan confirms the forged JWT is accepted at easy/medium difficulty.
 - **Lane 1 Transport C is now green** — `sdk_tamper_lab` (MCP-T33, 2026-04-28) closes the only missing Transport C slot on Lane 1. Lane 4 still has no Transport B or C labs.
 - **Lane 4 dominates the count** (14/34 findings) — chain-of-tools attacks (`code_execution`, `attack_chain`, `multi_vector`) are the most common pattern surfaced by static analysis, which matches the camazotz corpus emphasis on agent-to-agent labs.
 - **Uncategorized** is now down to `excessive_permissions` (13/34) — these findings are tool-specific (the dangerous capability lives on the tool, not on a lane the check itself knows about). Tagging requires a per-tool lookup, deliberately deferred.
@@ -671,7 +671,7 @@ Concrete work items surfaced by this walkthrough, in rough value order:
 ### Open follow-ups
 
 - **Tune kubelet `--config-sync-period`** on the reference cluster to 10 s and re-measure Stage 2 latency.
-- **Lane 1 — SDK-path detection** — `sdk_tamper_lab` (MCP-T33) exists in camazotz but mcpnuke has no static check that probes the SDK cache-tamper attack path. Adding a Lane 1 / Transport C check to mcpnuke closes the coverage gap shown in the report above.
+- ✅ **Lane 1 — SDK-path detection** — Done (mcpnuke 6.12.0). `check_sdk_cache_tamper` + `check_sdk_cache_poisoning` (MCP-T33, Lane 1 / Transport C) probe the SDK cache-tamper attack path. Coverage report now shows 5/5 lanes.
 - **Lane 3 / Transport B** — no camazotz lab covers a Direct HTTP API machine-identity attack. One new lab closes this cell.
 - **Lane 4 / Transport B and C** — six labs cover agent-to-agent over MCP JSON-RPC; none model the SDK or HTTP variants of chain attacks.
 - **Tag `excessive_permissions` findings** in `mcpnuke` with per-tool lane lookups to close the remaining uncategorized bucket in `--coverage-report`.
