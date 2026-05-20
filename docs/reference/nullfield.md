@@ -79,4 +79,4 @@ bash tests/smoke.sh
 | v0.6 | Controller pod, universal Helm chart |
 | v0.7 | Vault credentials, gateway mode, admission webhook |
 | v0.8 | CRD controller (NullfieldPolicy as K8s resource) |
-| v0.9 | Hot policy reload, response inspection |
+| v0.9 | Hot policy reload, response inspection, tool lifecycle management with rug-pull detection, per-identity cost attribution |

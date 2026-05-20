@@ -197,7 +197,7 @@ the other two repos must move in lockstep.
 ## Per-Project Coverage Scorecard
 
 What each project covers today, and what it deliberately leaves to the others.
-This is the honest boundary of the ecosystem as of 2026-04-26.
+This is the honest boundary of the ecosystem as of 2026-05-19.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
@@ -205,6 +205,7 @@ This is the honest boundary of the ecosystem as of 2026-04-26.
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | Agentic token usage benchmarking — compares LLM providers (Claude, OpenAI, Bedrock, Ollama) on cost, throughput, latency, and accuracy with LLM-as-judge scoring. | MCP protocol enforcement, vulnerability scanning, policy. Stoneburner is for cost/performance measurement, not security. | Benchmark results JSON |
 
 **Transport matrix status** (surfaced by camazotz `/api/lanes` as
 machine-readable `gaps`):
@@ -251,6 +252,7 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ **nullfield v0.9** — tool lifecycle management with rug-pull detection (`pkg/registry/lifecycle.go`), response inspection pipeline, per-identity cost attribution — *2026-05-15*
 - ✅ `shell_exec_wrap_lab` (MCP-T53, Lane 3 / Transport D) — shell command wrapping injection; MCP tool calls `subprocess.run(user_input, shell=True)`, not simulated. 14 tests. Lab count 51 → 52. — *2026-05-15*
 - ✅ mcpnuke `shell_injection` check — Transport D behavioral probe with 5 metacharacter injection categories and dangerous base command probes. 18 tests. — *2026-05-15*
+- ✅ Central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml` — drift enforced by `test_agentic_sec_taxonomy_in_sync` in camazotz — *2026-05-12*
 
 ### Near-term (actively worked)
 
@@ -258,7 +260,6 @@ Three horizons, committed in decreasing order of near-term certainty.
 
 ### Future (revisit when the vocabulary drifts)
 
-- Central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml` — ✅ shipped 2026-05-12; drift is now enforced by `test_agentic_sec_taxonomy_in_sync` in camazotz
 - Per-lane rate-limit primitives in nullfield (distinct from global `maxCallsPerMinute`)
 - mcpnuke `--watch` mode producing continuous lane-coverage deltas against a long-running camazotz target
 

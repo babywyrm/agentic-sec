@@ -147,7 +147,7 @@ mcpnuke --targets http://localhost:4567/mcp \
 }
 ```
 
-Shipped profiles: `profiles/camazotz.json` (70+ tools), `profiles/dvmcp.json` (18 tools), `profiles/example.json` (annotated template).
+Shipped profiles: `profiles/camazotz.json` (111 tools), `profiles/dvmcp.json` (18 tools), `profiles/example.json` (annotated template).
 
 ## Check Categories
 
