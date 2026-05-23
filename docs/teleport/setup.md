@@ -511,9 +511,9 @@ mcpnuke --targets http://localhost:8080/mcp --verbose
 
 | Check | Attack chain | Threat |
 |---|---|---|
-| `teleport_lab_bot_theft` | Read tbot secret → replay identity → check session binding | MCP-T04 |
-| `teleport_lab_role_escalation` | Get roles → request escalation → privileged operation | MCP-T20 |
-| `teleport_lab_cert_replay` | Get expired cert → replay → check replay detection | MCP-T26 |
+| `teleport_lab_bot_theft` | Read tbot secret → replay identity → check session binding | MCP-T18 |
+| `teleport_lab_role_escalation` | Get roles → request escalation → privileged operation | MCP-T28 |
+| `teleport_lab_cert_replay` | Get expired cert → replay → check replay detection | MCP-T19 |
 
 ---
 
