@@ -235,7 +235,7 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ mcpnuke DPoP enforcement check (RFC 9449, three probes, Lane 3 / Transport A) — *2026-05-10*
 - ✅ nullfield `scope.request.blockRedirects` primitive (MCP-T41 defense) — *2026-05-10*
 - ✅ `delegated_sdk_lab` (MCP-T46, Lane 2 / Transport C) — fills Lane 2 / Transport C gap — *2026-05-10*
-- ✅ `agent_sdk_chain_lab` (MCP-T47, Lane 4 / Transport C) — fills Lane 4 / Transport C gap; **5×5 transport matrix now complete** — *2026-05-10*
+- ✅ `agent_sdk_chain_lab` (MCP-T47, Lane 4 / Transport C) — fills Lane 4 / Transport C gap — *2026-05-10*
 - ✅ mcpnuke Spring Actuator Phase 2 exploitation probes (heapdump, env/logger POST write, shutdown gating) — *2026-05-10*
 - ✅ Campaign 5: Enterprise AI-Ops (`docs/campaigns/enterprise-ai-ops.md`) — MCP-T42/T43/T44/T46/T47 chain — *2026-05-10*
 - ✅ Walkthrough 10: Token Cross-Pollution and Shared Identity (`docs/walkthroughs/token-cross-pollution.md`) — MCP-T42/T43 — *2026-05-10*

@@ -921,6 +921,7 @@ Each golden path gate maps to specific [Camazotz](https://github.com/babywyrm/ca
 | Gate 2: DPoP binding | `dpop_forgery_lab` | MCP-T43 | Exposed DPoP private key enables proof forgery with correct htm/htu binding |
 | Gate 3: Input validation | `blocklist_bypass_lab` | MCP-T44 | Incomplete shell/query blocklist misses alternate interpreter execution paths |
 | Gate 2: Agent chain | `agent_chain_direct_api_lab` | MCP-T45 | Agent-to-agent credential forwarding without act-chain or audience narrowing |
+| Gate 3: Subprocess sanitization | `shell_exec_wrap_lab` | MCP-T53 | Shell command wrapping injection via `subprocess.run(user_input, shell=True)` |
 
 Run `mcpnuke` against your staging gateway to validate that your gate implementations actually block these attack patterns.
 

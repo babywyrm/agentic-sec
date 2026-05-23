@@ -248,9 +248,10 @@ into a subprocess call. `blocklist_bypass_lab` (MCP-T44) shows why blocklisting
 interpreters never works. Both labs are Transport D. The concepts are the same;
 in the real CLI-agent world, the MCP wrapper is simply absent.
 
-**Future coverage planned:** `shell_exec_wrap_lab` (MCP-T53) — a Transport D
+**Now shipped:** `shell_exec_wrap_lab` (MCP-T53) — a Transport D
 lab where the MCP tool actually calls `subprocess.run(user_input, shell=True)`;
-not simulated. See `docs/ecosystem.md` Horizon section for the full roadmap.
+not simulated. Shipped 2026-05-15 with 14 tests and a matching mcpnuke
+`shell_injection` behavioral check.
 
 ---
 
