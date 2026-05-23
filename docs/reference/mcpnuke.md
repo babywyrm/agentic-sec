@@ -26,7 +26,7 @@ for the full taxonomy.
 ## Key Commands
 
 ```bash
-# Static baseline — all 99 tools, zero API calls, instant
+# Static baseline — all 130 tools, zero API calls, instant
 mcpnuke --targets http://localhost:8080/mcp \
   --no-invoke --coverage 0 --verbose \
   --json baseline.json
@@ -147,7 +147,7 @@ mcpnuke --targets http://localhost:4567/mcp \
 }
 ```
 
-Shipped profiles: `profiles/camazotz.json` (111 tools), `profiles/dvmcp.json` (18 tools), `profiles/example.json` (annotated template).
+Shipped profiles: `profiles/camazotz.json` (130 tools), `profiles/dvmcp.json` (18 tools), `profiles/example.json` (annotated template).
 
 ## Check Categories
 

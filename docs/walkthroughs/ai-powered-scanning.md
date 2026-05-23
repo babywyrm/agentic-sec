@@ -48,7 +48,7 @@ the tools, and real AI analyzing the attack surface.
 ### Static scan (no Claude): 179 findings in 0.7s
 
 Pattern matching detects dangerous tool names, parameters, and capability
-keywords across all 99 tools:
+keywords across all 130 tools:
 
 ```
 [CRITICAL] code_execution: Code execution indicator in 'hallucination.execute_plan'
@@ -157,7 +157,7 @@ mcpnuke --targets http://localhost:8080/mcp \
   --profile profiles/camazotz.json \
   --json baseline.json
 
-# Results: 179 findings across 99 tools, 0.7s, zero API calls
+# Results: 179 findings across 130 tools, 0.7s, zero API calls
 ```
 
 ### Scan 2: Claude analysis (top 15 tools, ~3 min)
@@ -235,9 +235,9 @@ mcpnuke --targets https://mcp.internal.example.com/mcp \
 | `--no-invoke --coverage 0` | all 99 | 179 | ~1s | 0 | CI baseline, instant audit |
 | `--fast` (= `--coverage 5`) | top 5 | ~40 | ~2 min | 0 | Quick PR check |
 | `--coverage 15 --claude` | top 15 | ~96 | ~3 min | Many | Sprint review, reporting |
-| `--coverage 0 --claude` | all 99 | 200+ | ~30+ min | Many | Full assessment |
+| `--coverage 0 --claude` | all 130 | 200+ | ~30+ min | Many | Full assessment |
 
-Numbers above reflect a full camazotz deployment (99 tools). Results scale with server size.
+Numbers above reflect a full camazotz deployment (130 tools). Results scale with server size.
 
 **Cost estimate** (Claude API, `claude-sonnet-4-20250514`):
 - Static scan: $0.00 (no API calls)
@@ -309,7 +309,7 @@ When presenting AI-powered scan results to stakeholders:
 1. **Lead with the attack chains.** Claude's `MCP-ATK-*` findings describe
    complete kill chains in language non-technical reviewers can understand.
 
-2. **Show the delta.** "Static analysis found 179 issues across 99 tools. AI reasoning on the top 15 tools found 47 additional scenarios including live credential exposure and a persistent exfiltration backdoor." The diff output is ready-made for this — copy the NEW block directly into your report.
+2. **Show the delta.** "Static analysis found 179 issues across 130 tools. AI reasoning on the top 15 tools found 47 additional scenarios including live credential exposure and a persistent exfiltration backdoor." The diff output is ready-made for this — copy the NEW block directly into your report.
 
 3. **Include the generated policy.** The `fix.yaml` is a concrete, actionable
    deliverable — not just a list of problems but a ready-to-apply solution.
