@@ -205,7 +205,7 @@ This is the honest boundary of the ecosystem as of 2026-05-19.
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | Agentic token usage benchmarking — compares LLM providers (Claude, OpenAI, Bedrock, Ollama) on cost, throughput, latency, and accuracy with LLM-as-judge scoring. | MCP protocol enforcement, vulnerability scanning, policy. Stoneburner is for cost/performance measurement, not security. | Benchmark results JSON |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | Agentic token usage benchmarking — compares LLM providers (Claude, OpenAI, Bedrock, Ollama, **brain-gateway**) on cost, throughput, latency, and accuracy with LLM-as-judge scoring. The `brain-gateway` provider routes benchmarks through camazotz's MCP inference endpoint, enabling comparative analysis of the same workload across camazotz-managed providers. | MCP protocol enforcement, vulnerability scanning, policy. Stoneburner is for cost/performance measurement, not security. | Benchmark results JSON; `atomics compare --narrative` |
 
 **Transport matrix status** (surfaced by camazotz `/api/lanes` as
 machine-readable `gaps`):
@@ -383,4 +383,5 @@ incident response runbooks (what to do when mcpnuke finds a gap).
 | Add the policy layer | [nullfield README](https://github.com/babywyrm/nullfield) — deploy as sidecar |
 | Add machine identity | [Teleport Setup](teleport/setup.md) — step-by-step Teleport integration |
 | Scan and validate | [mcpnuke README](https://github.com/babywyrm/mcpnuke) — `mcpnuke --targets http://localhost:8080/mcp` |
+| Benchmark providers | [stoneburner](https://github.com/babywyrm/stoneburner) — `atomics run --provider brain-gateway` |
 | Production architecture | [Golden Path v3](golden-path.md) — the complete security spec |
