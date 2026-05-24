@@ -37,6 +37,7 @@ MCP and agentic AI patterns are 1–2 year old RFCs — the security conventions
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar proxy that intercepts every MCP `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET policy before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP security scanner — static, behavioral, and AI-assisted probes; outputs findings + nullfield policy |
 | **[stoneburner](https://github.com/babywyrm/stoneburner)** | Benchmarking | Agentic token usage benchmarking platform — compares LLM providers (Claude, OpenAI, Bedrock, Ollama) on cost, throughput, latency, and accuracy with LLM-as-judge scoring |
+| **agentic-bootstrap** *(POC)* | CTF infra | Decouples VM inference from the image — boots any CTF machine against any LLM backend, enforces model compatibility, validates solvability per model |
 
 Each tool ships independently. They are more powerful together.
 

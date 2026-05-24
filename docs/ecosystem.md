@@ -177,6 +177,42 @@ mcpnuke to prove the defenses work. If mcpnuke's exploit chains produce
 CRITICAL findings on hard difficulty, your policy has gaps. If they produce
 INFO findings ("defense held"), you're in good shape.
 
+### Layer 5: agentic-bootstrap — CTF Inference Orchestration
+
+> *Local POC — not yet public.*
+
+agentic-bootstrap solves a different problem: **how to run the same CTF VM
+against different LLM backends without rebuilding the image**. Each machine
+(Warbird, Hammerhand, future boxes) has AI-gated attack surfaces — prompt
+injection targets, deployment security gates, log redaction layers — and the
+model powering those gates directly affects solvability and difficulty.
+
+**Architecture:**
+
+```
+machine.yaml    ─── HOW to wire a box (static: k8s patches, env vars, systemd)
+                    never changes when models or endpoints swap
+profile.yaml    ─── WHERE to call (swappable: endpoint IP, port, default model)
+                    brainbox.yaml → lab Ollama, cloud-brain.yaml → GCP GPU
+bootstrap.sh    ─── generic dispatcher: reads both, applies patches via SSH
+                    refuses incompatible model+machine combos (exit 2)
+tests/*.sh      ─── per-machine solvability validation: sweeps every LLM gate
+                    across a model lineup, reports PASS/FAIL/SOLVABILITY_BROKEN
+```
+
+**What validation has shown (Warbird, 6 models):** model choice creates a
+difficulty spectrum. The `ops_assistant` prompt-injection gate leaks the
+agent secret on 5/5 strategies with `qwen3.5:0.8b` (easy) but only 1/5
+with `qwen2.5:7b` (hard). The `deploy_war` structural gate holds on 5 of
+6 models but `qwen3:4b` breaks it entirely — its chain-of-thought reasoning
+leaks into verdict text, defeating the `startswith("APPROVED")` parser and
+making the box unsolvable. That model is flagged `incompatible` and the
+bootstrap refuses to deploy it.
+
+**What it solves:** CTF platform operators select a difficulty tier when
+spawning a VM, the bootstrap wires the inference layer accordingly, and
+the solvability tests guarantee the box remains winnable.
+
 ### The Lane View — `/lanes` UI + `/api/lanes` JSON contract
 
 Camazotz ships two parallel views over the 52 labs: `/threat-map` groups
@@ -206,6 +242,7 @@ This is the honest boundary of the ecosystem as of 2026-05-19.
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
 | **[stoneburner](https://github.com/babywyrm/stoneburner)** | Agentic token usage benchmarking — compares LLM providers (Claude, OpenAI, Bedrock, Ollama, **brain-gateway**) on cost, throughput, latency, and accuracy with LLM-as-judge scoring. The `brain-gateway` provider routes benchmarks through camazotz's MCP inference endpoint, enabling comparative analysis of the same workload across camazotz-managed providers. | MCP protocol enforcement, vulnerability scanning, policy. Stoneburner is for cost/performance measurement, not security. | Benchmark results JSON; `atomics compare --narrative` |
+| **agentic-bootstrap** *(local POC, not yet public)* | CTF VM inference bootstrapping — decouples the LLM inference layer from VM images so machines can be booted against any endpoint and model. Per-machine wiring specs (`machine.yaml`), swappable inference profiles, model compatibility enforcement with incompatibility refusal, and per-machine solvability test suites that validate attack-chain integrity across models. | Not a security tool. Handles operational wiring of CTF lab VMs to inference backends (Ollama on local hardware, cloud GPU hosts). | `machine.yaml` per VM, `profiles/*.yaml` per backend, `tests/*.sh` per machine |
 
 **Transport matrix status** (surfaced by camazotz `/api/lanes` as
 machine-readable `gaps`):
@@ -384,4 +421,5 @@ incident response runbooks (what to do when mcpnuke finds a gap).
 | Add machine identity | [Teleport Setup](teleport/setup.md) — step-by-step Teleport integration |
 | Scan and validate | [mcpnuke README](https://github.com/babywyrm/mcpnuke) — `mcpnuke --targets http://localhost:8080/mcp` |
 | Benchmark providers | [stoneburner](https://github.com/babywyrm/stoneburner) — `atomics run --provider brain-gateway` |
+| Wire a CTF VM to an inference backend | agentic-bootstrap — `bootstrap.sh machines/warbird profiles/brainbox.yaml` |
 | Production architecture | [Golden Path v3](golden-path.md) — the complete security spec |
