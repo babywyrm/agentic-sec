@@ -1,14 +1,59 @@
 # Changelog
 
 All notable hub-level changes to the agentic-security ecosystem (camazotz +
-nullfield + mcpnuke + this docs hub). Per-project code changes live in each
-project's own CHANGELOG; this file narrates **ecosystem milestones** —
-moments where the shared vocabulary, the lane/transport taxonomy, the
-policy contract, or the cross-project surfaces moved together.
+nullfield + mcpnuke + stoneburner + this docs hub). Per-project code changes
+live in each project's own CHANGELOG; this file narrates **ecosystem
+milestones** — moments where the shared vocabulary, the lane/transport
+taxonomy, the policy contract, or the cross-project surfaces moved together.
 
 The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
-"release" is the alignment of the three sibling repos.
+"release" is the alignment of the sibling repos.
+
+## [2026-05 pt.17] Ecosystem sync — agentic-bootstrap + nullfield 138-tool alignment
+
+- **agentic-bootstrap** documented in `ecosystem.md` (Layer 5 architecture, coverage scorecard) and `README.md` (tool table, reference link). CTF VM inference bootstrapping system that decouples LLM inference from VM images — per-machine wiring specs, swappable profiles, model compatibility enforcement, solvability test suites. Local POC, not yet public.
+- **nullfield `tools.yaml`** re-synced from 85 → 138 tools, matching camazotz's current `tools/list` surface.
+- **`docs/reference/stoneburner.md`** created — CLI commands, provider table, eval suites (adversarial/red-blue/probe), thinking mode, camazotz brain-gateway integration.
+- **README** updated: "Three Tools" → "The Tools"; added stoneburner badge, reference link, license footer entry.
+- **Ecosystem scorecard** stoneburner description expanded to reflect adversarial/red-blue/probe suites; scorecard date bumped to 2026-05-24.
+
+---
+
+## [2026-05 pt.16] Stoneburner v0.5.0 — adversarial, red/blue, and probe suites
+
+- **stoneburner `atomics adversarial`** — 15 adversarial fixtures across 7 categories (prompt injection, role confusion, context escape, instruction override, social engineering, data exfil, CoT leakage). Inverted resistance scoring on 0.0–1.0 scale. `--runs N` for multi-pass variance (mean ± stddev). `--extra-judges` for multi-judge consensus scoring across providers.
+- **stoneburner `atomics redblue`** — 10 fixtures (5 red team offensive, 5 blue team defensive) for security capability evaluation. Reuses quality-based LLM-as-judge scoring.
+- **stoneburner `atomics probe`** — live infrastructure analysis via external `probes.yaml`. Configurable artifact types (access logs, JSON reports, K8s audit logs, config files, API responses). Regression detection against prior baselines.
+- **Thinking mode** (`--thinking` / `--no-thinking` / `--thinking-budget`) — benchmarks reasoning toggle across providers that support it (Claude, OpenAI, Ollama).
+- **`brain-gateway` provider** — routes benchmarks through camazotz's MCP inference endpoint, enabling same-workload comparison across camazotz-managed providers.
+- **adv-14 CoT leakage fixture** — captures the `qwen3:4b` chain-of-thought-into-verdict bug found during Warbird CTF model compatibility testing. Models that emit reasoning before structured verdicts break `startswith`-based parsers in agentic pipelines.
+- **adv-15 credential extraction fixture** — mirrors the "helpful ops request" social engineering strategy that leaked `WARBIRD_AGENT_CLIENT_SECRET` across multiple Ollama models.
+- **SQLite schema v6** — `suite` column on `task_results`, new `adversarial_results` and `probe_results` tables.
+- **369 tests passing.**
+
+---
+
+## [2026-05 pt.15] Camazotz — Auth0 + Identity Dashboard + DPoP
+
+- **Auth0 identity provider** — `OidcIdentityProvider` subclass with OIDC auto-discovery (`from_issuer()`). Fourth IdP alongside mock, ZITADEL, and Okta. `make up-auth0` compose profile.
+- **Identity Dashboard operational hub** — redesigned `/identity` page with live lifecycle testing, OIDC auto-discovery panel, JWT decoder, DPoP badge, provider switcher. Supersedes the earlier pt.11 switcher panel.
+- **Transparent DPoP (RFC 9449)** — OIDC providers now support Demonstrating Proof-of-Possession. DPoP proofs are generated per-request; brain-gateway validates binding. Surfaces in Identity Dashboard as a badge.
+- **Brain provider runtime switching** — benchmark SSE dashboard for live provider comparison. Playground search filter. Brain popover with provider metadata. Ollama SSRF allowlist.
+- **Test count: 1479** (up from 1209 at pt.9).
+
+---
+
+## [2026-05 pt.14] mcpnuke 6.10–6.13 — inference probes + SDK cache + Ollama AI
+
+- **MCP-T54 `--inference` / `--inference-host`** (mcpnuke 6.10.0) — unauthenticated inference backend probe. Discovers Ollama/vLLM/TGI endpoints exposed without auth, enumerates models, checks for prompt injection via the raw API. Lane 3 finding.
+- **MCP-T55 `--inference-baseline` / `--save-inference-baseline`** (mcpnuke 6.11.0) — model integrity verification. Saves model digests as baseline; re-scan detects model swaps or tampering. Lane 3 finding.
+- **MCP-T33 `sdk_cache_tamper` + `sdk_cache_poisoning`** (mcpnuke 6.12.0) — Lane 1 / Transport C checks. Detects in-process SDK tool caches that can be tampered via shared memory or poisoned via malicious tool registration. Closes the Lane 1/C gap in mcpnuke's check catalog.
+- **Ollama AI analysis** (mcpnuke 6.13.0) — `--ollama-analysis` for single-model AI-assisted finding analysis; `--ollama-ensemble` for multi-model ensemble consensus. Zero-cost alternative to `--claude` for local analysis.
+- **Taxonomy entries T54/T55** added to `docs/taxonomy/lanes.yaml`.
+- **618 tests passing, 36 skipped.**
+
+---
 
 ## [2026-05 pt.13] MCP-T53 Shell Command Wrapping Injection
 

@@ -92,7 +92,7 @@ clickable IdP pill for quick mock/zitadel/okta toggling.
 | `http://localhost:3000/lanes` | **Agentic Lane View** — labs grouped by identity lane (HTML) |
 | `http://localhost:3000/threat-map` | Labs grouped by attack category (HTML) |
 | `http://localhost:8080/mcp` | MCP JSON-RPC endpoint |
-| `http://localhost:8080/api/lanes` | **Lane taxonomy** — schema v1 JSON (consumed by `mcpnuke --coverage-report`) |
+| `http://localhost:3000/api/lanes` | **Lane taxonomy** — schema v1 JSON (consumed by `mcpnuke --coverage-report`). Served by the portal on `:3000`, not brain-gateway. |
 | `http://localhost:8080/health` | Health check |
 | `PUT http://localhost:8080/config` | Runtime config (difficulty, brain model, IdP) |
 | `POST http://localhost:8080/reset` | Reset all lab state |

@@ -233,7 +233,7 @@ the other two repos must move in lockstep.
 ## Per-Project Coverage Scorecard
 
 What each project covers today, and what it deliberately leaves to the others.
-This is the honest boundary of the ecosystem as of 2026-05-19.
+This is the honest boundary of the ecosystem as of 2026-05-24.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
@@ -241,7 +241,7 @@ This is the honest boundary of the ecosystem as of 2026-05-19.
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | Agentic token usage benchmarking — compares LLM providers (Claude, OpenAI, Bedrock, Ollama, **brain-gateway**) on cost, throughput, latency, and accuracy with LLM-as-judge scoring. The `brain-gateway` provider routes benchmarks through camazotz's MCP inference endpoint, enabling comparative analysis of the same workload across camazotz-managed providers. | MCP protocol enforcement, vulnerability scanning, policy. Stoneburner is for cost/performance measurement, not security. | Benchmark results JSON; `atomics compare --narrative` |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM provider benchmarking (cost, throughput, latency, accuracy via LLM-as-judge) across Claude, OpenAI, Bedrock, Ollama, and **brain-gateway**. Adversarial resilience testing (15 fixtures, `--runs N` multi-pass variance, `--extra-judges` multi-judge consensus). Red/blue security capability eval (10 fixtures). Live infrastructure probe via `probes.yaml`. Thinking mode benchmarking. The `brain-gateway` provider routes through camazotz's MCP inference endpoint. | MCP protocol enforcement, vulnerability scanning, policy generation. Stoneburner complements mcpnuke — it measures LLM reasoning quality and adversarial resilience, not MCP protocol integrity. | `atomics compare --narrative`; adversarial/redblue/probe CLI output; SQLite results DB |
 | **agentic-bootstrap** *(local POC, not yet public)* | CTF VM inference bootstrapping — decouples the LLM inference layer from VM images so machines can be booted against any endpoint and model. Per-machine wiring specs (`machine.yaml`), swappable inference profiles, model compatibility enforcement with incompatibility refusal, and per-machine solvability test suites that validate attack-chain integrity across models. | Not a security tool. Handles operational wiring of CTF lab VMs to inference backends (Ollama on local hardware, cloud GPU hosts). | `machine.yaml` per VM, `profiles/*.yaml` per backend, `tests/*.sh` per machine |
 
 **Transport matrix status** (surfaced by camazotz `/api/lanes` as
@@ -290,10 +290,19 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ `shell_exec_wrap_lab` (MCP-T53, Lane 3 / Transport D) — shell command wrapping injection; MCP tool calls `subprocess.run(user_input, shell=True)`, not simulated. 14 tests. Lab count 51 → 52. — *2026-05-15*
 - ✅ mcpnuke `shell_injection` check — Transport D behavioral probe with 5 metacharacter injection categories and dangerous base command probes. 18 tests. — *2026-05-15*
 - ✅ Central machine-readable taxonomy at `agentic-sec/docs/taxonomy/lanes.yaml` — drift enforced by `test_agentic_sec_taxonomy_in_sync` in camazotz — *2026-05-12*
+- ✅ mcpnuke 6.10–6.13: inference backend probe (MCP-T54), model integrity verification (MCP-T55), SDK cache tamper/poisoning (MCP-T33), Ollama AI analysis + ensemble mode — *2026-05-16–19*
+- ✅ **Auth0 identity provider** in camazotz — fourth IdP alongside mock, ZITADEL, Okta. OIDC auto-discovery. `make up-auth0` compose profile. — *2026-05-20*
+- ✅ **Identity Dashboard** redesign — lifecycle testing, OIDC auto-discovery panel, JWT decoder, DPoP badge — *2026-05-21*
+- ✅ **Transparent DPoP (RFC 9449)** for OIDC providers in camazotz brain gateway — *2026-05-21*
+- ✅ nullfield `tools.yaml` re-synced to 138 tools (was 85) — *2026-05-23*
+- ✅ **stoneburner v0.5.0** — adversarial resilience (15 fixtures, `--runs N`, `--extra-judges`), red/blue security eval (10 fixtures), live probe, thinking mode, `brain-gateway` provider — *2026-05-23*
+- ✅ **agentic-bootstrap** documented — CTF VM inference bootstrapping POC with model compatibility enforcement and per-machine solvability test suites — *2026-05-24*
 
 ### Near-term (actively worked)
 
-- Auth0 identity provider alongside ZITADEL and Okta for Lane 1/2 coverage (same `OidcIdentityProvider` base, thin subclass)
+- `docs/reference/stoneburner.md` parity with camazotz/nullfield/mcpnuke reference docs
+- Hammerhand test suite (`machines/hammerhand/tests/`) — validate attack chain across model lineup
+- stoneburner learning path integration (adversarial eval in Track 1, probe in Track 3)
 
 ### Future (revisit when the vocabulary drifts)
 

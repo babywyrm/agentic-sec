@@ -26,7 +26,7 @@ for the full taxonomy.
 ## Key Commands
 
 ```bash
-# Static baseline — all 130 tools, zero API calls, instant
+# Static baseline — all 138 tools, zero API calls, instant
 mcpnuke --targets http://localhost:8080/mcp \
   --no-invoke --coverage 0 --verbose \
   --json baseline.json
@@ -76,7 +76,7 @@ mcpnuke --targets http://localhost:8080/mcp --fast --by-lane
 
 # Ecosystem-level coverage report against a live camazotz
 mcpnuke --targets http://$K8S_HOST:30080/mcp \
-  --coverage-report http://$K8S_HOST:8080
+  --coverage-report http://$K8S_HOST:3000
 ```
 
 ## Coverage & Diff
@@ -147,7 +147,7 @@ mcpnuke --targets http://localhost:4567/mcp \
 }
 ```
 
-Shipped profiles: `profiles/camazotz.json` (130 tools), `profiles/dvmcp.json` (18 tools), `profiles/example.json` (annotated template).
+Shipped profiles: `profiles/camazotz.json` (138 tools), `profiles/dvmcp.json` (18 tools), `profiles/example.json` (annotated template).
 
 ## Check Categories
 

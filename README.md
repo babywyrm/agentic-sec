@@ -2,13 +2,14 @@
 
 Security architecture for agentic AI infrastructure — MCP tool execution, machine identity, and automated defense.
 
-A documentation hub and cross-project reference for a closed-loop security stack protecting AI-agent deployments built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). Three tightly-coupled tools, one shared vocabulary, one feedback loop.
+A documentation hub and cross-project reference for a closed-loop security stack protecting AI-agent deployments built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). Four core tools, one shared vocabulary, one feedback loop.
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <a href="https://github.com/babywyrm/camazotz"><img alt="camazotz" src="https://img.shields.io/badge/camazotz-52%20labs-fb923c"></a>
   <a href="https://github.com/babywyrm/nullfield"><img alt="nullfield" src="https://img.shields.io/badge/nullfield-5%20actions-a78bfa"></a>
   <a href="https://github.com/babywyrm/mcpnuke"><img alt="mcpnuke" src="https://img.shields.io/badge/mcpnuke-scan%20%2B%20generate-34d399"></a>
+  <a href="https://github.com/babywyrm/stoneburner"><img alt="stoneburner" src="https://img.shields.io/badge/stoneburner-15%20adversarial-ef4444"></a>
 </p>
 
 ---
@@ -29,14 +30,14 @@ MCP and agentic AI patterns are 1–2 year old RFCs — the security conventions
 
 ---
 
-## The Three Tools
+## The Tools
 
 | Tool | Role | What it does |
 |------|------|-------------|
 | **[camazotz](https://github.com/babywyrm/camazotz)** | Vulnerable target | Intentionally vulnerable MCP server — 52 labs across 5 identity lanes and 5 transport surfaces, covering every OWASP MCP Top 10 risk |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar proxy that intercepts every MCP `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET policy before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP security scanner — static, behavioral, and AI-assisted probes; outputs findings + nullfield policy |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | Benchmarking | Agentic token usage benchmarking platform — compares LLM providers (Claude, OpenAI, Bedrock, Ollama) on cost, throughput, latency, and accuracy with LLM-as-judge scoring |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | Benchmarking + LLM eval | Provider benchmarking (cost, latency, accuracy) plus adversarial resilience testing (15 fixtures), red/blue security capability eval, and live infrastructure probing — with multi-judge consensus and multi-pass variance |
 | **agentic-bootstrap** *(POC)* | CTF infra | Decouples VM inference from the image — boots any CTF machine against any LLM backend, enforces model compatibility, validates solvability per model |
 
 Each tool ships independently. They are more powerful together.
@@ -119,6 +120,7 @@ For Kubernetes, Helm, and Teleport deployment options see [`docs/deployment-guid
 | [`docs/reference/camazotz.md`](docs/reference/camazotz.md) | Lab categories, difficulty levels, deployment options, API |
 | [`docs/reference/nullfield.md`](docs/reference/nullfield.md) | The five actions, policy YAML, per-lane templates, CRDs |
 | [`docs/reference/mcpnuke.md`](docs/reference/mcpnuke.md) | Scan modes, coverage flags, diff system, profile system, AI analysis |
+| [`docs/reference/stoneburner.md`](docs/reference/stoneburner.md) | Providers, eval suites, adversarial/red-blue/probe commands, thinking mode, camazotz integration |
 
 ### Deployment
 
@@ -177,4 +179,5 @@ MIT. Each sibling project is independently MIT-licensed.
 [camazotz](https://github.com/babywyrm/camazotz/blob/main/LICENSE) ·
 [nullfield](https://github.com/babywyrm/nullfield/blob/main/LICENSE) ·
 [mcpnuke](https://github.com/babywyrm/mcpnuke/blob/main/LICENSE) ·
+[stoneburner](https://github.com/babywyrm/stoneburner/blob/main/LICENSE) ·
 [agentic-sec](./LICENSE)
