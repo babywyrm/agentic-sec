@@ -294,7 +294,7 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ **Auth0 identity provider** in camazotz — fourth IdP alongside mock, ZITADEL, Okta. OIDC auto-discovery. `make up-auth0` compose profile. — *2026-05-20*
 - ✅ **Identity Dashboard** redesign — lifecycle testing, OIDC auto-discovery panel, JWT decoder, DPoP badge — *2026-05-21*
 - ✅ **Transparent DPoP (RFC 9449)** for OIDC providers in camazotz brain gateway — *2026-05-21*
-- ✅ nullfield `tools.yaml` re-synced to 138 tools (was 85) — *2026-05-23*
+- ✅ nullfield `tools.yaml` re-synced to 139 tools (was 85) — *2026-05-23*
 - ✅ **stoneburner v0.5.0** — adversarial resilience (15 fixtures, `--runs N`, `--extra-judges`), red/blue security eval (10 fixtures), live probe, thinking mode, `brain-gateway` provider — *2026-05-23*
 - ✅ **agentic-bootstrap** documented — CTF VM inference bootstrapping POC with model compatibility enforcement and per-machine solvability test suites — *2026-05-24*
 

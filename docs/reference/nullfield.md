@@ -139,7 +139,7 @@ All configuration is via environment variables (no CLI flags).
 | `:30090` | brain-gateway-policed | nullfield-enforced MCP |
 | `:31591` | brain-gateway-policed admin | Sidecar admin/metrics |
 
-- **138 tools** registered in `integrations/camazotz/tools.yaml`
+- **139 tools** registered in `integrations/camazotz/tools.yaml`
 - Three-tier policy: read-only ALLOW, write ALLOW, dangerous DENY
 - Sync check: `bash integrations/camazotz/sync-tools.sh http://<host>:8080/mcp`
 
@@ -152,4 +152,4 @@ All configuration is via environment variables (no CLI flags).
 | v0.6 | Controller pod, universal Helm chart |
 | v0.7 | Vault credentials, gateway mode, admission webhook |
 | v0.8 | CRD controller (NullfieldPolicy as K8s resource) |
-| v0.9 | Response inspection, tool lifecycle/rug-pull detection, per-identity cost attribution, 138-tool camazotz sync |
+| v0.9 | Response inspection, tool lifecycle/rug-pull detection, per-identity cost attribution, 139-tool camazotz sync |

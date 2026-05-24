@@ -10,10 +10,10 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the sibling repos.
 
-## [2026-05 pt.17] Ecosystem sync — agentic-bootstrap + nullfield 138-tool alignment
+## [2026-05 pt.17] Ecosystem sync — agentic-bootstrap + nullfield 139-tool alignment
 
 - **agentic-bootstrap** documented in `ecosystem.md` (Layer 5 architecture, coverage scorecard) and `README.md` (tool table, reference link). CTF VM inference bootstrapping system that decouples LLM inference from VM images — per-machine wiring specs, swappable profiles, model compatibility enforcement, solvability test suites. Local POC, not yet public.
-- **nullfield `tools.yaml`** re-synced from 85 → 138 tools, matching camazotz's current `tools/list` surface.
+- **nullfield `tools.yaml`** re-synced from 85 → 139 tools, matching camazotz's current `tools/list` surface.
 - **`docs/reference/stoneburner.md`** created — CLI commands, provider table, eval suites (adversarial/red-blue/probe), thinking mode, camazotz brain-gateway integration.
 - **README** updated: "Three Tools" → "The Tools"; added stoneburner badge, reference link, license footer entry.
 - **Ecosystem scorecard** stoneburner description expanded to reflect adversarial/red-blue/probe suites; scorecard date bumped to 2026-05-24.
