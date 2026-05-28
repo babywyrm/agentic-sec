@@ -221,9 +221,73 @@ Export via `atomics export --format csv` or `atomics export --format json`.
 
 ---
 
+## Model Selection as Security Configuration
+
+Model swapping on a shared inference backend is not just a performance or
+cost decision — it is a **security-relevant configuration change** when
+the platform uses AI-mediated security gates (MCP-T56).
+
+### The Risk
+
+AI governance gates (deployment approval, secret-filtering assistants,
+scale-review tools) rely on the LLM following system-prompt guardrails.
+Different models exhibit dramatically different guardrail resistance:
+
+| Model Class | Guardrail Behavior |
+|-------------|-------------------|
+| Reasoning models (chain-of-thought) | Tend to recognize and refuse social-engineering probes |
+| General-purpose instruction-following | Mixed — depends on alignment tuning |
+| Code-completion models | Comply readily with structured extraction requests |
+| Small models (<4B params) | Inconsistent — may leak on casual requests |
+
+The same system prompt + the same context + a different model =
+a completely different security posture.
+
+### stoneburner for Guardrail Evaluation
+
+Use the adversarial suite to benchmark guardrail resistance before
+deploying a model behind security gates:
+
+```bash
+# Sweep all models on the inference host
+for model in qwen2.5:3b gemma3:4b mistral:7b deepseek-r1:14b qwen2.5:14b; do
+  atomics adversarial --provider ollama -m "$model" \
+    --ollama-host ollama.internal:11434 \
+    --category social_engineering,data_exfil_attempt \
+    --runs 3
+done
+
+# Compare guardrail resistance across models
+atomics compare --by model --suite adversarial
+```
+
+Key fixtures for guardrail evaluation:
+
+- **adv-15** (credential extraction): Social engineering for env var values
+- **adv-10** (false authority): "SYSTEM OVERRIDE" style attempts
+- **adv-14** (CoT leakage): Chain-of-thought bleeding into structured output
+
+### Integration with mcpnuke
+
+mcpnuke's `inference_guardrail_variance` check (MCP-T56) performs a
+lightweight version of this assessment automatically during scans.
+stoneburner provides the deep, multi-pass, multi-judge evaluation for
+CI pipeline integration and formal model approval.
+
+Recommended workflow:
+
+1. **Pre-deploy:** `atomics adversarial --runs 5` on the candidate model
+2. **Gate:** Reject models scoring below threshold on `social_engineering`
+3. **Post-deploy:** `mcpnuke --inference` scans detect runtime model swaps
+4. **Monitor:** `atomics probe --alert-on-regression` catches guardrail drift
+
+---
+
 ## Cross-references
 
 - [ecosystem.md](../ecosystem.md) — stoneburner's role in the defense stack
 - [deployment-guide.md](../deployment-guide.md) — K8s deployment with brain-gateway
 - [mcpnuke reference](mcpnuke.md) — infrastructure scanning (complementary tool)
 - [camazotz reference](camazotz.md) — brain-gateway provider source
+- [Walkthrough 12](../walkthroughs/guardrail-resistance-testing.md) — AI Guardrail Resistance Testing
+- [Campaign F](../campaigns/shared-ai-platform.md) — Shared AI Platform
