@@ -39,30 +39,55 @@ exfiltrate proprietary source code, or forge review status updates.
 ## Architecture
 
 ```
-Tenant A Developer (Lane 1)
-    │  authenticates via OIDC federation → platform JWT (tenant_id=A)
-    ▼
-API Gateway (Lane 2)
-    │  routes merge request to review pipeline
-    │  enforces tenant_id claim on all downstream calls
-    ▼
-AI Review Agent (Lane 2, K8s Job)
-    │  receives diff + context from artifact store
-    │  system prompt: "evaluate code quality and security"
-    │  context includes: build logs, test results, coverage deltas,
-    │                    and review history (multi-tenant store)
-    │  produces structured verdict: APPROVE/DENY + rationale
-    ▼
-Artifact Store (Lane 3, shared)                  Webhook Dispatcher (Lane 2)
-    │  contains diffs, build logs, review                │
-    │  history for ALL tenants                           │  delivers verdict to
-    │  row-level isolation via tenant_id                 │  tenant's git forge
-    │  in query filters                                  │  signs payload with
-    ▼                                                    │  per-tenant HMAC secret
-ConfigMap / Secrets (Lane 4, K8s namespace)              ▼
-    │  webhook signing secrets                    Tenant Git Forge
-    │  AI model configuration                     (GitHub / GitLab / Bitbucket)
-    │  database connection strings
+                        Tenant A Developer
+                              │
+                    OIDC federation → platform JWT
+                          (tenant_id=A)
+                              │
+                              ▼
+                     ┌─────────────────┐
+                     │   API Gateway    │  Lane 2
+                     │                 │
+                     │  JWT validation  │
+                     │  tenant_id       │
+                     │  enforcement     │
+                     └────────┬────────┘
+                              │
+                              ▼
+                     ┌─────────────────┐
+                     │ AI Review Agent  │  Lane 2, K8s Job
+                     │                 │
+                     │  diff + context  │
+                     │  from artifact   │
+                     │  store           │
+                     │                 │
+                     │  verdict:        │
+                     │  APPROVE / DENY  │
+                     └───┬─────────┬───┘
+                         │         │
+              ┌──────────┘         └──────────┐
+              ▼                               ▼
+     ┌────────────────┐             ┌──────────────────┐
+     │ Artifact Store  │  Lane 3    │ Webhook Dispatch  │  Lane 2
+     │                │             │                  │
+     │  diffs, logs,   │             │  signs verdict    │
+     │  review history │             │  with per-tenant  │
+     │  (ALL tenants)  │             │  HMAC secret      │
+     │                │             └────────┬─────────┘
+     │  row-level      │                      │
+     │  isolation via   │                      ▼
+     │  tenant_id       │             Tenant Git Forge
+     └────────────────┘             (GitHub / GitLab / BB)
+              ▲
+              │
+     ┌────────────────┐
+     │ ConfigMap /     │  Lane 4, K8s namespace
+     │ K8s Secrets     │
+     │                │
+     │  signing keys   │
+     │  model config   │
+     │  DB credentials │
+     └────────────────┘
 ```
 
 **The shared components:** All tenants' code flows through one AI review
@@ -76,35 +101,33 @@ ConfigMaps in the namespace.
 ## Threat Model
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        MergeGuard Platform                         │
-│                                                                     │
-│  ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐  │
-│  │ API Gateway   │───▶│ AI Review Agent  │───▶│ Webhook Dispatch │  │
-│  │              │    │                  │    │                  │  │
-│  │ JWT validation│    │ ┌──────────────┐ │    │ Signing secrets  │  │
-│  │ tenant_id     │    │ │ System Prompt│ │    │ for ALL tenants  │  │
-│  │ enforcement   │    │ │ + full diff  │ │    │                  │  │
-│  └──────────────┘    │ │ + build logs │ │    └──────────────────┘  │
-│                      │ │ + coverage   │ │              ▲           │
-│                      │ └──────────────┘ │    ┌─────────┴────────┐  │
-│                      │                  │    │   ConfigMap /     │  │
-│                      │  Verdict:        │    │   K8s Secrets     │  │
-│                      │  APPROVE / DENY  │    │                   │  │
-│                      └──────────────────┘    └──────────────────┘  │
-│                              │                                      │
-│                      ┌───────┴───────┐                              │
-│                      │ Artifact Store │                              │
-│                      │  (all tenants) │                              │
-│                      └───────────────┘                              │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────── MergeGuard Platform ───────────────────────┐
+│                                                                   │
+│  ┌───────────────┐  ┌──────────────────┐  ┌───────────────────┐  │
+│  │ API Gateway    │─▶│ AI Review Agent  │─▶│ Webhook Dispatch  │  │
+│  │               │  │                  │  │                   │  │
+│  │ JWT validation │  │ System Prompt    │  │ Signing secrets   │  │
+│  │ tenant_id      │  │ + full diff      │  │ for ALL tenants   │  │
+│  │ enforcement    │  │ + build logs     │  │                   │  │
+│  └───────────────┘  │ + coverage       │  └────────▲──────────┘  │
+│                     │                  │           │              │
+│        ④            │ Verdict:         │  ┌────────┴──────────┐  │
+│  JWT claim swap     │ APPROVE / DENY   │  │ ConfigMap /        │  │
+│                     └────────┬─────────┘  │ K8s Secrets        │  │
+│                      ① ⑤    │             └───────────────────┘  │
+│                              │                   ③               │
+│                     ┌────────┴─────────┐                         │
+│                     │ Artifact Store    │                         │
+│                     │ (all tenants)     │                         │
+│                     └──────────────────┘                         │
+│                              ②                                   │
+└──────────────────────────────────────────────────────────────────┘
 
- Attack vectors:
-   ① AI verdict manipulation via diff-embedded instructions (MCP-T56)
-   ② Cross-tenant data access via artifact store query injection (MCP-T07)
-   ③ Webhook secret exfiltration via ConfigMap read (MCP-T57)
-   ④ Tenant isolation bypass via JWT claim manipulation (MCP-T42)
-   ⑤ Model swap degrades review rigor across all tenants (MCP-T56)
+  ①  Verdict manipulation via diff-embedded instructions    MCP-T56
+  ②  Cross-tenant data leak via artifact store injection    MCP-T07
+  ③  Webhook secret exfiltration via ConfigMap read         MCP-T57
+  ④  Tenant isolation bypass via JWT claim manipulation     MCP-T42
+  ⑤  Model swap degrades review rigor for all tenants       MCP-T56
 ```
 
 | Step | Lab | Threat | Threat ID |
