@@ -290,4 +290,4 @@ Recommended workflow:
 - [mcpnuke reference](mcpnuke.md) — infrastructure scanning (complementary tool)
 - [camazotz reference](camazotz.md) — brain-gateway provider source
 - [Walkthrough 12](../walkthroughs/guardrail-resistance-testing.md) — AI Guardrail Resistance Testing
-- [Campaign F](../campaigns/shared-ai-platform.md) — Shared AI Platform
+- [Campaign F](../campaigns/shared-ai-platform.md) — Multi-Tenant AI Code Review Platform
