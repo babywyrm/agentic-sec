@@ -10,6 +10,26 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the sibling repos.
 
+## [2026-05 pt.18] mcpnuke CI tooling + stoneburner CLI polish + docs sync
+
+- **mcpnuke SARIF 2.1.0 export** (`--sarif FILE`) — maps CRITICAL/HIGH → `error`, MEDIUM → `warning`, LOW → `note`; embeds `security-severity` property and taxonomy/MITRE tags in SARIF rules. Ready for GitHub Code Scanning upload via `codeql-action/upload-sarif`. 15 new tests.
+- **mcpnuke `--fail-on`** severity gate — `{critical,high,medium,low,any,none}` replaces hardcoded CRITICAL/HIGH exit checks; `none` always exits 0 for informational scans. Default unchanged (`high`).
+- **mcpnuke token redaction** — `_raw_token` stripped from `auth_context` in all JSON/SARIF output paths. Bearer tokens are never written to report files, PR comments, or CI artifacts. 2 regression tests.
+- **mcpnuke LICENSE** — MIT license file added.
+- **mcpnuke-runner documentation** — new section in `docs/ci-cd-guide.md` covering K8s/Helm deployment, env vars, manual trigger via camazotz API, and structured logging.
+- **mcpnuke CI guide updated** — GitHub Actions and GitLab CI examples now use `--fail-on` + `--sarif`; generic CI bash simplified to use `--fail-on` instead of shell-parsing JSON severity counts.
+- **stoneburner `atomics sweep --save`** — persist sweep results to new `sweep_results` table (schema v8). `--ollama-host` replaces `--host` (hidden alias kept). `-t` shorthand removed from `capacity --think-time` (collision with `--tier`).
+- **stoneburner `atomics export --suite`** — `{tasks,stress,sweep,all}` exposes all DB tables as jsonl or CSV. Previously only task results were exportable.
+- **stoneburner `atomics compare --output FILE`** — write JSON comparison alongside the Rich table output.
+- **stoneburner `atomics doctor`** documented in README with check table and CI pre-flight example.
+- **stoneburner orphan configs removed** — `configs/{aggressive,conservative,default}.toml` deleted (unused since Pydantic Settings replaced TOML loading).
+- **`docs/reference/stoneburner.md`** updated: sweep/stress/capacity/models/doctor commands, schema v8 tables, export `--suite`, compare `--output`, Ollama env vars.
+- **`docs/reference/mcpnuke.md`** updated: `--fail-on`, `--sarif`, token redaction, CI integration section, test count (671 collected, 635 pass / 37 skip).
+- **Ecosystem scorecard** date bumped to 2026-05-31; mcpnuke entry updated with SARIF + `--fail-on`.
+- **Test counts:** mcpnuke 671 (635 pass, 37 skip), stoneburner 443 pass.
+
+---
+
 ## [2026-05 pt.17] Ecosystem sync — agentic-bootstrap + nullfield 139-tool alignment
 
 - **agentic-bootstrap** documented in `ecosystem.md` (Layer 5 architecture, coverage scorecard) and `README.md` (tool table, reference link). CTF VM inference bootstrapping system that decouples LLM inference from VM images — per-machine wiring specs, swappable profiles, model compatibility enforcement, solvability test suites. Local POC, not yet public.

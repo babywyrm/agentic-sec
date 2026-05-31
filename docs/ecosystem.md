@@ -233,15 +233,15 @@ the other two repos must move in lockstep.
 ## Per-Project Coverage Scorecard
 
 What each project covers today, and what it deliberately leaves to the others.
-This is the honest boundary of the ecosystem as of 2026-05-24.
+This is the honest boundary of the ecosystem as of 2026-05-31.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
 | **[camazotz](https://github.com/babywyrm/camazotz)** | 52 labs across all 5 identity lanes and 5 transport surfaces (A=MCP, B=Direct API, C=in-process SDK, D=subprocess, E=native LLM function-calling). Parallel browsing via `/threat-map` (by attack category) and `/lanes` (by identity flow). | Runtime enforcement, live detection of attacker traffic, policy generation. Camazotz is the *target*, not a defense. | `GET /api/lanes` schema v1, `scenario.yaml` per lab |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
-| **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` output |
+| **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). SARIF 2.1.0 export (`--sarif`). Configurable CI severity gate (`--fail-on`). Token redaction in all output paths. | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` / `--sarif` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM provider benchmarking (cost, throughput, latency, accuracy via LLM-as-judge) across Claude, OpenAI, Bedrock, Ollama, and **brain-gateway**. Adversarial resilience testing (15 fixtures, `--runs N` multi-pass variance, `--extra-judges` multi-judge consensus). Red/blue security capability eval (10 fixtures). Live infrastructure probe via `probes.yaml`. Thinking mode benchmarking. The `brain-gateway` provider routes through camazotz's MCP inference endpoint. | MCP protocol enforcement, vulnerability scanning, policy generation. Stoneburner complements mcpnuke — it measures LLM reasoning quality and adversarial resilience, not MCP protocol integrity. | `atomics compare --narrative`; adversarial/redblue/probe CLI output; SQLite results DB |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM provider benchmarking (cost, throughput, latency, accuracy via LLM-as-judge) across Claude, OpenAI, Bedrock, Ollama, and **brain-gateway**. Adversarial resilience testing (15 fixtures, `--runs N` multi-pass variance, `--extra-judges` multi-judge consensus). Red/blue security capability eval (10 fixtures). Live infrastructure probe via `probes.yaml`. Thinking mode benchmarking. Multi-model sweeps (`atomics sweep`), GPU stress testing (`atomics stress`), user capacity projection (`atomics capacity`), model discovery (`atomics models`). The `brain-gateway` provider routes through camazotz's MCP inference endpoint. | MCP protocol enforcement, vulnerability scanning, policy generation. Stoneburner complements mcpnuke — it measures LLM reasoning quality and adversarial resilience, not MCP protocol integrity. | `atomics compare --narrative --output`; adversarial/redblue/probe CLI output; SQLite results DB (schema v8) |
 | **agentic-bootstrap** *(local POC, not yet public)* | CTF VM inference bootstrapping — decouples the LLM inference layer from VM images so machines can be booted against any endpoint and model. Per-machine wiring specs (`machine.yaml`), swappable inference profiles, model compatibility enforcement with incompatibility refusal, and per-machine solvability test suites that validate attack-chain integrity across models. | Not a security tool. Handles operational wiring of CTF lab VMs to inference backends (Ollama on local hardware, cloud GPU hosts). | `machine.yaml` per VM, `profiles/*.yaml` per backend, `tests/*.sh` per machine |
 
 **Transport matrix status** (surfaced by camazotz `/api/lanes` as
@@ -297,12 +297,16 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ nullfield `tools.yaml` re-synced to 139 tools (was 85) — *2026-05-23*
 - ✅ **stoneburner v0.5.0** — adversarial resilience (15 fixtures, `--runs N`, `--extra-judges`), red/blue security eval (10 fixtures), live probe, thinking mode, `brain-gateway` provider — *2026-05-23*
 - ✅ **agentic-bootstrap** documented — CTF VM inference bootstrapping POC with model compatibility enforcement and per-machine solvability test suites — *2026-05-24*
+- ✅ **mcpnuke SARIF 2.1.0 export** (`--sarif`), `--fail-on` CI severity gate, `_raw_token` redaction, MIT LICENSE, mcpnuke-runner docs — *2026-05-31*
+- ✅ **stoneburner CLI polish** — `sweep --save`, `export --suite {tasks,stress,sweep,all}`, `compare --output`, `--ollama-host` unification, `capacity` `-t` collision fix, `doctor` docs, schema v8 — *2026-05-31*
 
 ### Near-term (actively worked)
 
-- `docs/reference/stoneburner.md` parity with camazotz/nullfield/mcpnuke reference docs
 - Hammerhand test suite (`machines/hammerhand/tests/`) — validate attack chain across model lineup
 - stoneburner learning path integration (adversarial eval in Track 1, probe in Track 3)
+- mcpnuke PyPI publication with proper metadata and entry point
+- Shared MCP-T56 result schema between mcpnuke and stoneburner for cross-tool analysis
+- End-to-end walkthrough: camazotz + mcpnuke inference scan + stoneburner adversarial sweep
 
 ### Future (revisit when the vocabulary drifts)
 

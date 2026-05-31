@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.5.0
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.5.0 · 443 tests · schema v8
 
 ---
 
@@ -45,9 +45,32 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 | `atomics run --thinking-budget 20000` | Set max thinking tokens |
 | `atomics compare` | Compare providers side-by-side |
 | `atomics compare --by model` | Compare individual models |
+| `atomics compare --output results.json` | Write JSON comparison alongside table |
 | `atomics report` | Display usage reports and trends |
 | `atomics tiers` | Show burn tier profiles (ez/baseline/mega) |
 | `atomics provider-test` | Health check the configured provider |
+| `atomics doctor` | Check installation health and config |
+
+### Model Discovery & Multi-Model Sweeps
+
+| Command | What it does |
+|---------|-------------|
+| `atomics models` | List available models on Ollama host with class/thinking annotations |
+| `atomics sweep --all-local` | Discover and evaluate all local models |
+| `atomics sweep --models qwen2.5:7b,qwen3:14b` | Evaluate specific models head-to-head |
+| `atomics sweep --provider claude --models claude-haiku-4-5-20251001` | Sweep cloud models |
+| `atomics sweep --fixtures ev-01,ev-06,ev-08` | Evaluate against specific fixtures |
+| `atomics sweep --save` | Persist sweep results to database |
+
+### Stress Testing & Capacity
+
+| Command | What it does |
+|---------|-------------|
+| `atomics stress --model qwen2.5:7b` | Ramp concurrency to find GPU saturation point |
+| `atomics stress --provider openai --model gpt-4o-mini` | Stress test a cloud API endpoint |
+| `atomics stress --provider claude --model claude-haiku-4-5-20251001` | Stress test Claude |
+| `atomics capacity --model qwen2.5:7b --users 50` | Project user load from stress data |
+| `atomics capacity --peak-tps 120 --single-latency 8000 --users 200` | Manual capacity projection |
 
 ### Security Evaluation Suites
 
@@ -69,8 +92,10 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 | Command | What it does |
 |---------|-------------|
 | `atomics schedule --install` | Install cron/systemd/launchd schedule |
-| `atomics stress` | Stress test with configurable concurrency |
-| `atomics export` | Export benchmark data (CSV, JSON) |
+| `atomics export` | Export task results (default suite) |
+| `atomics export --suite stress` | Export stress test history |
+| `atomics export --suite sweep -o out.jsonl` | Export sweep results to file |
+| `atomics export --suite all --format csv` | Export all suites as CSV |
 | `atomics login` | OAuth/OIDC login |
 
 ---
@@ -197,7 +222,7 @@ Environment variable: `ATOMICS_BRAIN_GATEWAY_URL` (default `http://localhost:808
 
 ## Storage
 
-SQLite database (schema v6) with tables:
+SQLite database (schema v8) with tables:
 
 | Table | Content |
 |-------|---------|
@@ -205,8 +230,10 @@ SQLite database (schema v6) with tables:
 | `task_results` | Per-task outcomes with `suite` column (eval/redblue) |
 | `adversarial_results` | Adversarial fixture results |
 | `probe_results` | Live probe results |
+| `stress_results` | Stress test throughput/latency per concurrency level |
+| `sweep_results` | Multi-model sweep quality/latency/cost per run |
 
-Export via `atomics export --format csv` or `atomics export --format json`.
+Export via `atomics export --suite {tasks,stress,sweep,all} --format {jsonl,csv}`.
 
 ---
 
@@ -216,6 +243,8 @@ Export via `atomics export --format csv` or `atomics export --format json`.
 |----------|---------|---------|
 | `ANTHROPIC_API_KEY` | — | Claude API key |
 | `OPENAI_API_KEY` | — | OpenAI API key |
+| `ATOMICS_OLLAMA_HOST` | `http://localhost:11434` | Ollama endpoint for local inference |
+| `ATOMICS_OLLAMA_MODEL` | `qwen2.5:7b` | Default model for Ollama provider |
 | `ATOMICS_BRAIN_GATEWAY_URL` | `http://localhost:8080` | brain-gateway endpoint |
 | `ATOMICS_DB_PATH` | `~/.atomics/metrics.db` | SQLite database location |
 

@@ -2,7 +2,7 @@
 
 MCP red teaming and security scanner.
 
-**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke)
+**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.13.0 · 671 tests · MIT
 
 **In the framework:** mcpnuke is the validator that exercises every cell of
 the [Identity Flow Framework](../identity-flows.md). New checks should
@@ -61,6 +61,63 @@ mcpnuke --targets https://mcp.example.com/mcp \
   --oidc-url https://auth.example.com/realms/mcp \
   --client-id scanner --client-secret "$SECRET"
 ```
+
+## CI Integration
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Clean scan — no findings at or above `--fail-on` threshold |
+| `1` | At least one finding at or above threshold (default: HIGH) |
+| `2` | Scanner error (target unreachable, invalid args, unhandled exception) |
+
+### `--fail-on` severity gate
+
+```bash
+# Default: exit 1 on HIGH or CRITICAL
+mcpnuke --targets http://target/mcp --fast
+
+# Only fail on CRITICAL
+mcpnuke --targets http://target/mcp --fast --fail-on critical
+
+# Fail on anything (including LOW)
+mcpnuke --targets http://target/mcp --fast --fail-on any
+
+# Informational only — always exit 0
+mcpnuke --targets http://target/mcp --fast --fail-on none
+```
+
+Choices: `critical`, `high` (default), `medium`, `low`, `any`, `none`.
+
+### `--sarif` — SARIF 2.1.0 export
+
+```bash
+mcpnuke --targets http://target/mcp --fast --sarif results.sarif
+```
+
+Maps: CRITICAL/HIGH → `error`, MEDIUM → `warning`, LOW → `note`. Embeds
+`security-severity` and taxonomy tags (`MCP-T06`, `T1059`, etc.) in SARIF
+rule properties. Ready for GitHub Code Scanning upload:
+
+```yaml
+- name: Upload SARIF to GitHub Code Scanning
+  uses: github/codeql-action/upload-sarif@v3
+  if: always()
+  with:
+    sarif_file: results.sarif
+```
+
+See [CI/CD Integration Guide](https://github.com/babywyrm/mcpnuke/blob/main/docs/ci-cd-guide.md)
+for full GitHub Actions, GitLab CI, and mcpnuke-runner (K8s) setup.
+
+### Token redaction
+
+Bearer tokens stored in `auth_context` via `--auth-token` are automatically
+stripped from all JSON and SARIF output. The `_raw_token` field is redacted;
+JWT claim summaries, introspection summaries, and JWKS summaries are preserved.
+
+---
 
 ## Cross-Project Lane Reporting
 
