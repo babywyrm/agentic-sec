@@ -27,6 +27,7 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 | **OpenAI / Codex** | `--provider openai` | `OPENAI_API_KEY` | Reasoning tokens tracked for o3/o4/gpt-5.x. |
 | **Bedrock** (AWS) | `--provider bedrock --region us-east-1` | AWS credentials | Uses `boto3`. Install: `uv sync --extra bedrock`. |
 | **Ollama** (local) | `--provider ollama` | None | Zero-cost local inference. `--ollama-host` for remote. |
+| **vLLM / OpenAI-compatible** | `--provider vllm` | None | Speaks `/v1/chat/completions`. Targets vLLM, LiteLLM, llama.cpp. `--vllm-host` for remote. `ATOMICS_VLLM_HOST` / `ATOMICS_VLLM_MODEL`. |
 | **brain-gateway** (camazotz) | `--provider brain-gateway` | None | Routes through camazotz at `--gateway-url`. |
 
 ---
@@ -245,6 +246,8 @@ Export via `atomics export --suite {tasks,stress,sweep,all} --format {jsonl,csv}
 | `OPENAI_API_KEY` | — | OpenAI API key |
 | `ATOMICS_OLLAMA_HOST` | `http://localhost:11434` | Ollama endpoint for local inference |
 | `ATOMICS_OLLAMA_MODEL` | `qwen2.5:7b` | Default model for Ollama provider |
+| `ATOMICS_VLLM_HOST` | `http://localhost:8000/v1` | vLLM / OpenAI-compatible base URL (e.g. brainbox LiteLLM gateway) |
+| `ATOMICS_VLLM_MODEL` | `qwen2.5:3b` | Default model for vllm provider |
 | `ATOMICS_BRAIN_GATEWAY_URL` | `http://localhost:8080` | brain-gateway endpoint |
 | `ATOMICS_DB_PATH` | `~/.atomics/metrics.db` | SQLite database location |
 
@@ -278,10 +281,19 @@ Use the adversarial suite to benchmark guardrail resistance before
 deploying a model behind security gates:
 
 ```bash
-# Sweep all models on the inference host
+# Sweep all models on an Ollama host
 for model in qwen2.5:3b gemma3:4b mistral:7b deepseek-r1:14b qwen2.5:14b; do
   atomics adversarial --provider ollama -m "$model" \
-    --ollama-host ollama.internal:11434 \
+    --ollama-host http://ollama.internal:11434 \
+    --category social_engineering,data_exfil_attempt \
+    --runs 3
+done
+
+# Sweep all three brainbox vLLM models (judge also on brainbox)
+for model in qwen2.5:1.5b qwen2.5:3b qwen3.5:0.8b; do
+  atomics adversarial --provider vllm -m "$model" \
+    --vllm-host http://192.168.1.239:8000/v1 \
+    --judge-provider vllm \
     --category social_engineering,data_exfil_attempt \
     --runs 3
 done
