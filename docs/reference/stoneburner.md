@@ -57,8 +57,10 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 | Command | What it does |
 |---------|-------------|
 | `atomics models` | List available models on Ollama host with class/thinking annotations |
+| `atomics models --provider vllm --vllm-host URL` | List models from a vLLM/LiteLLM gateway (`GET /v1/models`) |
 | `atomics sweep --all-local` | Discover and evaluate all local models |
 | `atomics sweep --models qwen2.5:7b,qwen3:14b` | Evaluate specific models head-to-head |
+| `atomics sweep --provider vllm --vllm-host URL --models m1,m2 --judge-provider vllm` | Sweep against vLLM/LiteLLM gateway |
 | `atomics sweep --provider claude --models claude-haiku-4-5-20251001` | Sweep cloud models |
 | `atomics sweep --fixtures ev-01,ev-06,ev-08` | Evaluate against specific fixtures |
 | `atomics sweep --save` | Persist sweep results to database |
