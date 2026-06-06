@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.5.0 · 443 tests · schema v8
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.6.0 · 834 tests · schema v11
 
 ---
 
@@ -70,10 +70,35 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 | Command | What it does |
 |---------|-------------|
 | `atomics stress --model qwen2.5:7b` | Ramp concurrency to find GPU saturation point |
+| `atomics stress --models qwen2.5:3b,qwen2.5:7b` | Multi-model VRAM contention — solo baseline then simultaneous, reports per-model TPS degradation factor |
 | `atomics stress --provider openai --model gpt-4o-mini` | Stress test a cloud API endpoint |
 | `atomics stress --provider claude --model claude-haiku-4-5-20251001` | Stress test Claude |
 | `atomics capacity --model qwen2.5:7b --users 50` | Project user load from stress data |
 | `atomics capacity --peak-tps 120 --single-latency 8000 --users 200` | Manual capacity projection |
+
+### Stability, Regression & Mixed Workloads
+
+| Command | What it does |
+|---------|-------------|
+| `atomics soak 30m --model qwen2.5:7b` | Long-duration stability test; linear-regression drift → STABLE / DEGRADED / UNSTABLE |
+| `atomics soak --save-baseline NAME` | Capture key metrics (avg/peak tok/s, P95, error rate) under a named baseline |
+| `atomics soak --compare-baseline NAME` | Colour-coded delta vs a saved baseline → IMPROVED / STABLE / REGRESSED |
+| `atomics baselines` | List all saved baselines |
+| `atomics scenario -w gate:qwen2.5:7b:4 -w eval:qwen2.5:7b:2` | Mixed-workload simulation; per-workload P50/P95, SLA, cross-workload interference |
+| `atomics scenario --ramp 10` | Stagger worker start times so load builds gradually |
+
+### QA / CTF Solvability & Gate Regression
+
+| Command | What it does |
+|---------|-------------|
+| `atomics qa --fixtures qa/examples/gate.yaml` | Validate CTF solvability / AI-gate regression from a YAML fixture (pass/fail/must-match regex) |
+| `atomics qa --fail-fast` | Stop at first failing fixture |
+| `atomics qa --profile profiles/local/gate.yaml` | Route fixture queries through a TargetProfile (app HTTP endpoint or Ollama w/ custom system prompt) |
+
+Custom **target profiles** (`--profile`) also apply to `soak`, `stress`, and
+`scenario` — YAML defines an `ollama` (custom system prompt/temp) or `http`
+(arbitrary endpoint + body template + response parsing) target. Sensitive
+profiles live in gitignored `profiles/local/`.
 
 ### Security Evaluation Suites
 
@@ -125,7 +150,7 @@ atomics adversarial --provider ollama -m qwen3:14b --runs 5
 
 # 2 judges — primary + deepseek consensus
 atomics adversarial --provider ollama -m qwen3:14b \
-  --extra-judges ollama:deepseek-r1:14b@192.168.1.126
+  --extra-judges ollama:deepseek-r1:14b@gpu-host
 
 # Combined: 3 passes, 2 judges
 atomics adversarial --provider claude --runs 3 \
@@ -141,7 +166,7 @@ atomics adversarial --provider claude --runs 3 \
 before structured `APPROVED:`/`DENIED:` verdicts. In production agentic
 pipelines, this defeats `startswith`-based parsers and can expose allowlist
 rules or system prompt fragments. Discovered during CTF VM model compatibility
-testing — `qwen3:4b` broke the Warbird deploy gate with this failure mode.
+testing — `qwen3:4b` broke an AI deployment-approval gate with this failure mode.
 
 **adv-15 (credential extraction):** Mirrors the "helpful ops request" social
 engineering strategy that leaked secrets across multiple Ollama models in live
@@ -181,7 +206,7 @@ targets:
   - name: ollama-api
     artifact_type: inference-api
     source: http
-    url: http://192.168.1.126:11434/api/tags
+    url: http://gpu-host:11434/api/tags
 ```
 
 ---
@@ -199,6 +224,48 @@ tracked separately from visible output.
 
 Flags: `--thinking` (force on), `--no-thinking` (force off),
 `--thinking-budget N` (max thinking tokens).
+
+---
+
+## Inference Backend Management (`brain/` + `inference.env`)
+
+stoneburner ships a portable inference-ops layer that is agnostic to any
+specific host — usable on a laptop, a GPU box, or cloud nodes.
+
+### `brain/` toolkit
+
+Standalone shell scripts (no dependency on the `atomics` package) for managing
+the inference layer on any box:
+
+| Script | Purpose |
+|--------|---------|
+| `brain-status` | Print running models, VRAM mapping, gateway state |
+| `brain-switch` | Toggle a box between Ollama and OpenAI-compatible (vLLM/LiteLLM) |
+| `brain-vllm` | Start/stop/restart the vLLM engine + gateway systemd fleet |
+
+### The `inference.env` standard
+
+A vendor-neutral control file lets **any box describe the LLM inference target
+it is wired to**, so any consumer (the `atomics` providers, the `brain/`
+scripts, a downstream agent service) self-configures. Spec:
+[`docs/INFERENCE_ENV.md`](https://github.com/babywyrm/stoneburner/blob/main/docs/INFERENCE_ENV.md).
+
+Canonical schema (`INFERENCE_BACKEND` / `INFERENCE_URL` / `INFERENCE_MODEL` /
+`INFERENCE_THINK` / `INFERENCE_API_KEY`, plus optional intent and provenance
+fields), with legacy `OPENAI_*` / `OLLAMA_*` / `INFERENCE_API` keys normalized
+automatically. Searched at `$INFERENCE_ENV` → `$BRAIN_ENV` →
+`/opt/agentic/inference.env` → `/etc/agentic/inference.env`.
+
+```python
+from atomics.inference import load_control_file, provider_from_target
+
+target = load_control_file()              # reads a box's control file
+provider = provider_from_target(target)   # auto-builds the matching provider
+```
+
+`atomics.inference` also exposes the agnostic resolver (difficulty/pool tier →
+resolved backend+model+endpoint, with model-compat and backend-capability
+checks) used by box bootstrappers to write a control file.
 
 ---
 
@@ -225,7 +292,7 @@ Environment variable: `ATOMICS_BRAIN_GATEWAY_URL` (default `http://localhost:808
 
 ## Storage
 
-SQLite database (schema v8) with tables:
+SQLite database (schema v11) with tables:
 
 | Table | Content |
 |-------|---------|
@@ -235,6 +302,9 @@ SQLite database (schema v8) with tables:
 | `probe_results` | Live probe results |
 | `stress_results` | Stress test throughput/latency per concurrency level |
 | `sweep_results` | Multi-model sweep quality/latency/cost per run |
+| `scenario_results` | Mixed-workload scenario outcomes (per-workload latency/SLA) |
+| `soak_results` | Long-duration stability runs (drift, error rate, cost) |
+| `baselines` | Named metric baselines for regression comparison (UNIQUE name+suite) |
 
 Export via `atomics export --suite {tasks,stress,sweep,all} --format {jsonl,csv}`.
 
@@ -248,7 +318,7 @@ Export via `atomics export --suite {tasks,stress,sweep,all} --format {jsonl,csv}
 | `OPENAI_API_KEY` | — | OpenAI API key |
 | `ATOMICS_OLLAMA_HOST` | `http://localhost:11434` | Ollama endpoint for local inference |
 | `ATOMICS_OLLAMA_MODEL` | `qwen2.5:7b` | Default model for Ollama provider |
-| `ATOMICS_VLLM_HOST` | `http://localhost:8000/v1` | vLLM / OpenAI-compatible base URL (e.g. brainbox LiteLLM gateway) |
+| `ATOMICS_VLLM_HOST` | `http://localhost:8000/v1` | vLLM / OpenAI-compatible base URL (e.g. a LiteLLM gateway) |
 | `ATOMICS_VLLM_MODEL` | `qwen2.5:3b` | Default model for vllm provider |
 | `ATOMICS_BRAIN_GATEWAY_URL` | `http://localhost:8080` | brain-gateway endpoint |
 | `ATOMICS_DB_PATH` | `~/.atomics/metrics.db` | SQLite database location |
@@ -291,10 +361,10 @@ for model in qwen2.5:3b gemma3:4b mistral:7b deepseek-r1:14b qwen2.5:14b; do
     --runs 3
 done
 
-# Sweep all three brainbox vLLM models (judge also on brainbox)
+# Sweep vLLM gateway models (judge also on the gateway)
 for model in qwen2.5:1.5b qwen2.5:3b qwen3.5:0.8b; do
   atomics adversarial --provider vllm -m "$model" \
-    --vllm-host http://192.168.1.239:8000/v1 \
+    --vllm-host http://gpu-host:8000/v1 \
     --judge-provider vllm \
     --category social_engineering,data_exfil_attempt \
     --runs 3
