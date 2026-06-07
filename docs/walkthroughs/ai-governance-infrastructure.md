@@ -235,6 +235,42 @@ infrastructure.
 
 ---
 
+## Model Compatibility Is Challenge-Specific
+
+AI-backed challenge validation has two separate meanings:
+
+1. **Function compatibility:** the model is reachable, follows the expected
+   output contract, and makes the right approve/deny or summarize/redact
+   decisions for individual tools.
+2. **Walkthrough compatibility:** the complete player-facing chain still works
+   under the deployed model, backend, prompts, and application state.
+
+These are not interchangeable. A model can pass every function-level check and
+still break a challenge if the intended vulnerable behavior depends on a model
+being permissive, literal, or inconsistent in a particular way.
+
+In live validation of AI-gated CTF infrastructure, we observed a generic pattern:
+a more safety-stable model passed health checks, summaries, and security-gate
+decisions, but refused to disclose a sensitive value that the intentionally
+vulnerable walkthrough flow depended on. A smaller, less guarded model completed
+the same end-to-end chain. From a production security perspective, the safer
+model behaved better; from a challenge-solvability perspective, it was
+incompatible.
+
+This is why model promotion for AI-backed challenges must include both layers:
+
+```text
+FUNCTION_COMPATIBLE     individual AI-mediated functions behave correctly
+WALKTHROUGH_COMPATIBLE  the complete player-facing chain succeeds repeatedly
+```
+
+Do not mark a model as challenge-compatible solely because the inference path,
+AI gate, or individual tool checks pass. If the challenge depends on an
+AI-mediated vulnerability, verify the actual walkthrough chain over repeated
+rounds and record sanitized evidence.
+
+---
+
 ## Step 7: Allowlist Strictness Variance
 
 Beyond redirect-based bypass, the **strictness of AI allowlist enforcement
@@ -302,4 +338,5 @@ broader methodology of evaluating AI-mediated security gates.
 - [RFC 7231 §6.4 — HTTP Redirect Status Codes](https://datatracker.ietf.org/doc/html/rfc7231#section-6.4)
 - [CWE-601 — Open Redirect](https://cwe.mitre.org/data/definitions/601.html)
 - **Walkthrough 12** — AI Guardrail Resistance Testing (MCP-T56)
+- [Model Compatibility for Agentic CTF Challenges](model-compatibility-for-agentic-challenges.md)
 - **Campaign F** — Multi-Tenant AI Code Review Platform
