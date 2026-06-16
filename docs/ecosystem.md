@@ -177,42 +177,6 @@ mcpnuke to prove the defenses work. If mcpnuke's exploit chains produce
 CRITICAL findings on hard difficulty, your policy has gaps. If they produce
 INFO findings ("defense held"), you're in good shape.
 
-### Layer 5: agentic-bootstrap — CTF Inference Orchestration
-
-> *Local POC — not yet public.*
-
-agentic-bootstrap solves a different problem: **how to run the same CTF VM
-against different LLM backends without rebuilding the image**. Each machine
-(Warbird, Hammerhand, future boxes) has AI-gated attack surfaces — prompt
-injection targets, deployment security gates, log redaction layers — and the
-model powering those gates directly affects solvability and difficulty.
-
-**Architecture:**
-
-```
-machine.yaml    ─── HOW to wire a box (static: k8s patches, env vars, systemd)
-                    never changes when models or endpoints swap
-profile.yaml    ─── WHERE to call (swappable: endpoint IP, port, default model)
-                    brainbox.yaml → lab Ollama, cloud-brain.yaml → GCP GPU
-bootstrap.sh    ─── generic dispatcher: reads both, applies patches via SSH
-                    refuses incompatible model+machine combos (exit 2)
-tests/*.sh      ─── per-machine solvability validation: sweeps every LLM gate
-                    across a model lineup, reports PASS/FAIL/SOLVABILITY_BROKEN
-```
-
-**What validation has shown (Warbird, 6 models):** model choice creates a
-difficulty spectrum. The `ops_assistant` prompt-injection gate leaks the
-agent secret on 5/5 strategies with `qwen3.5:0.8b` (easy) but only 1/5
-with `qwen2.5:7b` (hard). The `deploy_war` structural gate holds on 5 of
-6 models but `qwen3:4b` breaks it entirely — its chain-of-thought reasoning
-leaks into verdict text, defeating the `startswith("APPROVED")` parser and
-making the box unsolvable. That model is flagged `incompatible` and the
-bootstrap refuses to deploy it.
-
-**What it solves:** CTF platform operators select a difficulty tier when
-spawning a VM, the bootstrap wires the inference layer accordingly, and
-the solvability tests guarantee the box remains winnable.
-
 ### The Lane View — `/lanes` UI + `/api/lanes` JSON contract
 
 Camazotz ships two parallel views over the 52 labs: `/threat-map` groups
@@ -233,7 +197,7 @@ the other two repos must move in lockstep.
 ## Per-Project Coverage Scorecard
 
 What each project covers today, and what it deliberately leaves to the others.
-This is the honest boundary of the ecosystem as of 2026-05-31.
+This is the honest boundary of the ecosystem as of 2026-06-16.
 
 | Project | Covers | Does not cover | Source of truth |
 |---------|--------|----------------|-----------------|
@@ -241,9 +205,7 @@ This is the honest boundary of the ecosystem as of 2026-05-31.
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Per-tool-call policy enforcement: ALLOW / DENY / HOLD / SCOPE / BUDGET. Identity verification (JWT/cert). Session binding. Response redaction. Budget accounting. | Scanning for new vulnerabilities, generating initial policies from scratch, IDP issuance, long-term audit storage. | `NullfieldPolicy` CRD; per-lane starter templates (spec 2026-04-26) |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Static, behavioral, infrastructure, and exploit-chain scanning of MCP servers. Policy recommendation (`--generate-policy`). Teleport-aware checks. Per-lane reporting (spec 2026-04-26). SARIF 2.1.0 export (`--sarif`). Configurable CI severity gate (`--fail-on`). Token redaction in all output paths. | Runtime request blocking (that's nullfield's job). Identity issuance. Deployment. | Finding dataclass; `--json` / `--sarif` output |
 | **[agentic-sec](https://github.com/babywyrm/agentic-sec)** | The shared vocabulary — lane slugs, transport codes, threat taxonomy, golden-path architecture. Cross-project walkthroughs. | Any implementation. It is strictly documentation. | `docs/identity-flows.md` |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM provider benchmarking (cost, throughput, latency, accuracy via LLM-as-judge) across Claude, OpenAI, Bedrock, Ollama, and **brain-gateway**. Adversarial resilience testing (15 fixtures, `--runs N` multi-pass variance, `--extra-judges` multi-judge consensus). Red/blue security capability eval (10 fixtures). Live infrastructure probe via `probes.yaml`. Thinking mode benchmarking. Multi-model sweeps (`atomics sweep`), GPU stress testing (`atomics stress`), user capacity projection (`atomics capacity`), model discovery (`atomics models`). The `brain-gateway` provider routes through camazotz's MCP inference endpoint. | MCP protocol enforcement, vulnerability scanning, policy generation. Stoneburner complements mcpnuke — it measures LLM reasoning quality and adversarial resilience, not MCP protocol integrity. | `atomics compare --narrative --output`; adversarial/redblue/probe CLI output; SQLite results DB (schema v8) |
-| **agentic-bootstrap** *(local POC, not yet public)* | CTF VM inference bootstrapping — decouples the LLM inference layer from VM images so machines can be booted against any endpoint and model. Per-machine wiring specs (`machine.yaml`), swappable inference profiles, model compatibility enforcement with incompatibility refusal, and per-machine solvability test suites that validate attack-chain integrity across models. | Not a security tool. Handles operational wiring of CTF lab VMs to inference backends (Ollama on local hardware, cloud GPU hosts). | `machine.yaml` per VM, `profiles/*.yaml` per backend, `tests/*.sh` per machine |
-
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM provider benchmarking (cost, throughput, latency, accuracy via LLM-as-judge) across Claude, OpenAI, Bedrock, Ollama, **vLLM/OpenAI-compatible gateways**, and **brain-gateway**. Adversarial resilience testing (15 fixtures, `--runs N` multi-pass variance, `--extra-judges` multi-judge consensus). Red/blue security capability eval (10 fixtures). Live infrastructure probe via `probes.yaml`. Thinking mode benchmarking. Multi-model sweeps (`atomics sweep`), GPU stress + multi-model VRAM contention (`atomics stress`), long-duration stability + named regression baselines (`atomics soak`), mixed-workload simulation (`atomics scenario`), CTF solvability / AI-gate regression (`atomics qa`), user capacity projection (`atomics capacity`), model discovery (`atomics models`). Vendor-neutral `inference.env` standard + agnostic resolver (`atomics.inference`) for self-configuring consumers. Judge accuracy & calibration (self-judge guard, gold-criteria coverage) and token-burn fidelity (honest cache/thinking-token accounting). The `brain-gateway` provider routes through camazotz's MCP inference endpoint. | MCP protocol enforcement, vulnerability scanning, policy generation. Stoneburner complements mcpnuke — it measures LLM reasoning quality and adversarial resilience, not MCP protocol integrity. | `atomics compare --narrative --output`; adversarial/redblue/probe CLI output; SQLite results DB (schema v14) |
 **Transport matrix status** (surfaced by camazotz `/api/lanes` as
 machine-readable `gaps`):
 
@@ -296,13 +258,11 @@ Three horizons, committed in decreasing order of near-term certainty.
 - ✅ **Transparent DPoP (RFC 9449)** for OIDC providers in camazotz brain gateway — *2026-05-21*
 - ✅ nullfield `tools.yaml` re-synced to 139 tools (was 85) — *2026-05-23*
 - ✅ **stoneburner v0.5.0** — adversarial resilience (15 fixtures, `--runs N`, `--extra-judges`), red/blue security eval (10 fixtures), live probe, thinking mode, `brain-gateway` provider — *2026-05-23*
-- ✅ **agentic-bootstrap** documented — CTF VM inference bootstrapping POC with model compatibility enforcement and per-machine solvability test suites — *2026-05-24*
 - ✅ **mcpnuke SARIF 2.1.0 export** (`--sarif`), `--fail-on` CI severity gate, `_raw_token` redaction, MIT LICENSE, mcpnuke-runner docs — *2026-05-31*
 - ✅ **stoneburner CLI polish** — `sweep --save`, `export --suite {tasks,stress,sweep,all}`, `compare --output`, `--ollama-host` unification, `capacity` `-t` collision fix, `doctor` docs, schema v8 — *2026-05-31*
-
+- ✅ **stoneburner v0.6.0** — vendor-neutral `inference.env` standard + agnostic resolver (`atomics.inference`); `--provider vllm` (OpenAI-compatible: vLLM/LiteLLM/llama.cpp); `atomics qa` (CTF solvability / AI-gate regression); `atomics soak` (long-duration stability + named regression baselines); `atomics scenario` (mixed-workload simulation); multi-model VRAM contention (`stress --models`); judge accuracy & calibration (deterministic scoring, self-judge guard, gold-criteria coverage, multi-judge consensus); token-burn fidelity (honest cache/thinking-token accounting, standardized TPS); schema v8 → v14; 911 tests — *2026-06-15*
 ### Near-term (actively worked)
 
-- Hammerhand test suite (`machines/hammerhand/tests/`) — validate attack chain across model lineup
 - stoneburner learning path integration (adversarial eval in Track 1, probe in Track 3)
 - mcpnuke PyPI publication with proper metadata and entry point
 - Shared MCP-T56 result schema between mcpnuke and stoneburner for cross-tool analysis
@@ -434,5 +394,4 @@ incident response runbooks (what to do when mcpnuke finds a gap).
 | Add machine identity | [Teleport Setup](teleport/setup.md) — step-by-step Teleport integration |
 | Scan and validate | [mcpnuke README](https://github.com/babywyrm/mcpnuke) — `mcpnuke --targets http://localhost:8080/mcp` |
 | Benchmark providers | [stoneburner](https://github.com/babywyrm/stoneburner) — `atomics run --provider brain-gateway` |
-| Wire a CTF VM to an inference backend | agentic-bootstrap — `bootstrap.sh machines/warbird profiles/brainbox.yaml` |
 | Production architecture | [Golden Path v3](golden-path.md) — the complete security spec |

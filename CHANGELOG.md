@@ -10,6 +10,16 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the sibling repos.
 
+## [2026-06 pt.19] stoneburner v0.6.0 reference sync + coherence enforcement
+
+- **`docs/reference/stoneburner.md`** synced to v0.6.0 / schema v14 / 911 tests; new **Evaluation Fidelity** section (judge accuracy & calibration: deterministic scoring, self-judge guard, gold-criteria coverage, multi-judge consensus; token-burn fidelity: honest cache/thinking-token accounting, standardized TPS); `task_results` fidelity columns (schema v12–v14).
+- **Ecosystem scorecard + roadmap** updated for stoneburner v0.6.0 (`inference.env` standard + `atomics.inference` resolver, `--provider vllm`, `qa`/`soak`/`scenario`/`contention`/`baselines`); boundary date 2026-06-16.
+- **Walkthrough index** — Walkthrough 12 (AI Guardrail Resistance Testing) and the model-compatibility methodology note are now linked from `README.md`.
+- **Cross-repo coherence** (`scripts/check_coherence.py`) extended to gate the stoneburner + mcpnuke package versions and stoneburner's SQLite `SCHEMA_VERSION` cited in the reference headers; 12 unit tests added under `tests/`; CI now checks out stoneburner and runs the tests before the assertions.
+- **Scope** — references to not-yet-public CTF inference orchestration were removed; the generalized research (model-compatibility labels, capability-vs-resilience) remains in the stoneburner reference and the model-compatibility note.
+
+---
+
 ## [2026-05 pt.18] mcpnuke CI tooling + stoneburner CLI polish + docs sync
 
 - **mcpnuke SARIF 2.1.0 export** (`--sarif FILE`) — maps CRITICAL/HIGH → `error`, MEDIUM → `warning`, LOW → `note`; embeds `security-severity` property and taxonomy/MITRE tags in SARIF rules. Ready for GitHub Code Scanning upload via `codeql-action/upload-sarif`. 15 new tests.
@@ -30,9 +40,8 @@ versions are dated rather than semver because this is a docs hub and the
 
 ---
 
-## [2026-05 pt.17] Ecosystem sync — agentic-bootstrap + nullfield 139-tool alignment
+## [2026-05 pt.17] Ecosystem sync — stoneburner reference + nullfield 139-tool alignment
 
-- **agentic-bootstrap** documented in `ecosystem.md` (Layer 5 architecture, coverage scorecard) and `README.md` (tool table, reference link). CTF VM inference bootstrapping system that decouples LLM inference from VM images — per-machine wiring specs, swappable profiles, model compatibility enforcement, solvability test suites. Local POC, not yet public.
 - **nullfield `tools.yaml`** re-synced from 85 → 139 tools, matching camazotz's current `tools/list` surface.
 - **`docs/reference/stoneburner.md`** created — CLI commands, provider table, eval suites (adversarial/red-blue/probe), thinking mode, camazotz brain-gateway integration.
 - **README** updated: "Three Tools" → "The Tools"; added stoneburner badge, reference link, license footer entry.
@@ -47,8 +56,8 @@ versions are dated rather than semver because this is a docs hub and the
 - **stoneburner `atomics probe`** — live infrastructure analysis via external `probes.yaml`. Configurable artifact types (access logs, JSON reports, K8s audit logs, config files, API responses). Regression detection against prior baselines.
 - **Thinking mode** (`--thinking` / `--no-thinking` / `--thinking-budget`) — benchmarks reasoning toggle across providers that support it (Claude, OpenAI, Ollama).
 - **`brain-gateway` provider** — routes benchmarks through camazotz's MCP inference endpoint, enabling same-workload comparison across camazotz-managed providers.
-- **adv-14 CoT leakage fixture** — captures the `qwen3:4b` chain-of-thought-into-verdict bug found during Warbird CTF model compatibility testing. Models that emit reasoning before structured verdicts break `startswith`-based parsers in agentic pipelines.
-- **adv-15 credential extraction fixture** — mirrors the "helpful ops request" social engineering strategy that leaked `WARBIRD_AGENT_CLIENT_SECRET` across multiple Ollama models.
+- **adv-14 CoT leakage fixture** — captures the `qwen3:4b` chain-of-thought-into-verdict bug found during agentic AI-gate model-compatibility testing. Models that emit reasoning before structured verdicts break `startswith`-based parsers in agentic pipelines.
+- **adv-15 credential extraction fixture** — mirrors the "helpful ops request" social engineering strategy that leaked an agent client secret across multiple Ollama models.
 - **SQLite schema v6** — `suite` column on `task_results`, new `adversarial_results` and `probe_results` tables.
 - **369 tests passing.**
 

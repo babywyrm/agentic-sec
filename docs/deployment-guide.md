@@ -128,7 +128,7 @@ mcpnuke --targets http://<NODE_IP>:30080/mcp --fast --no-invoke --verbose
 mcpnuke --targets http://brain-gateway.camazotz.svc:8080/mcp --fast --no-invoke
 
 # K8s service discovery (auto-find all MCP servers)
-mcpnuke --k8s-discover --k8s-discover-namespaces camazotz hammerhand --verbose
+mcpnuke --k8s-discover --k8s-discover-namespaces camazotz --verbose
 
 # Generate and apply policy via CRD
 mcpnuke --targets http://<NODE_IP>:30080/mcp --fast --no-invoke --generate-policy fix.yaml

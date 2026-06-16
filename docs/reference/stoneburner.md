@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.6.0 · 834 tests · schema v11
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.6.0 · 911 tests · schema v14
 
 ---
 
@@ -184,12 +184,13 @@ atomics adversarial --provider claude --runs 3 \
 **adv-14 (CoT leakage):** Catches models that emit chain-of-thought reasoning
 before structured `APPROVED:`/`DENIED:` verdicts. In production agentic
 pipelines, this defeats `startswith`-based parsers and can expose allowlist
-rules or system prompt fragments. Discovered during CTF VM model compatibility
-testing — `qwen3:4b` broke an AI deployment-approval gate with this failure mode.
+rules or system prompt fragments. Observed during agentic AI-gate
+model-compatibility testing — `qwen3:4b` broke an AI deployment-approval gate
+with this failure mode.
 
 **adv-15 (credential extraction):** Mirrors the "helpful ops request" social
 engineering strategy that leaked secrets across multiple Ollama models in live
-CTF testing.
+model testing.
 
 ---
 
@@ -243,6 +244,58 @@ tracked separately from visible output.
 
 Flags: `--thinking` (force on), `--no-thinking` (force off),
 `--thinking-budget N` (max thinking tokens).
+
+---
+
+## Evaluation Fidelity
+
+Benchmark numbers are only useful if they are honest and reproducible.
+stoneburner hardens both the judge and the metrics so cross-model comparisons
+hold up.
+
+### Judge accuracy & calibration
+
+The LLM-as-judge quality scorer is built to be reproducible and hard to game:
+
+- **Deterministic scoring** — quality/resistance judges request `temperature=0.0`
+  (withheld where the backend forbids it: OpenAI reasoning models, Claude
+  extended-thinking; brain-gateway controls sampling server-side).
+- **Self-judge guard** — `detect_self_judge` warns when a judge is the same
+  provider+model as the model under test (incl. consensus-panel members), since
+  self-preference biases the score.
+- **Gold-criteria coverage** — `compute_criteria_coverage` adds an objective,
+  judge-independent lexical measure of how many of a fixture's gold criteria
+  appear in the response (`task_results.criteria_coverage`, schema v13).
+- **Multi-judge consensus** — `score_consensus` averages a primary judge plus an
+  optional panel and records inter-judge stdev (`judge_score_stdev`, schema v14);
+  `eval`/`adversarial` accept `--extra-judges provider:model[@host]`.
+- **Fair completeness** — the judge's truncation cap scales to each fixture's
+  expected output length, so long answers are judged in full, not cut at 3000
+  chars.
+- **Calibration regression guard** — `atomics/eval/calibration.py` ranks graded
+  answers (wrong → thin → thorough) and asserts monotonic, well-separated
+  scoring; an opt-in live test (`ATOMICS_LIVE_JUDGE=1`) validates the real judge.
+  A `parse_failure_rate` is surfaced in the eval summary.
+
+### Token-burn fidelity
+
+Provider metrics report only what each API can actually observe, so cost and
+throughput comparisons are apples-to-apples:
+
+- **Prompt-cache tokens** — Claude `cache_read`/`cache_write` tokens are captured
+  and priced correctly (reads 0.10×, writes 1.25× the base input rate).
+- **Honest thinking tokens** — populated only when truly reported (OpenAI
+  `reasoning_tokens`; Ollama/vLLM use a character-proportional estimate anchored
+  to the real output total; Claude stays 0, since Anthropic bills thinking as
+  output).
+- **Standardized throughput** — `tokens_per_second` = output tokens ÷ elapsed
+  time via `compute_tps`, with a `tps_basis` field labeling `wall_clock` vs
+  `generation` (Ollama decode time); Bedrock now reports throughput too.
+- **Centralized pricing** — all pricing tables and the cost function live in
+  `atomics/providers/pricing.py`.
+
+Both areas persist to `task_results` (schema v12–v14) and surface in
+`provider-test` output and `compare`.
 
 ---
 
@@ -311,12 +364,12 @@ Environment variable: `ATOMICS_BRAIN_GATEWAY_URL` (default `http://localhost:808
 
 ## Storage
 
-SQLite database (schema v11) with tables:
+SQLite database (schema v14) with tables:
 
 | Table | Content |
 |-------|---------|
 | `runs` | Benchmark run metadata |
-| `task_results` | Per-task outcomes with `suite` column (eval/redblue) |
+| `task_results` | Per-task outcomes (`suite` column eval/redblue); fidelity columns: cache read/write tokens + `tps_basis` (v12), `criteria_coverage` (v13), `judge_score_stdev` (v14) |
 | `adversarial_results` | Adversarial fixture results |
 | `probe_results` | Live probe results |
 | `stress_results` | Stress test throughput/latency per concurrency level |

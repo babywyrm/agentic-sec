@@ -38,8 +38,6 @@ MCP and agentic AI patterns are 1–2 year old RFCs — the security conventions
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar proxy that intercepts every MCP `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET policy before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP security scanner — static, behavioral, and AI-assisted probes; outputs findings + nullfield policy |
 | **[stoneburner](https://github.com/babywyrm/stoneburner)** | Benchmarking + LLM eval | Provider benchmarking (cost, latency, accuracy) plus adversarial resilience testing (15 fixtures), red/blue security capability eval, and live infrastructure probing — with multi-judge consensus and multi-pass variance |
-| **agentic-bootstrap** *(POC)* | CTF infra | Decouples VM inference from the image — boots any CTF machine against any LLM backend, enforces model compatibility, validates solvability per model |
-
 Each tool ships independently. They are more powerful together.
 
 ---
@@ -112,6 +110,7 @@ For Kubernetes, Helm, and Teleport deployment options see [`docs/deployment-guid
 | [`docs/identity-flows.md`](docs/identity-flows.md) | Five identity lanes × five transport surfaces — the foundational taxonomy |
 | [`docs/golden-path.md`](docs/golden-path.md) | Production security architecture for MCP deployments — for security review boards |
 | [`docs/feedback-loop.md`](docs/feedback-loop.md) | The scan → recommend → enforce → validate operational cycle |
+| [`docs/walkthroughs/model-compatibility-for-agentic-challenges.md`](docs/walkthroughs/model-compatibility-for-agentic-challenges.md) | Why AI-backed challenges need two-layer model validation — function-compatible vs walkthrough-compatible, and why a "safer" model can break a challenge |
 
 ### Tool Reference
 
@@ -146,6 +145,7 @@ For Kubernetes, Helm, and Teleport deployment options see [`docs/deployment-guid
 | 9 | [AI Governance Infrastructure as Attack Surface](docs/walkthroughs/ai-governance-infrastructure.md) | How AI governance gates can be bypassed structurally via open redirect — not prompt injection | 45m |
 | 10 | [Token Cross-Pollution and Shared Identity](docs/walkthroughs/token-cross-pollution.md) | Shared IdP scope pollution (MCP-T42) + DPoP key leak forgery (MCP-T43) — two controls that fail together | 15m |
 | 11 | [Building a Lane 4 Defense from Scratch](docs/walkthroughs/lane4-defense.md) | Depth limits, scope narrowing, task allowlists, and audit chain across all five Lane 4 transport patterns | 20m |
+| 12 | [AI Guardrail Resistance Testing](docs/walkthroughs/guardrail-resistance-testing.md) | Systematically test whether AI-mediated security gates enforce protections or merely suggest them (MCP-T56) with `mcpnuke --inference` + stoneburner | 30m |
 
 ---
 
