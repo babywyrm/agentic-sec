@@ -6,11 +6,12 @@ Thanks for your interest. This repo is a documentation and architecture hub — 
 
 ## What Lives Here
 
-`agentic-sec` is the connective tissue between three independent tools:
+`agentic-sec` is the connective tissue between four independent tools:
 
 - **camazotz** — the vulnerable target (labs, transports, API surface)
 - **nullfield** — the policy arbiter (actions, CRDs, policy templates)
 - **mcpnuke** — the scanner (scan modes, findings schema, policy generation)
+- **stoneburner** — LLM benchmarking + adversarial/security evaluation
 
 If your contribution is a bug fix or feature in one of those tools, open a PR in that repo. If it's cross-cutting — a new walkthrough, a new campaign scenario, a vocabulary change, a new identity lane — it belongs here.
 
@@ -38,6 +39,13 @@ Follow the format in any existing campaign — each section (Deployment Context,
 ### Reference Updates
 
 Tool reference docs (`docs/reference/`) should stay in sync with the tool repos. If you notice drift — a flag that exists in mcpnuke but isn't in `docs/reference/mcpnuke.md`, for example — a PR fixing that is very welcome.
+
+Some of this is enforced automatically. `scripts/check_coherence.py` is a drift catcher that reads authoritative sources from each sibling repo and asserts the prose agrees — lab counts, the transport/lane vocabulary, the nullfield tool count, and the **stoneburner + mcpnuke package versions and stoneburner's SQLite `SCHEMA_VERSION`** cited in the reference headers. It runs in CI (`.github/workflows/cross-repo-coherence.yml`) with all five repos checked out as siblings, and its own unit tests live in `tests/`. To run locally with the repos side-by-side:
+
+```bash
+python -m pytest                              # checker unit tests
+python scripts/check_coherence.py --root ..   # assertions against sibling repos
+```
 
 ### Vocabulary / Taxonomy
 

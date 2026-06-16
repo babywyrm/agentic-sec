@@ -1,19 +1,23 @@
 name: Cross-repo coherence
 
-# Catches drift across the four-repo MCP security ecosystem (camazotz,
-# mcpnuke, nullfield, agentic-sec). Runs `scripts/check_coherence.py`
-# against the four repos at HEAD of main:
+# Catches drift across the five-repo MCP security ecosystem (camazotz,
+# mcpnuke, nullfield, stoneburner, agentic-sec). Runs `scripts/check_coherence.py`
+# against the repos at HEAD of main:
 #
 #   - lab module count (camazotz_modules/*/scenario.yaml is the truth source)
-#     must match every prose assertion across the four repos
+#     must match every prose assertion across the repos
 #   - five-transport taxonomy (ADR 0001 in camazotz) must be cited as A-E,
 #     never as "three transports" or "A-C"
 #   - lane vocabulary (frontend/lane_taxonomy.py in camazotz) must be the
 #     canonical 5 slugs
 #   - nullfield/integrations/camazotz/tools.yaml count must match the
 #     "all N tools" assertion in its README
+#   - the stoneburner + mcpnuke tool references in agentic-sec must cite the
+#     live pyproject package version, and the stoneburner reference must cite
+#     the live SQLite SCHEMA_VERSION (header + Storage section)
 #
-# When this fails, the failure message names the file and the stale string.
+# The checker's own unit tests live in agentic-sec/tests/ and run in the same
+# job. When a check fails, the failure message names the file and stale string.
 # Triggered on: push to main here, push to any sibling repo (via
 # repository_dispatch), and a nightly cron as a safety net.
 
@@ -22,6 +26,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/check_coherence.py'
+      - 'tests/**'
+      - 'pyproject.toml'
       - '.github/workflows/cross-repo-coherence.yml'
       - 'docs/**'
       - 'README.md'
@@ -63,10 +69,23 @@ jobs:
           path: nullfield
           ref: main
 
+      - name: Check out stoneburner @ main
+        uses: actions/checkout@v4
+        with:
+          repository: babywyrm/stoneburner
+          path: stoneburner
+          ref: main
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Run coherence unit tests
+        working-directory: agentic-sec
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest
 
       - name: Run coherence assertions
         run: |

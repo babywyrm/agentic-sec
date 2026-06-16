@@ -3,11 +3,20 @@
 
 This script is the drift catcher. It reads authoritative sources from each
 repo (`camazotz_modules/*/scenario.yaml`, `nullfield/integrations/camazotz/
-tools.yaml`, `mcpnuke/checks/__init__.py`, ADR 0001) and asserts that every
-downstream doc and number agrees. When it fails, the failure message names
-the exact file and the exact stale assertion.
+tools.yaml`, `mcpnuke/checks/__init__.py`, ADR 0001, plus the `pyproject.toml`
+package versions of stoneburner + mcpnuke and stoneburner's SQLite
+`SCHEMA_VERSION`) and asserts that every downstream doc and number agrees.
+When it fails, the failure message names the exact file and the exact stale
+assertion.
 
-Designed to be run from CI on a workspace that has all four repos checked
+Note on test counts: the tool-reference headers also cite a test count (e.g.
+"911 tests"). That number is informational only and is deliberately NOT gated
+— deriving it deterministically requires running each sibling's full pytest
+suite (parametrization makes a static `def test_` count wrong), which is not
+viable in this lightweight multi-repo checkout. Versions and schema versions
+are the correctness-bearing facts, and those are gated.
+
+Designed to be run from CI on a workspace that has all five repos checked
 out side-by-side as siblings:
 
     workspace/
@@ -15,6 +24,7 @@ out side-by-side as siblings:
       camazotz/
       mcpnuke/
       nullfield/
+      stoneburner/
 
 Override the workspace root with the env var ECOSYSTEM_ROOT, or pass
 --root <path>. Default is the parent of this script's repo.
@@ -47,6 +57,9 @@ class Truth:
     lane_slugs: list[str]      # camazotz frontend/lane_taxonomy.py canonical slugs
     nullfield_registered_tools: int  # entries in nullfield's integrations/camazotz/tools.yaml
     mcpnuke_registered_checks: int   # registered in mcpnuke/checks/__init__.py
+    stoneburner_version: str   # stoneburner/pyproject.toml package version
+    stoneburner_schema: int    # stoneburner/atomics/storage/schema.py SCHEMA_VERSION
+    mcpnuke_version: str       # mcpnuke/pyproject.toml package version
 
 
 def _count_scenario_yamls(camazotz_root: Path) -> int:
@@ -100,11 +113,35 @@ def _count_mcpnuke_checks(mcpnuke_root: Path) -> int:
     return max(candidates)
 
 
+_PYPROJECT_VERSION_RE = re.compile(r'^version\s*=\s*["\']([^"\']+)["\']', re.M)
+
+
+def _read_pyproject_version(repo_root: Path, *, label: str) -> str:
+    pyproject = repo_root / "pyproject.toml"
+    if not pyproject.exists():
+        raise SystemExit(f"coherence: {label} pyproject.toml not found: {pyproject}")
+    m = _PYPROJECT_VERSION_RE.search(pyproject.read_text())
+    if not m:
+        raise SystemExit(f"coherence: {label} version not found in {pyproject}")
+    return m.group(1)
+
+
+def _read_stoneburner_schema(stoneburner_root: Path) -> int:
+    schema = stoneburner_root / "atomics/storage/schema.py"
+    if not schema.exists():
+        raise SystemExit(f"coherence: stoneburner schema.py not found: {schema}")
+    m = re.search(r"^SCHEMA_VERSION\s*=\s*(\d+)", schema.read_text(), re.M)
+    if not m:
+        raise SystemExit(f"coherence: SCHEMA_VERSION not found in {schema}")
+    return int(m.group(1))
+
+
 def gather_truth(root: Path) -> Truth:
     cam = root / "camazotz"
     nul = root / "nullfield"
     mcp = root / "mcpnuke"
-    for repo in (cam, nul, mcp, root / "agentic-sec"):
+    stb = root / "stoneburner"
+    for repo in (cam, nul, mcp, stb, root / "agentic-sec"):
         if not repo.exists():
             raise SystemExit(
                 f"coherence: expected sibling repo not found: {repo} "
@@ -116,6 +153,9 @@ def gather_truth(root: Path) -> Truth:
         lane_slugs=_read_lane_slugs(cam),
         nullfield_registered_tools=_count_nullfield_tools(nul),
         mcpnuke_registered_checks=_count_mcpnuke_checks(mcp),
+        stoneburner_version=_read_pyproject_version(stb, label="stoneburner"),
+        stoneburner_schema=_read_stoneburner_schema(stb),
+        mcpnuke_version=_read_pyproject_version(mcp, label="mcpnuke"),
     )
 
 
@@ -294,6 +334,76 @@ def _check_adr_transports(camazotz_root: Path, truth: Truth, report: Report) -> 
     report.checks_run += 1
 
 
+# Header line shape in the tool references: "... · v0.6.0 · 911 tests · schema v14".
+# `· schema vN` is intentionally specific so it does not match inline references
+# like "(schema v13)" or "schema v12-v14" elsewhere in the doc body.
+_REF_VERSION_RE = re.compile(r"·\s*v(\d+\.\d+\.\d+)\s*·")
+_REF_HEADER_SCHEMA_RE = re.compile(r"·\s*schema v(\d+)")
+_REF_STORAGE_SCHEMA_RE = re.compile(r"SQLite database \(schema v(\d+)\)")
+
+
+def _check_stoneburner_reference(agentic_sec_root: Path, truth: Truth,
+                                 report: Report) -> None:
+    """The stoneburner reference must cite the live package + schema version."""
+    ref = agentic_sec_root / "docs/reference/stoneburner.md"
+    if not ref.exists():
+        report.fail(ref, "missing")
+        report.checks_run += 1
+        return
+    text = ref.read_text()
+
+    ver = _REF_VERSION_RE.search(text)
+    if not ver:
+        report.fail(ref, "no 'v X.Y.Z' version in the header line")
+    elif ver.group(1) != truth.stoneburner_version:
+        report.fail(
+            ref,
+            f"header cites v{ver.group(1)} but stoneburner/pyproject.toml is "
+            f"v{truth.stoneburner_version}",
+        )
+
+    target = str(truth.stoneburner_schema)
+    header_schema = _REF_HEADER_SCHEMA_RE.search(text)
+    if not header_schema:
+        report.fail(ref, f"no '· schema vN' header assertion to verify against v{target}")
+    elif header_schema.group(1) != target:
+        report.fail(
+            ref,
+            f"header cites schema v{header_schema.group(1)} but stoneburner "
+            f"SCHEMA_VERSION is v{target}",
+        )
+
+    storage_schema = _REF_STORAGE_SCHEMA_RE.search(text)
+    if storage_schema and storage_schema.group(1) != target:
+        report.fail(
+            ref,
+            f"Storage section cites schema v{storage_schema.group(1)} but "
+            f"SCHEMA_VERSION is v{target}",
+        )
+    report.checks_run += 1
+
+
+def _check_mcpnuke_reference(agentic_sec_root: Path, truth: Truth,
+                             report: Report) -> None:
+    """The mcpnuke reference must cite the live package version."""
+    ref = agentic_sec_root / "docs/reference/mcpnuke.md"
+    if not ref.exists():
+        report.fail(ref, "missing")
+        report.checks_run += 1
+        return
+    text = ref.read_text()
+    ver = _REF_VERSION_RE.search(text)
+    if not ver:
+        report.fail(ref, "no 'v X.Y.Z' version in the header line")
+    elif ver.group(1) != truth.mcpnuke_version:
+        report.fail(
+            ref,
+            f"header cites v{ver.group(1)} but mcpnuke/pyproject.toml is "
+            f"v{truth.mcpnuke_version}",
+        )
+    report.checks_run += 1
+
+
 # --------------------------------------------------------------------------
 # Driver
 # --------------------------------------------------------------------------
@@ -312,12 +422,16 @@ def main() -> int:
     print(f"  truth: {truth.lab_modules} labs, transports={truth.transport_codes}, "
           f"lanes={len(truth.lane_slugs)}, nullfield_tools={truth.nullfield_registered_tools}, "
           f"mcpnuke_checks={truth.mcpnuke_registered_checks}")
+    print(f"         stoneburner v{truth.stoneburner_version} schema v{truth.stoneburner_schema}, "
+          f"mcpnuke v{truth.mcpnuke_version}")
     print()
 
     report = Report()
     _check_adr_transports(args.root / "camazotz", truth, report)
     _check_lane_slugs(args.root / "camazotz", truth, report)
     _check_nullfield_tool_count_consistency(args.root / "nullfield", truth, report)
+    _check_stoneburner_reference(args.root / "agentic-sec", truth, report)
+    _check_mcpnuke_reference(args.root / "agentic-sec", truth, report)
     for repo, label in [
         (args.root / "camazotz", "camazotz"),
         (args.root / "agentic-sec", "agentic-sec"),
