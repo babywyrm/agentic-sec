@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.6.0 · 911 tests · schema v14
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.6.0 · 964 tests · schema v15
 
 ---
 
@@ -364,7 +364,7 @@ Environment variable: `ATOMICS_BRAIN_GATEWAY_URL` (default `http://localhost:808
 
 ## Storage
 
-SQLite database (schema v14) with tables:
+SQLite database (schema v15) with tables:
 
 | Table | Content |
 |-------|---------|
@@ -377,6 +377,7 @@ SQLite database (schema v14) with tables:
 | `scenario_results` | Mixed-workload scenario outcomes (per-workload latency/SLA) |
 | `soak_results` | Long-duration stability runs (drift, error rate, cost) |
 | `baselines` | Named metric baselines for regression comparison (UNIQUE name+suite) |
+| `archreview_results` | Security-architecture review findings per model/tier/round (v15); columns: recall, precision, f-score, judge score, finding count, pack hash, matched categories |
 
 Export via `atomics export --suite {tasks,stress,sweep,all} --format {jsonl,csv}`.
 
