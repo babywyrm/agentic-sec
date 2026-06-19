@@ -27,6 +27,7 @@ MCP and agentic AI patterns are 1–2 year old RFCs — the security conventions
 | Defend with nullfield policy | [Walkthrough 2 — The Defense](docs/walkthroughs/defense.md) |
 | Run the full scan → enforce → validate loop | [Walkthrough 5 — Live Feedback Loop](docs/walkthroughs/live-loop.md) |
 | Understand the full architecture | [`docs/ecosystem.md`](docs/ecosystem.md) |
+| See what's mature, thin, and planned next | [`docs/roadmap.md`](docs/roadmap.md) |
 
 ---
 
@@ -37,7 +38,7 @@ MCP and agentic AI patterns are 1–2 year old RFCs — the security conventions
 | **[camazotz](https://github.com/babywyrm/camazotz)** | Vulnerable target | Intentionally vulnerable MCP server — 52 labs across 5 identity lanes and 5 transport surfaces, covering every OWASP MCP Top 10 risk |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar proxy that intercepts every MCP `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET policy before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP security scanner — static, behavioral, and AI-assisted probes; outputs findings + nullfield policy |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | Benchmarking + LLM eval | Provider benchmarking (cost, latency, accuracy) plus adversarial resilience testing (15 fixtures), red/blue security capability eval, and live infrastructure probing — with multi-judge consensus and multi-pass variance |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | Benchmarking + LLM eval | Provider benchmarking (cost, latency, accuracy) plus adversarial resilience testing (15 fixtures), red/blue security capability eval, security-architecture review benchmarking (`archreview`), and live infrastructure probing — with multi-judge consensus and multi-pass variance |
 Each tool ships independently. They are more powerful together.
 
 ---
