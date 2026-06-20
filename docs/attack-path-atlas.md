@@ -285,11 +285,14 @@ Attacks targeting the configuration layer that defines agent behavior.
 
 | ID | Threat | Technique | OWASP | Status |
 |----|--------|-----------|-------|--------|
-| J1 | Rule injection | Malicious rule added to .cursor/rules or AGENTS.md that persists across sessions | MCP09 | Gap |
-| J2 | Skill poisoning | Modified SKILL.md with hidden instructions executed on invocation | MCP03 | Gap |
+| J1 | Rule injection | Malicious rule added to .cursor/rules or AGENTS.md that persists across sessions | MCP09 | Partial |
+| J2 | Skill poisoning | Modified SKILL.md with hidden instructions executed on invocation | MCP03 | Partial |
 | J3 | Automation trigger abuse | Crafted event triggers an automation with unintended scope | MCP09 | Gap |
-| J4 | Hook manipulation | Git hook or agent hook modified to execute on sensitive events | MCP04 | Gap |
+| J4 | Hook manipulation | Agent hook modified to execute on sensitive events (exfil, bootstrap) | MCP04 | Partial |
 | J5 | Config inheritance escalation | Child workspace inherits overly permissive parent config | MCP02 | Gap |
+| J6 | Dependency-path planting | AGENTS.md placed in node_modules/ or vendor/ to hijack agent context | MCP03 | Partial |
+| J7 | Review suppression | Instructions to hide changes from PR summaries or commit messages | MCP08 | Partial |
+| J8 | Encoded payload in config | Base64/hex blobs in control files bypass pattern scanners | MCP06 | Partial |
 
 ---
 
@@ -320,16 +323,19 @@ Failures in the trust verification and cryptographic layers.
 | G — Infrastructure | 7 | 6 | 1 | 0 |
 | H — HITL | 5 | 0 | 2 | 3 |
 | I — MCP Protocol | 8 | 8 | 0 | 0 |
-| J — Config/Automation | 5 | 0 | 0 | 5 |
+| J — Config/Automation | 8 | 0 | 6 | 2 |
 | K — Zero Trust | 5 | 1 | 3 | 1 |
-| **TOTAL** | **61** | **28** | **16** | **17** |
+| **TOTAL** | **64** | **28** | **22** | **14** |
 
-**46% covered, 26% partial, 28% gap** — the gaps are concentrated in:
+**44% covered, 34% partial, 22% gap** — remaining gaps concentrated in:
 - Reasoning manipulation (A3, A4)
 - HITL exploitation (H1–H4)
-- Config/Automation poisoning (J1–J5)
 - Temporal/sleeper attacks (C1, C5)
 - Observability evasion (E2, E5)
+
+Domain J moved from 100% gap to 75% partial — scanner and hook hardening
+exist in research ([`sysadmin/ai/agent-safety/`](https://github.com/babywyrm/sysadmin/tree/master/ai/agent-safety))
+but lack public camazotz labs and mcpnuke modules.
 
 ---
 
@@ -359,6 +365,48 @@ Failures in the trust verification and cryptographic layers.
 | **nullfield** | Which policy primitives need design (HITL fatigue guards, config integrity) |
 | **stoneburner** | Which benchmark suites to add (reasoning manipulation, memory persistence) |
 | **agentic-sec** | Where walkthroughs and campaigns are needed |
+
+---
+
+## Impact Scoring (BRS)
+
+Each path can be scored using the **Blast Radius Score** methodology:
+
+```
+BRS = Impact × Likelihood × Scope × Duration
+```
+
+| BRS Range | Severity | Example |
+|-----------|----------|---------|
+| 200+ | Critical | CI/CD runner compromise (agent image supply chain) |
+| 150–199 | High | Agent pod escape → node takeover; poisoned container image |
+| 100–149 | Medium | Secrets in tool output; cross-tenant memory leak |
+| 50–99 | Low | Single-session prompt injection without persistence |
+
+Full scoring worksheets: [`modeling/psirt/blast_matrix_.md`](https://github.com/babywyrm/sysadmin/tree/master/modeling/psirt)
+
+---
+
+## Methodology
+
+The Atlas is informed by layered threat frameworks:
+
+| Framework | What it provides | Reference |
+|-----------|-----------------|-----------|
+| **STRIDE** | Per-component threat categorization | [`modeling/readme.md`](https://github.com/babywyrm/sysadmin/tree/master/modeling) |
+| **PASTA** | Attack chain simulation (external + insider paths) | [`modeling/microservices/`](https://github.com/babywyrm/sysadmin/tree/master/modeling/microservices) |
+| **DREAD** | Numeric risk scoring for prioritization | [`modeling/readme.md`](https://github.com/babywyrm/sysadmin/tree/master/modeling) |
+| **Kill Chain** | Recon → Access → Lateral → Persist (agentic variant) | [`modeling/attack.md`](https://github.com/babywyrm/sysadmin/tree/master/modeling) |
+| **MITRE ATT&CK** | TTP mapping for detection engineering | [`modeling/redblue/`](https://github.com/babywyrm/sysadmin/tree/master/modeling/redblue) |
+| **SPIFFE/SPIRE** | Workload identity trust boundaries | [`modeling/spire/`](https://github.com/babywyrm/sysadmin/tree/master/modeling/spire) |
+| **PTEF** | Purple Team Exercise Framework (red↔blue validation) | [`modeling/redblue/readme.md`](https://github.com/babywyrm/sysadmin/tree/master/modeling/redblue) |
+
+The agentic kill chain variant:
+
+```
+Tool/API Recon → Prompt-Driven Initial Access → MCP Lateral Movement
+→ Credential Harvest via Tool Output → Persistence via Config/Memory
+```
 
 ---
 
