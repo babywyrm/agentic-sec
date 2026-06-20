@@ -8,6 +8,116 @@ roadmap for all repos in the agentic-sec family.
 
 ---
 
+## Table of Contents
+
+- [How to read this document](#how-to-read-this-document)
+- [Ecosystem overview (diagram)](#ecosystem-overview)
+- [Domains](#domain-a--agent-reasoning-attacks)
+  - [A — Agent Reasoning](#domain-a--agent-reasoning-attacks)
+  - [B — Multi-Agent Trust](#domain-b--multi-agent-trust)
+  - [C — Memory, State & Temporal](#domain-c--memory-state--temporal-attacks)
+  - [D — Supply Chain & Ecosystem](#domain-d--supply-chain--ecosystem)
+  - [E — Observability & Detection Evasion](#domain-e--observability--detection-evasion)
+  - [F — Identity, Auth & Delegation](#domain-f--identity-auth--delegation)
+  - [G — Infrastructure & Network (K8s + AI)](#domain-g--infrastructure--network-k8s--ai)
+  - [H — Human-in-the-Loop Exploitation](#domain-h--human-in-the-loop-exploitation)
+  - [I — MCP Protocol Specifics](#domain-i--mcp-protocol-specifics)
+  - [J — AGENTS.md, Skills, Rules & Automation](#domain-j--agentsmd-skills-rules--automation-config)
+  - [K — Zero Trust & Cryptographic](#domain-k--zero-trust--cryptographic)
+- [Coverage Summary](#coverage-summary)
+- [OWASP MCP Top 10 Cross-Reference](#cross-reference-owasp-mcp-top-10)
+- [What this drives (per repo)](#what-this-drives-per-repo)
+- [Glossary](#glossary)
+- [Versioning](#versioning)
+
+---
+
+## Ecosystem Overview
+
+```mermaid
+graph TB
+    subgraph "Attack Path Atlas (this document)"
+        ATLAS[61 Attack Paths<br/>11 Domains A–K]
+    end
+
+    subgraph "Red Team (Demonstrate & Exploit)"
+        CAM[camazotz<br/>Vulnerable MCP targets<br/>52 labs]
+        NUKE[mcpnuke<br/>Outside-in scanner<br/>Static + behavioral + AI]
+    end
+
+    subgraph "Blue Team (Defend & Enforce)"
+        NULL[nullfield<br/>Policy arbiter sidecar<br/>5 actions, CRD-native]
+        STONE[stoneburner<br/>LLM benchmarking<br/>Adversarial + archreview]
+    end
+
+    subgraph "Reference Frameworks"
+        OWASP[OWASP MCP Top 10<br/>MCP01–MCP10]
+        LLM10[OWASP LLM Top 10<br/>LLM01–LLM10]
+        MITRE[MITRE ATT&CK<br/>+ ATLAS]
+    end
+
+    ATLAS -->|"which labs to build"| CAM
+    ATLAS -->|"which checks to add"| NUKE
+    ATLAS -->|"which policies to design"| NULL
+    ATLAS -->|"which benchmarks to run"| STONE
+    ATLAS ---|"maps to"| OWASP
+    ATLAS ---|"maps to"| LLM10
+    ATLAS ---|"maps to"| MITRE
+
+    CAM -->|"proves exploitable"| ATLAS
+    NUKE -->|"detects in wild"| ATLAS
+    NULL -->|"blocks at runtime"| ATLAS
+    STONE -->|"measures resistance"| ATLAS
+```
+
+```mermaid
+graph LR
+    subgraph "Closed Loop (operational cycle)"
+        direction LR
+        SCAN[mcpnuke scan] --> FINDINGS[Findings<br/>mapped to Atlas IDs]
+        FINDINGS --> POLICY[nullfield policy<br/>generated]
+        POLICY --> ENFORCE[Applied to<br/>runtime]
+        ENFORCE --> VALIDATE[mcpnuke re-scan<br/>validates]
+        VALIDATE --> SCAN
+    end
+```
+
+```mermaid
+graph TD
+    subgraph "Attack Domain Relationships"
+        A[A: Reasoning] --> B[B: Multi-Agent]
+        A --> C[C: Memory/Temporal]
+        D[D: Supply Chain] --> I[I: MCP Protocol]
+        D --> J[J: Config/Automation]
+        I --> F[F: Identity/Auth]
+        I --> G[G: Infrastructure]
+        F --> H[H: Human-in-the-Loop]
+        E[E: Observability] -.->|"enables evasion of"| ALL[All Domains]
+        K[K: Zero Trust] -.->|"underpins"| F
+        K -.->|"underpins"| G
+    end
+```
+
+---
+
+## Linked Resources
+
+| Resource | Repo | Description |
+|----------|------|-------------|
+| [Taxonomy (lanes.yaml)](../docs/taxonomy/lanes.yaml) | agentic-sec | Machine-readable threat IDs (MCP-T01–T58) |
+| [Identity Flows](../docs/identity-flows.md) | agentic-sec | 5×5 lane × transport matrix |
+| [Golden Path](../docs/golden-path.md) | agentic-sec | Production security architecture (6 gates) |
+| [Feedback Loop](../docs/feedback-loop.md) | agentic-sec | Scan → enforce → validate cycle |
+| [Roadmap](../docs/roadmap.md) | agentic-sec | Strategic themes and maturity gaps |
+| [camazotz threat map](https://github.com/babywyrm/camazotz) | camazotz | Lab corpus by category |
+| [mcpnuke](https://github.com/babywyrm/mcpnuke) | mcpnuke | Scanner modules and profiles |
+| [nullfield](https://github.com/babywyrm/nullfield) | nullfield | Policy CRDs and action reference |
+| [stoneburner](https://github.com/babywyrm/stoneburner) | stoneburner | Adversarial, redblue, archreview suites |
+| [OWASP MCP Top 10](../docs/bridge.md) | agentic-sec | Practitioner bridge document |
+| [Learning Paths](../docs/learning-path.md) | agentic-sec | Red/Blue/Full Loop/Campaign tracks |
+
+---
+
 ## How to read this document
 
 Each attack domain contains paths. Each path has:
@@ -252,8 +362,39 @@ Failures in the trust verification and cryptographic layers.
 
 ---
 
+## Glossary
+
+| Term | Definition |
+|------|------------|
+| **MCP** | Model Context Protocol — JSON-RPC standard for LLM ↔ tool communication |
+| **Agent** | An LLM-powered system that can plan, use tools, and take actions autonomously |
+| **Orchestrator** | The outer agent that coordinates sub-agents and tool calls |
+| **Sub-agent** | A delegated agent operating under an orchestrator's authority |
+| **Tool** | A function exposed via MCP (or function-calling) that the agent can invoke |
+| **Guardrail** | LLM-powered or rule-based filter that evaluates agent actions before execution |
+| **HITL** | Human-in-the-Loop — human approval required before sensitive operations |
+| **Confused deputy** | Agent uses its own credentials for a request that should use the user's |
+| **Indirect prompt injection** | Malicious instructions placed in data the agent retrieves (not direct user input) |
+| **Context poisoning** | Injecting content into shared LLM context to influence downstream decisions |
+| **Rug-pull** | Tool behaves normally until trust is established, then changes behavior |
+| **Ambient authority** | Agent can invoke any tool in its manifest without per-call authorization |
+| **Split action chain** | Dangerous operation decomposed into individually benign approved steps |
+| **ABRS** | Agentic Blast Radius Score — impact metric for agentic attacks (beyond CVSS) |
+| **DPoP** | Demonstration of Proof-of-Possession — cryptographic token binding |
+| **SPIFFE** | Secure Production Identity Framework for Everyone — workload identity standard |
+| **nullfield** | Policy arbiter sidecar (5 actions: ALLOW, DENY, HOLD, SCOPE, BUDGET) |
+| **mcpnuke** | Outside-in MCP scanner (static + behavioral + infrastructure + AI-assisted) |
+| **camazotz** | Intentionally vulnerable MCP target (52 labs, 5 lanes × 5 transports) |
+| **stoneburner** | LLM adversarial benchmarking and architecture review tool |
+| **Lane** | Identity context of the caller (human-direct, delegated, machine, chain, anonymous) |
+| **Transport** | Wire protocol surface (MCP JSON-RPC, HTTP API, SDK, subprocess, function-calling) |
+| **MCP-T** | Threat ID in the shared taxonomy (MCP-T01 through MCP-T58) |
+| **OWASP MCP** | OWASP Top 10 for MCP (MCP01–MCP10) — industry standard risk classification |
+
+---
+
 ## Versioning
 
 | Version | Date | Change |
 |---------|------|--------|
-| 1.0 | 2026-06-20 | Initial atlas — 11 domains, 61 paths |
+| 1.0 | 2026-06-20 | Initial atlas — 11 domains, 61 paths, glossary, diagrams, cross-references |
