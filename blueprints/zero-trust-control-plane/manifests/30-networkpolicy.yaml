@@ -1,0 +1,60 @@
+# Network layer: make the gateway the ONLY path to the MCP server.
+#
+# Without this, a client could bypass the PEP entirely by calling
+# mcp-server.zerotrust.svc directly. Zero-trust requires that enforcement
+# cannot be skipped — so we default-deny ingress in the namespace and then
+# allow the MCP server to receive traffic ONLY from the gateway pods.
+#
+# ⚠️  ENFORCEMENT IS CNI-DEPENDENT. NetworkPolicy objects are inert unless the
+#     cluster's CNI enforces them. Plain flannel (and some k3s setups) silently
+#     ignore them — kubectl accepts the object, but nothing blocks the traffic,
+#     giving a FALSE sense of security. Verify with `./demo.sh` (it runs a
+#     bypass check) or `verify-netpol.sh`. If your cluster does NOT enforce
+#     NetworkPolicy, the gateway is NOT the only path — use the sidecar-PEP
+#     pattern instead (see README → "Guaranteeing non-bypassability").
+#     Enforcing CNIs: Calico, Cilium, kube-router, Antrea, Weave.
+---
+# Default-deny all ingress in the namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: zerotrust
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]
+---
+# The MCP server accepts traffic ONLY from gateway pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mcp-server-from-gateway-only
+  namespace: zerotrust
+spec:
+  podSelector:
+    matchLabels:
+      app: mcp-server
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# The gateway is reachable (so clients/tests can reach the PEP). Narrow this to
+# a specific ingress controller namespace in a real deployment.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gateway-ingress
+  namespace: zerotrust
+spec:
+  podSelector:
+    matchLabels:
+      app: gateway
+  policyTypes: ["Ingress"]
+  ingress:
+    - {}

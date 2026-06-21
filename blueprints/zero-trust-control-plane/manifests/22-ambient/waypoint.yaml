@@ -1,0 +1,26 @@
+# Waypoint proxy — the L7 enforcement point for ambient mode.
+#
+# ztunnel gives L4 (mTLS/identity) to all ambient workloads automatically. A
+# waypoint is required for L7 policy (HTTP-aware AuthorizationPolicy, including
+# ext_authz to OPA). This Gateway provisions a waypoint for the namespace; the
+# AuthorizationPolicy in security.yaml then binds OPA ext_authz to it.
+#
+# Equivalent imperative form:  istioctl waypoint apply -n zerotrust --enroll-namespace
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: zerotrust-waypoint
+  namespace: zerotrust
+  labels:
+    # `all` (not `service`) so the waypoint also captures workload/pod-IP-addressed
+    # traffic. With `service`, an in-mesh caller can bypass L7 OPA by hitting the
+    # pod IP directly (verified: returns 200). `all` makes enforcement
+    # non-bypassable for in-mesh callers. Pair with NetworkPolicy (30-*) to bound
+    # who can reach the workload at L3/L4.
+    istio.io/waypoint-for: all
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+    - name: mesh
+      port: 15008
+      protocol: HBONE

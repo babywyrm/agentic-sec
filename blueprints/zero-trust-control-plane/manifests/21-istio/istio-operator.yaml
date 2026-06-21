@@ -1,0 +1,25 @@
+# Istio control-plane config that registers OPA as a mesh external-authorization
+# provider. Apply with:  istioctl install -f istio-operator.yaml -y
+#
+# This is the control-plane change that makes the sidecar-PEP topology possible:
+# every sidecar can now call OPA via Envoy ext_authz, referenced by name from an
+# AuthorizationPolicy (action: CUSTOM).
+#
+# includeRequestBodyInCheck is the critical bit — it tells the sidecar to buffer
+# and forward the request body so the OPA policy can inspect the MCP JSON-RPC
+# payload (the tool name lives in the body, not the headers/path).
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: ztcp-istio
+spec:
+  profile: default
+  meshConfig:
+    extensionProviders:
+      - name: opa-ext-authz
+        envoyExtAuthzGrpc:
+          service: opa-extauthz.zerotrust.svc.cluster.local
+          port: 9191
+          includeRequestBodyInCheck:
+            maxRequestBytes: 8192
+            allowPartialMessage: true

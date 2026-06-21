@@ -1,0 +1,15 @@
+# Dedicated namespace for the prototype. Keeping everything here means cluster
+# policies (Gatekeeper, NetworkPolicy) can be scoped with a namespaceSelector so
+# the prototype never affects other workloads on a shared cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zerotrust
+  labels:
+    app.kubernetes.io/part-of: zero-trust-control-plane
+    # Marker label so Gatekeeper constraints can target ONLY this namespace.
+    ztcp.agentic-sec/managed: "true"
+    # Enforce restricted Pod Security Standards at the namespace level (defense
+    # in depth alongside Gatekeeper).
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted

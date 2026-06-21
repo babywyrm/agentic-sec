@@ -28,6 +28,7 @@ MCP and agentic AI patterns are 1–2 year old RFCs — the security conventions
 | Defend with nullfield policy | [Walkthrough 2 — The Defense](docs/walkthroughs/defense.md) |
 | Run the full scan → enforce → validate loop | [Walkthrough 5 — Live Feedback Loop](docs/walkthroughs/live-loop.md) |
 | Understand the full architecture | [`docs/ecosystem.md`](docs/ecosystem.md) |
+| Stand up a zero-trust control plane (runnable blueprint) | [`blueprints/zero-trust-control-plane/`](blueprints/zero-trust-control-plane/README.md) |
 | See what's mature, thin, and planned next | [`docs/roadmap.md`](docs/roadmap.md) |
 
 ---

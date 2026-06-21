@@ -1,0 +1,35 @@
+# Mesh security policy for the Istio-native topology.
+#
+# 1. PeerAuthentication STRICT — every workload requires mTLS. Non-mesh /
+#    plaintext callers are rejected at the sidecar, so the PEP cannot be
+#    bypassed regardless of NetworkPolicy/CNI enforcement.
+# 2. AuthorizationPolicy CUSTOM — routes the tool-call authorization decision to
+#    the OPA ext_authz provider for requests to the MCP endpoint on mcp-server.
+---
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: zerotrust
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: mcp-ext-authz
+  namespace: zerotrust
+spec:
+  selector:
+    matchLabels:
+      app: mcp-server
+  action: CUSTOM
+  provider:
+    name: opa-ext-authz   # must match the extensionProvider in istio-operator.yaml
+  rules:
+    - to:
+        - operation:
+            # Gate the MCP JSON-RPC endpoint. Other paths (health, etc.) are
+            # governed by normal mesh authz (default-allow within the mesh here).
+            paths: ["/mcp", "/"]

@@ -1,0 +1,79 @@
+# OPA as the mesh's external-authorization PDP.
+#
+# In the Istio-native topology there is NO standalone Envoy gateway pod — each
+# workload's own istio-proxy sidecar is the PEP, and it calls THIS OPA service
+# via Envoy ext_authz gRPC. OPA evaluates the same policy/authz.rego.
+#
+# The opa-policy ConfigMap is created by deploy.sh from policy/authz.rego.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa-extauthz
+  namespace: zerotrust
+  labels:
+    app: opa-extauthz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opa-extauthz
+  template:
+    metadata:
+      labels:
+        app: opa-extauthz
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: opa
+          image: openpolicyagent/opa:0.70.0-envoy
+          imagePullPolicy: IfNotPresent
+          args:
+            - "run"
+            - "--server"
+            - "--log-level=info"
+            - "--set=plugins.envoy_ext_authz_grpc.addr=:9191"
+            - "--set=plugins.envoy_ext_authz_grpc.path=envoy/authz/allow"
+            - "--set=decision_logs.console=true"
+            - "/policy/authz.rego"
+          ports:
+            - containerPort: 9191
+          volumeMounts:
+            - name: opa-policy
+              mountPath: /policy
+              readOnly: true
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 250m, memory: 128Mi }
+      volumes:
+        - name: opa-policy
+          configMap:
+            name: opa-policy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opa-extauthz
+  namespace: zerotrust
+  labels:
+    app: opa-extauthz
+spec:
+  selector:
+    app: opa-extauthz
+  ports:
+    # Port name + appProtocol=grpc so Istio treats it as HTTP/2 gRPC (required
+    # for the ext_authz call to work through the mesh).
+    - name: grpc-authz
+      port: 9191
+      targetPort: 9191
+      appProtocol: grpc

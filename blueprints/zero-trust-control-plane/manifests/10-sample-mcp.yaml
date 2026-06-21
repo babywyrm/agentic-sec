@@ -1,0 +1,68 @@
+# The workload to protect: a stand-in MCP server.
+#
+# For the prototype this is a request-echo server — when a call is ALLOWED it
+# reaches here and echoes the request (visible proof the call landed); when
+# DENIED it never arrives. Swap for a real MCP server (camazotz, dvmcp) without
+# changing the gateway or policy.
+#
+# IMPORTANT — the app MUST bind 0.0.0.0, not 127.0.0.1. Istio (>=1.10) forwards
+# inbound mesh traffic to the POD IP, so a localhost-only listener is unreachable
+# through the sidecar and every call 503s (URX/UF "connection refused"). We use
+# ealen/echo-server (binds 0.0.0.0:$PORT) for exactly this reason. A real MCP
+# server should likewise listen on 0.0.0.0.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-server
+  namespace: zerotrust
+  labels:
+    app: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-server
+  template:
+    metadata:
+      labels:
+        app: mcp-server
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: echo
+          image: ealen/echo-server:0.9.2
+          imagePullPolicy: IfNotPresent
+          env:
+            # ealen/echo-server binds 0.0.0.0:$PORT — required for Istio inbound.
+            - name: PORT
+              value: "8080"
+          ports:
+            - containerPort: 8080
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: { cpu: 25m, memory: 32Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-server
+  namespace: zerotrust
+  labels:
+    app: mcp-server
+spec:
+  selector:
+    app: mcp-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

@@ -1,0 +1,28 @@
+# L7 authorization for ambient mode.
+#
+# The AuthorizationPolicy (action: CUSTOM → opa-ext-authz) is enforced at the
+# waypoint for traffic to mcp-server. ztunnel already provides L4 mTLS + identity
+# for all ambient workloads, so non-mesh callers are handled at L4; this policy
+# adds the per-tool-call decision at L7 via OPA.
+#
+# The opa-ext-authz extensionProvider must already be registered in meshConfig
+# (reuse ../21-istio/istio-operator.yaml).
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: mcp-ext-authz
+  namespace: zerotrust
+spec:
+  # Target the waypoint that fronts mcp-server (L7 enforcement happens here).
+  targetRefs:
+    - kind: Gateway
+      group: gateway.networking.k8s.io
+      name: zerotrust-waypoint
+  action: CUSTOM
+  provider:
+    name: opa-ext-authz
+  rules:
+    - to:
+        - operation:
+            paths: ["/mcp", "/"]

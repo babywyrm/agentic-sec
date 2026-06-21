@@ -1,0 +1,23 @@
+# Put the namespace into ambient mode. Workloads get L4 (mTLS + identity) from the
+# node-level ztunnel automatically — no sidecar, no istio-init, no injection label.
+#
+# NOTE: this replaces the sidecar-mode labels. Remove `istio-injection` if it was
+# set by the 21-istio topology (deploy.sh handles this).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: zerotrust
+  labels:
+    app.kubernetes.io/part-of: zero-trust-control-plane
+    ztcp.agentic-sec/managed: "true"
+    # Ambient data-plane: ztunnel handles L4 for all pods here.
+    istio.io/dataplane-mode: ambient
+    # Enroll the namespace to USE the waypoint — REQUIRED for L7 policy.
+    # Without this, service traffic gets L4 (ztunnel) only and silently
+    # bypasses the waypoint, so the ext_authz AuthorizationPolicy never runs
+    # (deny cases would return 200). Must match the Gateway name in waypoint.yaml.
+    istio.io/use-waypoint: zerotrust-waypoint
+    # Ambient does not need privileged PSA (no per-pod NET_ADMIN init container),
+    # so we can keep the namespace at baseline/restricted.
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted

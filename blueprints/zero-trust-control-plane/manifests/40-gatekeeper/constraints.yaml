@@ -1,0 +1,57 @@
+# Constraints bind the templates to the zerotrust namespace ONLY.
+#
+# enforcementAction: dryrun  → violations are logged/audited, NOT blocked.
+# Promote to `deny` once you've confirmed nothing legitimate trips them. This is
+# how you safely introduce admission control on a shared/live cluster.
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: ZtcpDenyPrivileged
+metadata:
+  name: no-privileged-in-zerotrust
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaceSelector:
+      matchLabels:
+        ztcp.agentic-sec/managed: "true"
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: ZtcpRequiredLabels
+metadata:
+  name: require-app-label-in-zerotrust
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment"]
+    namespaceSelector:
+      matchLabels:
+        ztcp.agentic-sec/managed: "true"
+  parameters:
+    labels: ["app"]
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: ZtcpAllowedRepos
+metadata:
+  name: allowed-registries-in-zerotrust
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaceSelector:
+      matchLabels:
+        ztcp.agentic-sec/managed: "true"
+  parameters:
+    # Tighten to your private registry in production.
+    repos:
+      - "docker.io/"
+      - "openpolicyagent/"
+      - "envoyproxy/"
+      - "mendhak/"
+      - "ghcr.io/babywyrm/"

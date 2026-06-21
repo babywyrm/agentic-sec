@@ -1,0 +1,91 @@
+# Phase 2 — Admission layer (deploy-time hygiene).
+#
+# Gatekeeper = OPA core narrowed to Kubernetes admission. These ConstraintTemplates
+# define reusable Rego-backed checks; the constraints in constraints.yaml bind them
+# to the zerotrust namespace ONLY (via namespaceSelector) and start in `dryrun` so
+# they never break a shared cluster until you promote them to `deny`.
+#
+# Requires Gatekeeper installed:
+#   kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.18/deploy/gatekeeper.yaml
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: ztcpdenyprivileged
+spec:
+  crd:
+    spec:
+      names:
+        kind: ZtcpDenyPrivileged
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package ztcpdenyprivileged
+
+        violation[{"msg": msg}] {
+          c := input.review.object.spec.containers[_]
+          c.securityContext.privileged == true
+          msg := sprintf("privileged container not allowed: %v", [c.name])
+        }
+        violation[{"msg": msg}] {
+          c := input.review.object.spec.containers[_]
+          c.securityContext.allowPrivilegeEscalation == true
+          msg := sprintf("allowPrivilegeEscalation not allowed: %v", [c.name])
+        }
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: ztcprequiredlabels
+spec:
+  crd:
+    spec:
+      names:
+        kind: ZtcpRequiredLabels
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            labels:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package ztcprequiredlabels
+
+        violation[{"msg": msg}] {
+          required := input.parameters.labels[_]
+          not input.review.object.metadata.labels[required]
+          msg := sprintf("missing required label: %v", [required])
+        }
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: ztcpallowedrepos
+spec:
+  crd:
+    spec:
+      names:
+        kind: ZtcpAllowedRepos
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            repos:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package ztcpallowedrepos
+
+        violation[{"msg": msg}] {
+          c := input.review.object.spec.containers[_]
+          satisfied := [good | repo := input.parameters.repos[_]; good := startswith(c.image, repo)]
+          not any(satisfied)
+          msg := sprintf("image %v is not from an allowed registry", [c.image])
+        }

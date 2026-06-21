@@ -1,0 +1,23 @@
+# Istio ambient-profile install + OPA extension provider.
+# Apply with istio-cni overrides for k3s paths (see deploy.sh ambient):
+#   istioctl install -f istio-operator.yaml \
+#     --set values.cni.cniBinDir=/var/lib/rancher/k3s/data/cni \
+#     --set values.cni.cniConfDir=/var/lib/rancher/k3s/agent/etc/cni/net.d -y
+#
+# The ambient profile installs istiod + istio-cni + ztunnel. The extensionProvider
+# is identical to the sidecar topology — OPA is reused unchanged.
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: ztcp-ambient
+spec:
+  profile: ambient
+  meshConfig:
+    extensionProviders:
+      - name: opa-ext-authz
+        envoyExtAuthzGrpc:
+          service: opa-extauthz.zerotrust.svc.cluster.local
+          port: 9191
+          includeRequestBodyInCheck:
+            maxRequestBytes: 8192
+            allowPartialMessage: true
