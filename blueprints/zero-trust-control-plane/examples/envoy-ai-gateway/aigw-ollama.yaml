@@ -1,0 +1,134 @@
+# Phase D — AI egress layer: Envoy AI Gateway in front of a self-hosted LLM.
+#
+# This is the "what may leave to model providers?" control point. Every LLM call
+# from agents/MCP servers egresses THROUGH this gateway, which enforces:
+#   - a MODEL ALLOWLIST (only declared models are routable; others are rejected
+#     even if the backend has them pulled),
+#   - per-request token cost accounting (Envoy access logs / metadata),
+#   - a single credential-brokering chokepoint (BackendSecurityPolicy).
+#
+# Backend here is a node-local Ollama exposing the OpenAI-compatible /v1 API.
+# Portability: replace the Backend endpoint with your in-cluster model Service
+# (or a cloud provider + BackendSecurityPolicy API key) on EKS/anywhere.
+#
+# Apply with envsubst:  LLM_HOST=<ip> LLM_PORT=11434 envsubst < aigw-ollama.yaml | kubectl apply -f -
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-egress
+  labels:
+    app.kubernetes.io/part-of: zero-trust-control-plane
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: aigw
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: aigw
+  namespace: ai-egress
+spec:
+  gatewayClassName: aigw
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+---
+# Buffer limit (AI responses exceed Envoy's 32KB default).
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: client-buffer-limit
+  namespace: ai-egress
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: aigw
+  connection:
+    bufferLimit: 50Mi
+---
+# THE ALLOWLIST. Only models with an explicit rule are routable. There is NO
+# catch-all rule, so a request for any other model (even one Ollama has pulled,
+# e.g. llama3.2:1b) gets no route -> rejected at the egress gateway.
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIGatewayRoute
+metadata:
+  name: aigw
+  namespace: ai-egress
+spec:
+  parentRefs:
+    - name: aigw
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - matches:
+        - headers:
+            - type: Exact
+              name: x-ai-eg-model
+              value: ${ALLOW_MODEL}
+      backendRefs:
+        - name: ollama
+      timeouts:
+        request: 120s
+  llmRequestCosts:
+    - metadataKey: llm_input_token
+      type: InputToken
+    - metadataKey: llm_output_token
+      type: OutputToken
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIServiceBackend
+metadata:
+  name: ollama
+  namespace: ai-egress
+spec:
+  schema:
+    name: OpenAI
+  backendRef:
+    name: ollama
+    kind: Backend
+    group: gateway.envoyproxy.io
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: ollama
+  namespace: ai-egress
+spec:
+  endpoints:
+    - ip:
+        address: ${LLM_HOST}
+        port: ${LLM_PORT}
+---
+# Ollama ignores auth, but the OpenAI schema path expects a credential broker.
+# A dummy key here demonstrates the single credential-injection chokepoint
+# (swap for a real provider key on a Secret in production).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ollama-apikey
+  namespace: ai-egress
+type: Opaque
+stringData:
+  apiKey: "ollama-no-auth"
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: BackendSecurityPolicy
+metadata:
+  name: ollama-apikey
+  namespace: ai-egress
+spec:
+  targetRefs:
+    - group: aigateway.envoyproxy.io
+      kind: AIServiceBackend
+      name: ollama
+  type: APIKey
+  apiKey:
+    secretRef:
+      name: ollama-apikey

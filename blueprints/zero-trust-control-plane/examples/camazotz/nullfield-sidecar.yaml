@@ -1,0 +1,43 @@
+# Phase E — nullfield sidecar supporting resources (the sidecar container itself
+# is injected into deploy/brain-gateway by nullfield-deploy.sh).
+#
+# - nullfield-config: how nullfield listens + finds its in-pod upstream + policy.
+# - brain-gateway-policed: a Service that targets nullfield's :9090 (MCP) and
+#   :9091 (admin / hold approvals) so you can exercise the PEP directly.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nullfield-config
+  namespace: camazotz
+data:
+  NULLFIELD_LISTEN_ADDR: ":9090"
+  NULLFIELD_UPSTREAM_ADDR: "localhost:8080"
+  NULLFIELD_ADMIN_ADDR: ":9091"
+  NULLFIELD_POLICY_PATH: "/etc/nullfield/policy.yaml"
+  NULLFIELD_REGISTRY_PATH: "/etc/nullfield/tools.yaml"
+  NULLFIELD_AUDIT_LOG_LEVEL: "FULL"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: brain-gateway-policed
+  namespace: camazotz
+  labels:
+    app: brain-gateway
+    app.kubernetes.io/component: policy-enforced
+spec:
+  type: NodePort
+  selector:
+    app: brain-gateway
+  ports:
+    - name: mcp-policed      # MCP traffic through nullfield (the PEP)
+      port: 8080
+      targetPort: 9090
+      nodePort: 30090
+      protocol: TCP
+    - name: nullfield-admin  # hold approvals: GET/POST /admin/holds
+      port: 9091
+      targetPort: 9091
+      nodePort: 31591
+      protocol: TCP

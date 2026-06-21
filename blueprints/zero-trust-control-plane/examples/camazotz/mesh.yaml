@@ -1,0 +1,44 @@
+# Mesh enrollment for the camazotz target namespace (ambient topology).
+#
+# Pairs with: namespace labels (applied by deploy):
+#   istio.io/dataplane-mode=ambient
+#   istio.io/use-waypoint=camazotz-waypoint
+#
+# Reuses the SHARED OPA PDP (opa-ext-authz extensionProvider, registered mesh-wide
+# in meshConfig and backed by opa-extauthz.zerotrust.svc). This is the blueprint's
+# "one PDP, many PEPs" property: the camazotz waypoint calls the same OPA that
+# governs the generic demo namespace.
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: camazotz-waypoint
+  namespace: camazotz
+  labels:
+    # `all`: capture service- AND workload/pod-IP-addressed traffic so an in-mesh
+    # caller cannot bypass L7 OPA by hitting the brain-gateway pod IP directly.
+    istio.io/waypoint-for: all
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+    - name: mesh
+      port: 15008
+      protocol: HBONE
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: camazotz-ext-authz
+  namespace: camazotz
+spec:
+  targetRefs:
+    - kind: Gateway
+      group: gateway.networking.k8s.io
+      name: camazotz-waypoint
+  action: CUSTOM
+  provider:
+    name: opa-ext-authz
+  rules:
+    - to:
+        - operation:
+            paths: ["/mcp", "/"]

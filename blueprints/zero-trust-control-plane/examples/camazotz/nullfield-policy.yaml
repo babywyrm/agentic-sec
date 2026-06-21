@@ -1,0 +1,109 @@
+# Phase E — nullfield: the MCP-AWARE PEP (sidecar in front of brain-gateway).
+#
+# OPA at the waypoint (Phase A) decides allow/deny per principal+tool. But some
+# controls require understanding the MCP call itself and acting ON it — things a
+# generic L7 ext_authz cannot do. nullfield adds the other three of its five
+# verbs on top:
+#
+#   ALLOW   forward
+#   DENY    reject
+#   HOLD    park the call, notify a human, wait for approval (or timeout->deny)
+#   SCOPE   allow but modify — strip secret arguments / redact secrets in the response
+#   BUDGET  allow but enforce per-identity call quotas (cost runaway protection)
+#
+# Layered with OPA: waypoint(OPA) -> nullfield(:9090) -> brain-gateway(:8080).
+# Mapped to camazotz's real tools (138 across 52 OWASP-MCP labs).
+apiVersion: nullfield.io/v1alpha1
+kind: NullfieldPolicy
+metadata:
+  name: camazotz-mcp-arbiter
+spec:
+  selector:
+    matchLabels:
+      app: brain-gateway
+  rules:
+    # ALLOW — benign read-only topology/audit/listing.
+    - action: ALLOW
+      mcpMethod: tools/call
+      toolNames:
+        - chain.get_service_manifest
+        - gateway.list_resources
+        - audit.list_actions
+        - schema.list_surface
+        - ratelimit.check_budget
+      maxCallsPerMinute: 60
+
+    # SCOPE — credential-broker calls: allow but strip secret-bearing arguments
+    # on the way in, and redact secret-shaped values on the way back. The agent
+    # gets a useful (sanitized) response; the secret never leaves the boundary.
+    - action: SCOPE
+      mcpMethod: tools/call
+      toolNames:
+        - cred_broker.read_credential
+        - cred_broker.list_vaults
+      scope:
+        request:
+          stripArguments: [password, api_key, secret, token, credential]
+        response:
+          redactPatterns:
+            - 'AKIA[0-9A-Z]{16}'                 # AWS access key id
+            - 'sk-[A-Za-z0-9]{20,}'              # OpenAI-style key
+            - 'eyJ[A-Za-z0-9._-]{20,}'           # JWT
+            - 'postgres(ql)?://[^\s"]+'          # db URL with creds
+          redactReplacement: "[REDACTED-BY-NULLFIELD]"
+
+    # HOLD — high-impact changes (rewrite the agent's own system prompt, delegate
+    # a task down a chain). Park for human approval via the admin API; deny on
+    # timeout. This is the human-in-the-loop gate OPA structurally can't provide.
+    - action: HOLD
+      mcpMethod: tools/call
+      toolNames:
+        - config.update_system_prompt
+        - chain.delegate_task
+        - chain.load_agent
+      hold:
+        timeout: "5m"
+        onTimeout: "DENY"
+      reason: "system-prompt / delegation change requires human approval"
+
+    # BUDGET — LLM-invoking tools: allow but cap per-identity to prevent cost
+    # runaway / model-DoS (the camazotz "LLM Cost Exhaustion" lab).
+    - action: ALLOW
+      mcpMethod: tools/call
+      toolNames:
+        - cost.invoke_llm
+        - rag.query
+        - rag.synthesize
+      budget:
+        perIdentity:
+          maxCallsPerHour: 5
+        onExhausted: DENY
+
+    # DENY — high-risk: SSRF/egress, secret extraction, shell exec, supply chain,
+    # unvalidated plan execution, identity replay.
+    - action: DENY
+      mcpMethod: tools/call
+      toolNames:
+        - egress.fetch_url
+        - schema.extract_credentials
+        - schema.probe_error
+        - shellwrap.exec
+        - hallucination.execute_plan
+        - supply.install_package
+        - bot_identity_theft.read_tbot_secret
+        - bot_identity_theft.replay_identity
+        - agent_http_bypass.call_direct
+
+    # Default deny — anything not explicitly listed.
+    - action: DENY
+      mcpMethod: tools/call
+      toolNames: ["*"]
+      reason: "default deny (not in nullfield allowlist)"
+
+  circuitBreaker:
+    maxToolCallsPerSession: 50
+    maxSessionDuration: 300s
+    onTrip: KILL_POD
+
+  audit:
+    logLevel: FULL
