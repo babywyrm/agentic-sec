@@ -10,6 +10,7 @@ A documentation hub and cross-project reference for a closed-loop security stack
   <a href="https://github.com/babywyrm/nullfield"><img alt="nullfield" src="https://img.shields.io/badge/nullfield-5%20actions-a78bfa"></a>
   <a href="https://github.com/babywyrm/mcpnuke"><img alt="mcpnuke" src="https://img.shields.io/badge/mcpnuke-scan%20%2B%20generate-34d399"></a>
   <a href="https://github.com/babywyrm/stoneburner"><img alt="stoneburner" src="https://img.shields.io/badge/stoneburner-15%20adversarial-ef4444"></a>
+  <a href="https://github.com/babywyrm/skillseraph"><img alt="skillseraph" src="https://img.shields.io/badge/skillseraph-11%20platforms-8b5cf6"></a>
 </p>
 
 ---
@@ -39,6 +40,7 @@ MCP and agentic AI patterns are 1–2 year old RFCs — the security conventions
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar proxy that intercepts every MCP `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET policy before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP security scanner — static, behavioral, and AI-assisted probes; outputs findings + nullfield policy |
 | **[stoneburner](https://github.com/babywyrm/stoneburner)** | Benchmarking + LLM eval | Provider benchmarking (cost, latency, accuracy) plus adversarial resilience testing (15 fixtures), red/blue security capability eval, security-architecture review benchmarking (`archreview`), and live infrastructure probing — with multi-judge consensus and multi-pass variance |
+| **[skillseraph](https://github.com/babywyrm/skillseraph)** | Config scanner | Static analyzer for the agentic control plane — scans `AGENTS.md`, `SKILL.md`, rules, hooks, and MCP configs across 11 platforms for poisoning, injection, and supply-chain tampering. Covers [Attack Path Atlas](docs/attack-path-atlas.md) Domain J |
 Each tool ships independently. They are more powerful together.
 
 ---

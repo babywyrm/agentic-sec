@@ -333,9 +333,11 @@ Failures in the trust verification and cryptographic layers.
 - Temporal/sleeper attacks (C1, C5)
 - Observability evasion (E2, E5)
 
-Domain J moved from 100% gap to 75% partial — scanner and hook hardening
-exist in research ([`sysadmin/ai/agent-safety/`](https://github.com/babywyrm/sysadmin/tree/master/ai/agent-safety))
-but lack public camazotz labs and mcpnuke modules.
+Domain J is owned by **[skillseraph](https://github.com/babywyrm/skillseraph)** —
+a static scanner for agent config files (skills, rules, hooks, MCP configs) across
+11 platforms. It covers J1, J4, J6, J7, J8 today; J3 (automation trigger abuse) and
+J5 (config inheritance escalation) remain partial. camazotz labs and mcpnuke modules
+for Domain J are still planned.
 
 ---
 
@@ -360,10 +362,11 @@ but lack public camazotz labs and mcpnuke modules.
 
 | Repo | Atlas tells it... |
 |------|-------------------|
-| **camazotz** | Which labs to build next (Domain H, J have zero labs) |
-| **mcpnuke** | Which scanner modules are missing (reasoning drift, config injection) |
+| **camazotz** | Which labs to build next (Domain H still has zero labs) |
+| **mcpnuke** | Which scanner modules are missing (reasoning drift, live config injection) |
 | **nullfield** | Which policy primitives need design (HITL fatigue guards, config integrity) |
 | **stoneburner** | Which benchmark suites to add (reasoning manipulation, memory persistence) |
+| **[skillseraph](https://github.com/babywyrm/skillseraph)** | Owns Domain J — static scanning of agent config files (skills, rules, hooks, instructions) across 11 platforms |
 | **agentic-sec** | Where walkthroughs and campaigns are needed |
 
 ---
