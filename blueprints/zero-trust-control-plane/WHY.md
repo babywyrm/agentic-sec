@@ -5,6 +5,24 @@ from start to finish and explains what each layer *solves*, not just what it *is
 
 ---
 
+## Contents
+
+- [The one problem this solves](#the-one-problem-this-solves)
+- [Dissecting one request, end to end](#dissecting-one-request-end-to-end)
+  - [Hop 1: the Istio waypoint](#hop-1-the-istio-waypoint-envoy)
+  - [Hop 2: nullfield](#hop-2-nullfield-the-mcp-aware-pep)
+  - [Hop 3: the workload executes](#hop-3-the-workload-executes-the-tool)
+  - [Hop 4: the egress gateway](#hop-4-the-envoy-ai-gateway-egress)
+- [Real-world egress scenarios](#real-world-scenarios-why-you-need-an-egress-control-point)
+- [Scenario flow diagrams](#scenario-flows-visual)
+- [Istio ambient vs the AI gateway — how they differ](#istio-ambient-vs-the-ai-gateway)
+- [Why you can't skip any piece](#why-you-cant-skip-any-piece)
+- ["But isn't this overkill?"](#but-isnt-this-overkill)
+- [The feedback loop (offense proves defense)](#the-feedback-loop-offense-proves-defense)
+- [Summary: one sentence per layer](#summary-one-sentence-per-layer)
+
+---
+
 ## The one problem this solves
 
 Your agent decides what tools to call. Your agent can be injected, confused, or
@@ -307,6 +325,104 @@ user-influenced data.
 **What it does NOT do:** it doesn't understand MCP tool calls, doesn't check who
 the *user* is, doesn't enforce per-tool policy. It's purely about what *leaves*
 the cluster and under what constraints.
+
+---
+
+## Istio ambient vs the AI gateway
+
+A common question: "If Istio ambient already proxies traffic through Envoy, why do
+we need a *separate* Envoy for egress?" They share the mechanism (Envoy) but serve
+completely different purposes on different traffic paths.
+
+### What Istio ambient does
+
+Istio ambient provides **identity + encryption + L7 policy for internal
+service-to-service traffic** (east-west):
+
+- **ztunnel** gives every pod a cryptographic SPIFFE identity + automatic mTLS at L4
+- **The waypoint** adds L7 inspection: reads the JSON-RPC body, calls OPA, enforces
+  allow/deny per principal per tool
+- Handles **internal traffic**: pod A calling pod B within the mesh
+- Answers: *"may this internal caller invoke this tool on this internal MCP server?"*
+
+### What the AI/egress gateway does
+
+The egress gateway provides **destination control + credential injection + cost
+accounting for traffic leaving the cluster to external APIs** (north-south):
+
+- Controls which external destinations each workload can reach
+- Injects the right API credentials per route from K8s Secrets
+- Counts tokens, enforces per-workload budgets
+- Handles **outbound traffic**: pod calling GitHub, Slack, OpenAI, etc.
+- Answers: *"may this workload call this external provider, at this rate, with
+  these credentials?"*
+
+### Side-by-side comparison
+
+| | Istio ambient (waypoint) | AI/egress gateway |
+|--|--|--|
+| **Traffic direction** | Internal, east-west (pod → pod) | Outbound, north-south (pod → external API) |
+| **What it protects** | MCP servers from unauthorized internal callers | External APIs from unauthorized calls by your workloads |
+| **Identity model** | Verifies the caller's SPIFFE identity | Injects the destination's API credential |
+| **Protocol awareness** | MCP JSON-RPC via ext_authz + OPA | OpenAI /v1, REST APIs, any outbound HTTP |
+| **Policy engine** | OPA (shared PDP, deny-by-default Rego) | Route-based rules (AIGatewayRoute CRD) |
+| **Credential handling** | None (identity is the caller's) | Injects provider keys the workload never holds |
+| **Cost/budget** | Not applicable | Per-workload token budgets, enforced inline |
+| **Audit** | OPA decision logs + waypoint access logs | Unified Envoy access log for all egress |
+
+### How they compose
+
+They are complementary layers, not alternatives. You need both because they cover
+different legs of the same request:
+
+```
+external client
+    → [Istio waypoint + OPA]       internal ingress: "may you call this tool?"
+        → MCP server executes
+            → [AI/egress gateway]   external egress: "may you reach this destination?"
+                → api.github.com
+```
+
+```mermaid
+flowchart LR
+    subgraph internal [Internal — Istio ambient]
+        Client[Agent caller] -->|mTLS| Waypoint[Waypoint + OPA]
+        Waypoint -->|"ALLOW / 403"| MCP[MCP Server]
+    end
+    subgraph external [External — Egress gateway]
+        MCP -->|no credentials| EGW[AI Gateway]
+        EGW -->|"inject creds, enforce budget"| GitHub[api.github.com]
+        EGW -->|"inject creds"| Slack[api.slack.com]
+        EGW -->|"inject creds"| OpenAI[api.openai.com]
+        EGW -.-x|"403"| Blocked[unapproved destination]
+    end
+```
+
+### Could Istio handle egress too?
+
+Technically, Istio has `ServiceEntry` + egress `AuthorizationPolicy`. But it lacks:
+
+- **Credential injection** — Istio doesn't natively inject API keys per destination
+  route from K8s Secrets (you'd need a custom filter or sidecar).
+- **Token/cost counting** — Istio has no concept of LLM tokens or per-workload
+  cost budgets.
+- **Model-aware routing** — Istio doesn't parse the OpenAI `model` field to make
+  routing decisions or enforce model allowlists.
+- **Payload inspection for secrets** — Istio's authz policies operate on headers and
+  metadata, not response body content.
+
+The AI Gateway is Envoy extended with purpose-built AI/API-aware logic (ExtProc
+filters for token counting, body inspection, model routing). It's not a
+replacement for the mesh — it's a specialized egress proxy that sits alongside it.
+
+### When you'd use one vs both
+
+| Scenario | What you need |
+|----------|---------------|
+| Internal MCP servers calling each other | Istio ambient only (mTLS + waypoint + OPA) |
+| MCP servers calling external APIs (GitHub, Slack, LLM) | Both: ambient for internal + egress gateway for outbound |
+| Self-hosted LLM (no external APIs) | Ambient only (egress gateway optional for model allowlist) |
+| External APIs + cost control + credential isolation | Egress gateway is essential |
 
 ---
 
