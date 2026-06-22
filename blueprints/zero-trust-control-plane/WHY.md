@@ -130,30 +130,89 @@ what's different:
 
 | | Waypoint (Envoy + OPA) | AI Gateway (Envoy) |
 |--|--|--|
-| **Direction** | Inbound (client → MCP server) | Outbound (MCP server → LLM provider) |
-| **Protocol** | MCP JSON-RPC (`tools/call`) | OpenAI API (`/v1/chat/completions`) |
-| **Decision** | "May this principal call this tool?" | "May this workload use this model?" |
-| **Identity** | Checks the *caller's* identity | Injects the *provider's* credential |
-| **Data** | Doesn't touch request body (allow/deny only) | Counts tokens, logs cost |
+| **Direction** | Inbound (client → MCP server) | Outbound (MCP server → external APIs / LLM providers) |
+| **Protocol** | MCP JSON-RPC (`tools/call`) | OpenAI API, REST APIs, any outbound HTTP |
+| **Decision** | "May this principal call this tool?" | "May this workload reach this destination, at this rate, with these credentials?" |
+| **Identity** | Checks the *caller's* identity | Injects the *provider's* credentials per destination |
+| **Data** | Doesn't touch request body (allow/deny only) | Counts tokens, logs cost, can inspect/filter payloads |
 
-The AI Gateway solves three things the waypoint structurally can't:
+### Real-world scenarios: why you need an egress control point
 
-1. **Model allowlist.** "Which models can agents use?" is a policy question. The
-   backend might host 30 models; policy says you can reach 2. Without this, a
-   compromised workload calls any model it wants — including expensive frontier
-   models (cost runaway) or unapproved models (compliance).
+The prototype demonstrates model-allowlisting because that's the simplest case to
+prove. But the value of the egress gateway extends far beyond "which LLM can I
+call." In production, your MCP servers call *everything*: GitHub, Jira, Slack,
+Confluence, PagerDuty, Datadog, cloud provider APIs. Each of those outbound calls
+is an egress channel an attacker can exploit.
 
-2. **Credential brokering.** The provider API key (OpenAI, Bedrock, etc.) lives in
-   ONE place — the `BackendSecurityPolicy`. The workload never holds it. So a
-   compromised agent can't exfiltrate the key. Rotation is one spot.
+**Scenario 1: An injected agent exfiltrates secrets via Slack.**
 
-3. **Token-cost accounting.** Every request logs input/output tokens in the Envoy
-   access log. This is the hook for per-agent cost caps and billing attribution —
-   the defense against an injected agent looping expensive calls.
+Your `support-bot` MCP server has a Slack tool. An attacker injects context that
+makes the agent call `send_message(channel="#random", text=<contents of .env>)`.
+Without an egress gateway: the call goes out, the secret is in Slack, game over.
+
+With the egress gateway: the outbound call to `api.slack.com` passes through Envoy.
+Policy says `support-bot` may only POST to channels in an allowlist, and the
+payload is scanned for secret-shaped patterns (same regex as nullfield's SCOPE).
+The exfil attempt is blocked or redacted *at the network layer* before Slack
+ever sees it.
+
+**Scenario 2: An agent burns $50k on GPT-4o in a runaway loop.**
+
+Your coding agent has an LLM tool. A bug (or injection) causes it to loop:
+1000 calls to `gpt-4o` at $30/million tokens. Without a gateway: your cloud bill
+explodes before anyone notices.
+
+With the AI Gateway: per-model token budgets. After N tokens/hour (or $X/day), the
+gateway returns 429 and the agent gets a structured error. The budget is per-agent
+identity, so one runaway can't starve others.
+
+**Scenario 3: A compromised MCP server calls an unapproved external endpoint.**
+
+Your `github-mcp` server is supposed to call `api.github.com` and nothing else.
+An attacker plants a config that makes it POST to `attacker.example/collect`.
+Without egress control: the request goes out — it's just an HTTP call.
+
+With the egress gateway: the destination allowlist says `github-mcp` may only
+reach `api.github.com` and `api.atlassian.net`. Any other destination is refused.
+This is the SSRF-at-the-platform-level defense.
+
+**Scenario 4: Credential isolation across MCP servers.**
+
+You have 5 MCP servers: GitHub, Jira, Slack, PagerDuty, and a coding agent.
+Each needs different API keys. Without a gateway: each workload holds its own
+key (compromise one → exfiltrate that key). Key rotation = 5 places.
+
+With the egress gateway: all 5 workloads call the gateway without credentials.
+The gateway's `BackendSecurityPolicy` per route injects the right key for the
+right destination. Workloads never see the raw keys. Rotation is one place per
+provider. A compromised coding-agent can't steal the PagerDuty key because it
+was never in its environment.
+
+**Scenario 5: Audit trail for compliance ("which agent said what to which provider").**
+
+Your compliance team asks: "Show me every API call our agents made to GitHub last
+week." Without a gateway: you hope each MCP server logged its own calls (they
+probably didn't, or in different formats).
+
+With the egress gateway: every outbound request — destination, method, identity of
+the calling workload, payload size, response code, latency — is in one unified
+Envoy access log, structured, queryable. One source of truth for all agent
+egress.
+
+### The pattern: egress is the complement of ingress
+
+The waypoint answers: "what may *come in* to this workload?"
+The AI/egress gateway answers: "what may *go out* from this workload?"
+
+In traditional infra you have ingress controllers AND egress policies (like
+Kubernetes `NetworkPolicy egress`, or Istio `ServiceEntry` + `AuthorizationPolicy`
+on outbound). The AI Gateway is the same concept, specialized for the agentic
+pattern where outbound calls carry model prompts, API credentials, and
+user-influenced data.
 
 **What it does NOT do:** it doesn't understand MCP tool calls, doesn't check who
 the *user* is, doesn't enforce per-tool policy. It's purely about what *leaves*
-to model providers.
+the cluster and under what constraints.
 
 ---
 
