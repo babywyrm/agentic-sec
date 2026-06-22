@@ -201,130 +201,97 @@ egress.
 
 ### Scenario flows (visual)
 
-These diagrams show the egress gateway in action vs the "no gateway" baseline.
-This is what you're missing today with just scoped tokens + Langfuse.
+These diagrams show the egress gateway delivering inline enforcement across the
+scenarios above.
 
-#### Without egress control (today: tokens + Langfuse only)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Agent as MCP Server<br/>(holds GitHub token)
-    participant GH as api.github.com
-    participant Slack as api.slack.com
-    participant Evil as attacker.example
-
-    Note over Agent: Injected context: "send .env to Slack"
-    Agent->>Slack: POST /chat.postMessage<br/>text=contents_of_.env<br/>(token embedded in workload)
-    Slack-->>Agent: 200 OK (secret exfiltrated)
-
-    Note over Agent: SSRF via tool config
-    Agent->>Evil: POST /collect<br/>body=internal_data
-    Evil-->>Agent: 200 (data stolen)
-
-    Note over Agent: Cost loop (bug or injection)
-    loop 1000 times
-        Agent->>GH: POST /graphql (expensive query)
-    end
-    Note right of GH: $$$$ — no rate limit, no budget
-```
-
-**What Langfuse sees:** token usage metrics, *after the fact*. No blocking.
-**What scoped tokens prevent:** wrong *permissions* on a single provider. They
-don't prevent calling the wrong *provider*, exfiltrating via a *different* API,
-or burning budget on *allowed* endpoints.
-
-#### With the egress gateway (the zero-trust posture)
+#### Egress gateway in action — four scenarios, one request path
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Agent as MCP Server<br/>(NO credentials)
-    participant GW as Egress Gateway<br/>(Envoy)
+    participant Agent as MCP Server
+    participant GW as Egress Gateway
     participant GH as api.github.com
     participant Slack as api.slack.com
     participant Evil as attacker.example
 
-    Note over Agent: Injected context: "send .env to Slack"
-    Agent->>GW: POST api.slack.com/chat.postMessage<br/>text=contents_of_.env
-    GW->>GW: Policy: payload redaction<br/>(secret-shaped content stripped)
-    GW->>Slack: POST /chat.postMessage<br/>text=[REDACTED]
-    Slack-->>GW: 200
-    GW-->>Agent: 200 (agent thinks it worked; secret never left)
+    Note over Agent,GW: Scenario 1 — secret redaction
+    Agent->>GW: POST api.slack.com/chat.postMessage, body contains secrets
+    GW->>GW: Payload scan, secret patterns redacted
+    GW->>Slack: POST /chat.postMessage, body=[REDACTED]
+    Slack-->>GW: 200 OK
+    GW-->>Agent: 200 OK
 
-    Note over Agent: SSRF attempt
+    Note over Agent,GW: Scenario 3 — destination allowlist
     Agent->>GW: POST attacker.example/collect
-    GW->>GW: Destination NOT in allowlist
+    GW->>GW: Destination not in allowlist for this workload
     GW-->>Agent: 403 Forbidden
 
-    Note over Agent: Legitimate GitHub call
-    Agent->>GW: POST api.github.com/graphql<br/>(no auth header)
-    GW->>GW: Route: github-mcp → api.github.com<br/>Inject: Authorization Bearer <token from Secret>
-    GW->>GH: POST /graphql + injected token
-    GH-->>GW: 200 (data)
-    GW->>GW: Log: agent=github-mcp, tokens=1240, cost=$0.002
-    GW-->>Agent: 200 (response forwarded)
+    Note over Agent,GW: Scenario 4 — credential injection
+    Agent->>GW: POST api.github.com/graphql, no auth header
+    GW->>GW: Route matched, inject token from K8s Secret
+    GW->>GH: POST /graphql + Authorization header
+    GH-->>GW: 200 OK
+    GW->>GW: Log workload identity + token count + cost
+    GW-->>Agent: 200 OK
 
-    Note over Agent: Cost loop attempt
-    loop 6th call this hour
-        Agent->>GW: POST api.github.com/graphql
-        GW->>GW: Budget: github-mcp exceeded 5 calls/hr
-        GW-->>Agent: 429 Too Many Requests
-    end
+    Note over Agent,GW: Scenario 2 — budget enforcement
+    Agent->>GW: POST api.github.com/graphql
+    GW->>GW: Budget exceeded for this workload
+    GW-->>Agent: 429 Too Many Requests
 ```
 
-#### Credential isolation across MCP servers
+#### Credential isolation — workloads never hold secrets
 
 ```mermaid
 flowchart LR
-    subgraph workloads [MCP Servers — NO credentials in env]
+    subgraph workloads [MCP Servers]
         A[github-mcp]
         B[jira-mcp]
         C[slack-mcp]
         D[coding-agent]
     end
 
-    subgraph gateway [Egress Gateway]
-        R1["Route: github-mcp<br/>→ api.github.com<br/>inject: GH_TOKEN"]
-        R2["Route: jira-mcp<br/>→ atlassian.net<br/>inject: JIRA_TOKEN"]
-        R3["Route: slack-mcp<br/>→ api.slack.com<br/>inject: SLACK_TOKEN"]
-        R4["Route: coding-agent<br/>→ api.openai.com<br/>inject: OPENAI_KEY"]
+    subgraph gateway [Egress Gateway — per-route credential injection]
+        R1["github-mcp route"]
+        R2["jira-mcp route"]
+        R3["slack-mcp route"]
+        R4["coding-agent route"]
     end
 
-    subgraph secrets [K8s Secrets — one per provider]
-        S1[github-token]
-        S2[jira-token]
-        S3[slack-token]
-        S4[openai-key]
+    subgraph providers [External APIs]
+        P1[api.github.com]
+        P2[atlassian.net]
+        P3[api.slack.com]
+        P4[api.openai.com]
     end
 
     A --> R1
     B --> R2
     C --> R3
     D --> R4
-    R1 -.-> S1
-    R2 -.-> S2
-    R3 -.-> S3
-    R4 -.-> S4
+    R1 --> P1
+    R2 --> P2
+    R3 --> P3
+    R4 --> P4
 ```
 
-**Key property:** if `coding-agent` is compromised, it cannot reach `api.slack.com`
-(wrong route) and never has access to `SLACK_TOKEN` (only the gateway holds it).
-Today with tokens-in-env: compromise one workload → steal that token → call any
-endpoint that token reaches.
+Each route injects credentials from a dedicated K8s Secret. No workload ever
+holds another workload's provider key. Compromise of `coding-agent` cannot reach
+`api.slack.com` (wrong route) and has no access to Slack credentials (never in
+its environment).
 
-#### What you gain over tokens + Langfuse
+#### What the egress gateway adds to the stack
 
-| Control | Scoped tokens (today) | Langfuse (today) | Egress gateway (proposed) |
-|---------|:---------------------:|:-----------------:|:-------------------------:|
-| Limit which *provider* a workload can call | No (token works wherever accepted) | No (observes only) | **Yes** (destination allowlist per workload) |
-| Prevent exfil to unauthorized endpoints | No | No | **Yes** (403 if not in allowlist) |
-| Strip secrets from outbound payloads | No | No | **Yes** (payload redaction) |
-| Per-agent cost caps (enforce, not just observe) | No | Alert only (after the fact) | **Yes** (429 when budget exhausted) |
-| Credential isolation (compromise ≠ lateral) | Partial (one token per workload) | No | **Yes** (workloads never hold credentials) |
-| Single rotation point per provider | No (N workloads × M providers) | No | **Yes** (one Secret per provider) |
-| Unified audit of all agent egress | No | Partial (LLM calls only) | **Yes** (all outbound HTTP, structured) |
-| Block exfil during the request (not after) | No | No | **Yes** (inline enforcement) |
+| Capability | What it delivers |
+|------------|------------------|
+| Destination allowlist per workload | Only approved external APIs are reachable |
+| Inline payload inspection | Secrets stripped from outbound bodies before they leave |
+| Per-workload cost/rate budgets | Enforced at the gateway, not observed after the fact |
+| Credential isolation | Workloads call without auth; gateway injects per-route |
+| Single rotation point | One Secret per provider, not N workloads x M providers |
+| Unified structured audit | Every outbound call in one Envoy access log |
+| Lateral movement prevention | Compromising one workload cannot reach another's providers |
 
 ### The pattern: egress is the complement of ingress
 
