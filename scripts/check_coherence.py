@@ -60,6 +60,7 @@ class Truth:
     stoneburner_version: str   # stoneburner/pyproject.toml package version
     stoneburner_schema: int    # stoneburner/atomics/storage/schema.py SCHEMA_VERSION
     mcpnuke_version: str       # mcpnuke/pyproject.toml package version
+    skillseraph_version: str   # skillseraph/pyproject.toml package version
 
 
 def _count_scenario_yamls(camazotz_root: Path) -> int:
@@ -141,7 +142,8 @@ def gather_truth(root: Path) -> Truth:
     nul = root / "nullfield"
     mcp = root / "mcpnuke"
     stb = root / "stoneburner"
-    for repo in (cam, nul, mcp, stb, root / "agentic-sec"):
+    sks = root / "skillseraph"
+    for repo in (cam, nul, mcp, stb, sks, root / "agentic-sec"):
         if not repo.exists():
             raise SystemExit(
                 f"coherence: expected sibling repo not found: {repo} "
@@ -156,6 +158,7 @@ def gather_truth(root: Path) -> Truth:
         stoneburner_version=_read_pyproject_version(stb, label="stoneburner"),
         stoneburner_schema=_read_stoneburner_schema(stb),
         mcpnuke_version=_read_pyproject_version(mcp, label="mcpnuke"),
+        skillseraph_version=_read_pyproject_version(sks, label="skillseraph"),
     )
 
 
@@ -404,6 +407,27 @@ def _check_mcpnuke_reference(agentic_sec_root: Path, truth: Truth,
     report.checks_run += 1
 
 
+def _check_skillseraph_reference(agentic_sec_root: Path, truth: Truth,
+                                 report: Report) -> None:
+    """The skillseraph reference must cite the live package version."""
+    ref = agentic_sec_root / "docs/reference/skillseraph.md"
+    if not ref.exists():
+        report.fail(ref, "missing")
+        report.checks_run += 1
+        return
+    text = ref.read_text()
+    ver = _REF_VERSION_RE.search(text)
+    if not ver:
+        report.fail(ref, "no 'v X.Y.Z' version in the header line")
+    elif ver.group(1) != truth.skillseraph_version:
+        report.fail(
+            ref,
+            f"header cites v{ver.group(1)} but skillseraph/pyproject.toml is "
+            f"v{truth.skillseraph_version}",
+        )
+    report.checks_run += 1
+
+
 # --------------------------------------------------------------------------
 # Driver
 # --------------------------------------------------------------------------
@@ -423,7 +447,7 @@ def main() -> int:
           f"lanes={len(truth.lane_slugs)}, nullfield_tools={truth.nullfield_registered_tools}, "
           f"mcpnuke_checks={truth.mcpnuke_registered_checks}")
     print(f"         stoneburner v{truth.stoneburner_version} schema v{truth.stoneburner_schema}, "
-          f"mcpnuke v{truth.mcpnuke_version}")
+          f"mcpnuke v{truth.mcpnuke_version}, skillseraph v{truth.skillseraph_version}")
     print()
 
     report = Report()
@@ -432,11 +456,13 @@ def main() -> int:
     _check_nullfield_tool_count_consistency(args.root / "nullfield", truth, report)
     _check_stoneburner_reference(args.root / "agentic-sec", truth, report)
     _check_mcpnuke_reference(args.root / "agentic-sec", truth, report)
+    _check_skillseraph_reference(args.root / "agentic-sec", truth, report)
     for repo, label in [
         (args.root / "camazotz", "camazotz"),
         (args.root / "agentic-sec", "agentic-sec"),
         (args.root / "mcpnuke", "mcpnuke"),
         (args.root / "nullfield", "nullfield"),
+        (args.root / "skillseraph", "skillseraph"),
     ]:
         _check_doc_lab_counts(repo, truth, report, label=label)
         _check_three_transport_drift(repo, report, label=label)

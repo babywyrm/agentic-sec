@@ -285,14 +285,14 @@ Attacks targeting the configuration layer that defines agent behavior.
 
 | ID | Threat | Technique | OWASP | Status |
 |----|--------|-----------|-------|--------|
-| J1 | Rule injection | Malicious rule added to .cursor/rules or AGENTS.md that persists across sessions | MCP09 | Partial |
-| J2 | Skill poisoning | Modified SKILL.md with hidden instructions executed on invocation | MCP03 | Partial |
-| J3 | Automation trigger abuse | Crafted event triggers an automation with unintended scope | MCP09 | Gap |
-| J4 | Hook manipulation | Agent hook modified to execute on sensitive events (exfil, bootstrap) | MCP04 | Partial |
-| J5 | Config inheritance escalation | Child workspace inherits overly permissive parent config | MCP02 | Gap |
+| J1 | Rule injection | Malicious rule added to .cursor/rules or AGENTS.md that persists across sessions | MCP09 | Covered |
+| J2 | Skill poisoning | Modified SKILL.md with hidden instructions executed on invocation | MCP03 | Covered |
+| J3 | Automation trigger abuse | Crafted event triggers an automation with unintended scope | MCP09 | Covered |
+| J4 | Hook manipulation | Agent hook modified to execute on sensitive events (exfil, bootstrap) | MCP04 | Covered |
+| J5 | Config inheritance escalation | Child workspace inherits overly permissive parent config | MCP02 | Covered |
 | J6 | Dependency-path planting | AGENTS.md placed in node_modules/ or vendor/ to hijack agent context | MCP03 | Partial |
-| J7 | Review suppression | Instructions to hide changes from PR summaries or commit messages | MCP08 | Partial |
-| J8 | Encoded payload in config | Base64/hex blobs in control files bypass pattern scanners | MCP06 | Partial |
+| J7 | Review suppression | Instructions to hide changes from PR summaries or commit messages | MCP08 | Covered |
+| J8 | Encoded payload in config | Base64/hex blobs in control files bypass pattern scanners | MCP06 | Covered |
 
 ---
 
@@ -323,21 +323,26 @@ Failures in the trust verification and cryptographic layers.
 | G — Infrastructure | 7 | 6 | 1 | 0 |
 | H — HITL | 5 | 0 | 2 | 3 |
 | I — MCP Protocol | 8 | 8 | 0 | 0 |
-| J — Config/Automation | 8 | 0 | 6 | 2 |
+| J — Config/Automation | 8 | 7 | 1 | 0 |
 | K — Zero Trust | 5 | 1 | 3 | 1 |
-| **TOTAL** | **64** | **28** | **22** | **14** |
+| **TOTAL** | **64** | **35** | **17** | **12** |
 
-**44% covered, 34% partial, 22% gap** — remaining gaps concentrated in:
+**~55% covered, ~27% partial, ~19% gap** — remaining gaps concentrated in:
 - Reasoning manipulation (A3, A4)
 - HITL exploitation (H1–H4)
-- Temporal/sleeper attacks (C1, C5)
+- Temporal/sleeper attacks (C1 runtime activation, C5)
 - Observability evasion (E2, E5)
 
 Domain J is owned by **[skillseraph](https://github.com/babywyrm/skillseraph)** —
 a static scanner for agent config files (skills, rules, hooks, MCP configs) across
-11 platforms. It covers J1, J4, J6, J7, J8 today; J3 (automation trigger abuse) and
-J5 (config inheritance escalation) remain partial. camazotz labs and mcpnuke modules
-for Domain J are still planned.
+11 platforms. It now covers J1–J5, J7, and J8 with dedicated rule packs; J6
+(dependency-path planting) is Partial — the scanner walks dependency trees
+(`node_modules/`, `vendor/`, `.venv/`) but relies on the generic content rules
+firing on planted files. skillseraph also contributes *static* detection for
+several cross-domain paths: **C1** (sleeper / conditional-trigger payloads in
+config), **I3** (tool-schema smuggling in MCP tool descriptions), and **D1/D3/D4**
+(supply-chain patterns — unpinned installs, lifecycle hooks, registry confusion).
+camazotz labs and mcpnuke modules for Domain J are still planned.
 
 ---
 

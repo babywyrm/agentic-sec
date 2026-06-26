@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.6.0 · 964 tests · schema v15
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.7.0 · 964 tests · schema v15
 
 ---
 

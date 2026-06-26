@@ -42,6 +42,7 @@ def _make_truth(**overrides: object):
         stoneburner_version="0.6.0",
         stoneburner_schema=14,
         mcpnuke_version="6.13.0",
+        skillseraph_version="0.2.0",
     )
     defaults.update(overrides)
     return checker.Truth(**defaults)
@@ -76,6 +77,17 @@ def _write_mcpnuke_ref(root: Path, *, version: str) -> Path:
         f"# mcpnuke Reference\n\n"
         f"**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke)"
         f" · v{version} · 671 tests · MIT\n"
+    )
+    return ref
+
+
+def _write_skillseraph_ref(root: Path, *, version: str) -> Path:
+    ref = root / "agentic-sec" / "docs" / "reference" / "skillseraph.md"
+    ref.parent.mkdir(parents=True, exist_ok=True)
+    ref.write_text(
+        f"# skillseraph Reference\n\n"
+        f"[GitHub](https://github.com/babywyrm/skillseraph) · v{version} · "
+        f"110 tests · 11 platforms\n"
     )
     return ref
 
@@ -171,6 +183,33 @@ def test_mcpnuke_reference_stale_version(tmp_path: Path) -> None:
     checker._check_mcpnuke_reference(tmp_path / "agentic-sec", _make_truth(), report)
     assert not report.ok()
     assert "v6.10.0" in "\n".join(str(f) for f in report.failures)
+
+
+# --------------------------------------------------------------------------
+# skillseraph reference assertion
+# --------------------------------------------------------------------------
+
+
+def test_skillseraph_reference_ok(tmp_path: Path) -> None:
+    _write_skillseraph_ref(tmp_path, version="0.2.0")
+    report = checker.Report()
+    checker._check_skillseraph_reference(tmp_path / "agentic-sec", _make_truth(), report)
+    assert report.ok(), [str(f) for f in report.failures]
+
+
+def test_skillseraph_reference_stale_version(tmp_path: Path) -> None:
+    _write_skillseraph_ref(tmp_path, version="0.1.0")
+    report = checker.Report()
+    checker._check_skillseraph_reference(tmp_path / "agentic-sec", _make_truth(), report)
+    assert not report.ok()
+    assert "v0.1.0" in "\n".join(str(f) for f in report.failures)
+
+
+def test_skillseraph_reference_missing_file(tmp_path: Path) -> None:
+    (tmp_path / "agentic-sec").mkdir()
+    report = checker.Report()
+    checker._check_skillseraph_reference(tmp_path / "agentic-sec", _make_truth(), report)
+    assert not report.ok()
 
 
 # --------------------------------------------------------------------------
