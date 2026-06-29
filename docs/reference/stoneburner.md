@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.7.0 · 964 tests · schema v15
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.7.0 · 1017 tests · schema v15
 
 ---
 
@@ -16,6 +16,26 @@ the LLM itself behave under pressure?*
 
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
+
+### Recent maturity pass (2026-06-27/28)
+
+The weekend hardening pass moved stoneburner from a broad benchmark harness to a
+more complete model-risk platform:
+
+- **MCP/agentic adversarial fixtures** — 16 new fixtures covering tool-call
+  compliance, authority fabrication, breakglass injection, context poisoning,
+  agent-loop escape, and tool-use safety. These stay in stoneburner's lane:
+  model-level resistance, not live endpoint scanning.
+- **Adversarial leaderboard** — `docs/LEADERBOARD.md` now tracks a 20-model
+  brainbox sweep (32 fixtures × 3 runs) with qwen2.5:7b as judge. Current leader:
+  `qwen3.5:4b` at 98% resistance; `gemma4:12b` at 94%.
+- **Cost-aware adversarial judging** — paid judge calls (e.g. Claude) now surface
+  per-fixture and total cost instead of silently charging.
+- **Secrets layer** — `atomics secrets set/get/list/delete` stores API keys in
+  the OS keychain (env vars and `.env` remain first-class). `doctor` reports
+  keychain availability without printing values.
+- **Distribution readiness** — CI and PyPI trusted-publishing workflows added;
+  clean sdist + wheel builds verified.
 
 ---
 

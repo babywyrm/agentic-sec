@@ -2,7 +2,7 @@
 
 MCP red teaming and security scanner.
 
-**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.13.0 · 671 tests · MIT
+**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.13.0 · 635 tests · 40/57 taxonomy IDs · MIT
 
 **In the framework:** mcpnuke is the validator that exercises every cell of
 the [Identity Flow Framework](../identity-flows.md). New checks should
@@ -11,6 +11,26 @@ docstring. Transports D (subprocess) and E (native LLM function-calling)
 were ratified 2026-04-28 — see
 [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md)
 for the full taxonomy.
+
+## Recent maturity pass (2026-06-28)
+
+mcpnuke had a substantial coverage and verification pass focused on becoming a
+more complete outside-in MCP red-team scanner:
+
+- **Taxonomy coverage:** 14/57 → **40/57 IDs (70%)**. Tier 1 in the roadmap is
+  complete; remaining gaps are mostly multi-auth, RAG/governance, and transport
+  identity dilution scenarios that require specialized fixtures.
+- **New runtime/static checks:** MCP-T01 prompt injection via tool args, MCP-T02
+  tool output poisoning, MCP-T03 credential forwarding, MCP-T05 broad command
+  injection, MCP-T08 remote package execution, MCP-T10 agentic loops, MCP-T13
+  unsigned inter-agent comms, MCP-T15 model routing, plus thin detectors for
+  T17/T28/T32/T34/T35/T36/T52/T53/T57/T58.
+- **Verification loop:** every new check was unit-tested, registered, live-scanned
+  against DVMCP targets on the NUC, and validated against the full pytest suite.
+  Final stress test: DVMCP 10-port sweep + brainbox qwen2.5:14b AI analysis,
+  238 findings across 10 targets with clean exit.
+- **Roadmap added:** `ROADMAP.md` now tracks covered IDs, Tier 2 audit results,
+  live targets (DVMCP, camazotz, zerotrust), and infrastructure gaps.
 
 ## Scan Modes
 
