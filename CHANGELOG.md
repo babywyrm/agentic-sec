@@ -10,6 +10,22 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the sibling repos.
 
+## [2026-07 pt.20] stoneburner v0.8.0 reference sync (new suites + structure/hardening)
+
+- **`docs/reference/stoneburner.md`** synced to **v0.8.0** / schema v15 / 1078 tests.
+  Documents the three new adversarial suites (multi-turn, RAG-poisoning,
+  tool-description-injection → **64 fixtures across 8 suites**), cross-suite
+  plumbing (`--json-out` / `--compare` / `--fail-on-resilience`, `redblue --runs`,
+  suite-isolated `export`, parent run rows for adversarial/probe/archreview), the
+  v0.7.0 `archreview` benchmark, and the structure/hardening pass (ARCHITECTURE.md,
+  `py.typed` + mypy CI gate, `secrets get` masking, DB backup before schema wipe).
+- **`docs/ecosystem.md`** — stoneburner matrix entry rewritten for v0.8.0; Shipped
+  timeline gains v0.7.0, v0.8.0, and the structure/hardening pass.
+- **Cross-repo coherence** (`scripts/check_coherence.py`) re-run green: 328 checks,
+  reads live `stoneburner v0.8.0 schema v15`, no drift.
+
+---
+
 ## [2026-06 pt.19] stoneburner v0.6.0 reference sync + coherence enforcement
 
 - **`docs/reference/stoneburner.md`** synced to v0.6.0 / schema v14 / 911 tests; new **Evaluation Fidelity** section (judge accuracy & calibration: deterministic scoring, self-judge guard, gold-criteria coverage, multi-judge consensus; token-burn fidelity: honest cache/thinking-token accounting, standardized TPS); `task_results` fidelity columns (schema v12–v14).

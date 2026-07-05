@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.7.0 · 1017 tests · schema v15
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.8.0 · 1078 tests · schema v15
 
 ---
 
@@ -17,25 +17,44 @@ the LLM itself behave under pressure?*
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
 
-### Recent maturity pass (2026-06-27/28)
+### v0.8.0 + structure/hardening pass (2026-07-04)
 
-The weekend hardening pass moved stoneburner from a broad benchmark harness to a
-more complete model-risk platform:
+Three new adversarial suites, cross-suite plumbing, and a structural pass that
+made the project contributor-ready:
 
-- **MCP/agentic adversarial fixtures** — 16 new fixtures covering tool-call
-  compliance, authority fabrication, breakglass injection, context poisoning,
-  agent-loop escape, and tool-use safety. These stay in stoneburner's lane:
-  model-level resistance, not live endpoint scanning.
-- **Adversarial leaderboard** — `docs/LEADERBOARD.md` now tracks a 20-model
-  brainbox sweep (32 fixtures × 3 runs) with qwen2.5:7b as judge. Current leader:
-  `qwen3.5:4b` at 98% resistance; `gemma4:12b` at 94%.
-- **Cost-aware adversarial judging** — paid judge calls (e.g. Claude) now surface
-  per-fixture and total cost instead of silently charging.
-- **Secrets layer** — `atomics secrets set/get/list/delete` stores API keys in
-  the OS keychain (env vars and `.env` remain first-class). `doctor` reports
-  keychain availability without printing values.
-- **Distribution readiness** — CI and PyPI trusted-publishing workflows added;
-  clean sdist + wheel builds verified.
+- **Three new adversarial suites (64 fixtures total)** — multi-turn manipulation
+  (scripted `prior_turns`), RAG/retrieved-context poisoning, and MCP
+  tool-description injection (the model-reasoning analogue of the
+  hammerhand/artifice tool-metadata attack surface). `ALL_FIXTURES` is now a
+  single source of truth via `select_fixtures()`.
+- **Cross-suite plumbing** — every suite has `Summary.to_dict()` + `--json-out`;
+  `adversarial` gains `--compare` (side-by-side diff) and `--fail-on-resilience`
+  (CI gate); `redblue` gains `--runs` variance; suite-isolated
+  `export --suite {eval,redblue,adversarial,...}`; adversarial/probe/archreview
+  now persist with parent run rows.
+- **New-model research** — mistral-small:24b 78.2% vs mistral-nemo:12b 61.9% on
+  the 64-fixture suite; the tool-description-injection suite was the most
+  discriminating (surfaced weaknesses the 32-fixture set missed).
+- **Structure & hardening** — `ARCHITECTURE.md` contributor map; deduped
+  primitives (`stats.py`, single provider factory); `py.typed` + a mypy gate in
+  CI; security: `secrets get` masked by default (`--show` to reveal) and a DB
+  backup before any schema-migration wipe.
+
+### Earlier maturity pass (2026-06 / v0.7.0)
+
+- **`atomics archreview`** — security-architecture repo benchmark: deterministic
+  token-budgeted evidence packs scored by objective difficulty-weighted OWASP
+  recall/precision against per-repo answer keys, plus a self-judge-guarded
+  reasoning score and multi-round finding-set robustness.
+- **MCP/agentic + zero-trust adversarial fixtures** — tool-call compliance,
+  authority fabrication, breakglass injection, context poisoning, agent-loop
+  escape, tool-use safety. Model-level resistance, not live endpoint scanning.
+- **Adversarial leaderboard** — `docs/LEADERBOARD.md` tracks a 20-model brainbox
+  sweep with qwen2.5:7b as judge (`qwen3.5:4b` 98%, `gemma4:12b` 94%).
+- **Secrets layer** — `atomics secrets` stores API keys in the OS keychain (env
+  and `.env` remain first-class).
+- **Distribution readiness** — CI + PyPI trusted-publishing workflows; clean
+  sdist + wheel builds verified.
 
 ---
 
@@ -143,13 +162,16 @@ sanitized evidence from the actual player chain, preferably over repeated rounds
 
 | Command | What it does |
 |---------|-------------|
-| `atomics adversarial` | Adversarial resilience eval (15 fixtures) |
+| `atomics adversarial` | Adversarial resilience eval (64 fixtures across 8 suites) |
 | `atomics adversarial --runs 5` | Multi-pass with mean ± stddev |
 | `atomics adversarial --extra-judges ollama:deepseek-r1:14b` | Multi-judge consensus |
-| `atomics adversarial --category prompt_injection,data_exfil_attempt` | Filter by attack category |
-| `atomics redblue` | Red/blue security capability eval (10 fixtures) |
-| `atomics redblue --mode red` | Offensive tasks only |
-| `atomics redblue --mode blue` | Defensive tasks only |
+| `atomics adversarial --category tool_desc_injection` | Filter by category/group (multiturn, rag_poisoning, mcp, zerotrust, agentic, tool_safety, …) |
+| `atomics adversarial --compare mistral-small:24b` | Run a second model on the same fixtures, print a per-fixture diff |
+| `atomics adversarial --json-out run.json` | Machine-readable per-fixture export |
+| `atomics adversarial --fail-on-resilience 60` | CI gate — non-zero exit if resilience < 60% |
+| `atomics redblue --runs 3` | Red/blue capability eval (10 fixtures) with variance |
+| `atomics redblue --mode red` / `--mode blue` | Offensive / defensive tasks only |
+| `atomics archreview --repo juice-shop --models qwen2.5:7b` | Security-architecture repo review |
 | `atomics probe --probes-file probes.yaml` | Live infrastructure artifact analysis |
 | `atomics probe --alert-on-regression` | Alert when scores drop >10% |
 | `atomics eval` | Standard quality evaluation (25 fixtures) |
@@ -160,17 +182,20 @@ sanitized evidence from the actual player chain, preferably over repeated rounds
 |---------|-------------|
 | `atomics schedule --install` | Install cron/systemd/launchd schedule |
 | `atomics export` | Export task results (default suite) |
-| `atomics export --suite stress` | Export stress test history |
-| `atomics export --suite sweep -o out.jsonl` | Export sweep results to file |
+| `atomics export --suite {eval,redblue,adversarial,stress,sweep,soak}` | Suite-isolated export |
 | `atomics export --suite all --format csv` | Export all suites as CSV |
+| `atomics secrets get KEY` / `--show` | Read a keychain secret (masked by default) |
 | `atomics login` | OAuth/OIDC login |
 
 ---
 
-## Adversarial Suite (15 fixtures)
+## Adversarial Suite (64 fixtures across 8 suites)
 
 Tests whether a model **resists** adversarial manipulation. Uses inverted
-scoring — higher score = better resistance.
+scoring — higher score = better resistance. Suites (each selectable via
+`--category`): base prompt-injection/role-confusion/etc., `zerotrust`,
+`agentic`, `mcp`, `tool_safety`, `multiturn`, `rag_poisoning`,
+`tool_desc_injection`.
 
 | Category | Fixtures | Severity range | What it tests |
 |----------|----------|----------------|---------------|
