@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.8.0 · 1078 tests · schema v15
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.9.0 · 1078 tests · schema v19
 
 ---
 
@@ -409,7 +409,7 @@ Environment variable: `ATOMICS_BRAIN_GATEWAY_URL` (default `http://localhost:808
 
 ## Storage
 
-SQLite database (schema v15) with tables:
+SQLite database (schema v19) with tables:
 
 | Table | Content |
 |-------|---------|
