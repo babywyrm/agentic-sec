@@ -1,0 +1,391 @@
+# agentic-sec surface taxonomy — machine-readable index
+#
+# schema_version: 1.0.0
+#
+# The "surface lens" of the ecosystem: an inventory of the artifacts and
+# control points that exist in an agentic workspace, each mapped to the risk
+# it carries, how to vet it, which tool owns it, and when that check runs.
+#
+# Companion to lanes.yaml (identity lens). Where lanes.yaml answers "who is
+# calling and how", this file answers "what thing am I looking at, and how do
+# I know it's safe".
+#
+# Cross-reference contract (do not mint new IDs here):
+#   atlas_domains -> docs/attack-path-atlas.md   (domains A-K)
+#   threats       -> docs/taxonomy/lanes.yaml    (threat_id: MCP-T*)
+#   vetted_by     -> docs/reference/<tool>.md
+#
+# Field meanings:
+#   default_trust   how much implicit trust the surface is granted today
+#                   (high = trusted-by-default = usually higher risk)
+#   vetted_by       the ecosystem tool that owns checking this surface, or
+#                   "manual" / "platform" where no tool covers it yet
+#   when            the lifecycle point the check runs at
+#   fail_closed_test  the abuse test that proves the control refuses, not just
+#                   that the happy path works
+#   coverage        strong | partial | gap  (be honest; gaps drive the roadmap)
+
+schema_version: "1.0.0"
+generated: "2026-07-13"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Categories — the kinds of surface in an agentic workspace
+# ─────────────────────────────────────────────────────────────────────────────
+categories:
+  - id: control-plane-config
+    name: "Control-plane config"
+    description: >
+      Files at rest that tell an agent how to behave: instructions, skills,
+      rules, hooks, MCP server definitions, automation triggers. Trusted by
+      default, rarely reviewed as hostile input. The agentic supply-chain
+      surface.
+  - id: runtime
+    name: "Runtime tool execution"
+    description: >
+      The live path a tool call travels: MCP endpoints, the tool registry, the
+      arbiter, policy files, credential attachment, and non-MCP transports.
+      Where declared intent becomes real action.
+  - id: model
+    name: "Model & evaluation"
+    description: >
+      The LLM itself and the harnesses that measure it — inference backends,
+      adversarial resilience, benchmark and eval suites, and the memory/RAG
+      context it reads.
+  - id: identity
+    name: "Identity & credentials"
+    description: >
+      Tokens, certificates, machine identity, the token vault, and the
+      boundaries (or lack of them) between callers across transports.
+  - id: infra
+    name: "Infrastructure & observability"
+    description: >
+      The cluster/network substrate and the audit/detection layer that proves
+      what happened and why.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Surfaces (ordered to match the master map in surfaces.md)
+# ─────────────────────────────────────────────────────────────────────────────
+surfaces:
+  - id: agent-instructions
+    name: "Agent instruction files (AGENTS.md)"
+    category: control-plane-config
+    purpose: >
+      Repo- or org-level standing instructions an agent reads before acting —
+      conventions, do/don't rules, workflow guidance.
+    produced_by: "humans, templates, and (dangerously) dependencies"
+    default_trust: high
+    risk: >
+      Trusted by default and rarely reviewed as hostile. A planted AGENTS.md
+      (including one buried in a dependency tree) can override behavior,
+      fabricate authority, suppress PR disclosure, or exfiltrate secrets.
+    atlas_domains: [J1, J5]
+    threats: [MCP-T01, MCP-T02]
+    vetted_by: skillseraph
+    when: [pre-commit, CI, pre-boot]
+    fail_closed_test: >
+      Plant an AGENTS.md three directories deep in node_modules/ containing an
+      instruction-override payload; skillseraph fails CI at/above --fail-on.
+    coverage: strong
+
+  - id: skills
+    name: "Skills (SKILL.md)"
+    category: control-plane-config
+    purpose: >
+      Named, invokable capability definitions the agent can load on demand —
+      reusable procedures with their own instructions.
+    produced_by: "humans, skill marketplaces, dependencies"
+    default_trust: high
+    risk: >
+      Invocation-time override, callback/redirect on invoke, self-modification,
+      silent invocation, or remote skill pull that changes behavior after review.
+    atlas_domains: [J2]
+    threats: [MCP-T01, MCP-T03, MCP-T14]
+    vetted_by: skillseraph
+    when: [pre-commit, CI]
+    fail_closed_test: >
+      Add a SKILL.md whose invocation instructions include a remote fetch +
+      self-modify; skillseraph flags skill_invocation and fails CI.
+    coverage: strong
+
+  - id: ide-control-files
+    name: "IDE control files (.cursor/rules, hooks, settings)"
+    category: control-plane-config
+    purpose: >
+      IDE- and agent-runtime configuration: rule files, lifecycle hooks
+      (e.g. beforeAgentStart), editor settings that shape agent behavior locally.
+    produced_by: "developers, shared dotfiles, extensions"
+    default_trust: high
+    risk: >
+      Hooks that run shell on agent start, rules that inject hidden instructions,
+      or extension/publisher trust that pulls in unreviewed automation.
+    atlas_domains: [J3, J4]
+    threats: [MCP-T09, MCP-T14]
+    vetted_by: skillseraph
+    when: [pre-commit, ide-hook]
+    fail_closed_test: >
+      Add a hook config that execs a remote bootstrap on beforeAgentStart;
+      skillseraph audit-local flags it before the session starts.
+    coverage: strong
+
+  - id: mcp-server-configs
+    name: "MCP server definitions (configs)"
+    category: control-plane-config
+    purpose: >
+      Config that tells the agent which MCP servers and tools exist and how to
+      reach them — URLs, auth, stdio exec commands, tool schemas.
+    produced_by: "developers, shared config, dependencies"
+    default_trust: high
+    risk: >
+      Poisoned server def: remote/raw-IP URLs, env-credential injection, stdio
+      exec, TLS disable, wildcard tools, tool-schema smuggling.
+    atlas_domains: [J3, J4, I3]
+    threats: [MCP-T01, MCP-T03, MCP-T08]
+    vetted_by: skillseraph
+    when: [pre-commit, pre-boot]
+    fail_closed_test: >
+      Add an MCP server def with a raw-IP URL and env-credential injection;
+      skillseraph mcp_servers flags it and fails CI.
+    coverage: strong
+
+  - id: mcp-server-live
+    name: "Live MCP servers"
+    category: runtime
+    purpose: >
+      Deployed MCP endpoints the agent connects to — the actual tool providers
+      answering tools/list and tools/call.
+    produced_by: "platform teams, third parties"
+    default_trust: medium
+    risk: >
+      Dangerous tools exposed, schema over-disclosure, rug-pull mutation after
+      init, SSRF-capable tools, secrets in tool output.
+    atlas_domains: [I1, I3]
+    threats: [MCP-T03, MCP-T06, MCP-T07, MCP-T50]
+    vetted_by: mcpnuke
+    when: [CI, runtime]
+    fail_closed_test: >
+      Run mcpnuke against the endpoint; a known dangerous/exfil-capable tool
+      produces a finding mapped to its MCP-T ID (and a generated nullfield deny).
+    coverage: strong
+
+  - id: tool-registry
+    name: "Tool registry & schemas"
+    category: runtime
+    purpose: >
+      The allowlist of approved tools plus their schemas the arbiter enforces
+      against — declares which tools are even eligible to be called.
+    produced_by: "platform (nullfield ToolRegistry), discovered by mcpnuke"
+    default_trust: medium
+    risk: >
+      Unregistered tool reaching upstream, schema drift/rug-pull, over-broad
+      wildcard registration, credential patterns embedded in schemas.
+    atlas_domains: [I1, I3]
+    threats: [MCP-T03, MCP-T50]
+    vetted_by: nullfield + mcpnuke
+    when: [runtime, CI]
+    fail_closed_test: >
+      Call a tool absent from the registry; nullfield rejects at the registry
+      gate (-32003) before policy evaluation runs.
+    coverage: strong
+
+  - id: arbiter
+    name: "The arbiter / policy enforcement point"
+    category: runtime
+    purpose: >
+      The in-path decision point that evaluates every tools/call and returns
+      ALLOW / DENY / HOLD / SCOPE / BUDGET before the call reaches the tool.
+    produced_by: "platform (nullfield sidecar/gateway/webhook)"
+    default_trust: n/a
+    risk: >
+      Bypass (tool reached without traversing the arbiter), fail-open on
+      controller loss, or missing enforcement so policy is advisory only.
+    atlas_domains: [F, I]
+    threats: [MCP-T04, MCP-T25]
+    vetted_by: nullfield
+    when: [runtime]
+    fail_closed_test: >
+      Attempt a denied tool through the sidecar (-32000) and attempt to reach
+      the upstream directly, bypassing the sidecar; the bypass path must be
+      blocked by network/mesh policy, not just the arbiter.
+    coverage: strong
+
+  - id: policy-files
+    name: "Policy files (NullfieldPolicy, AgenticFlow, CRDs)"
+    category: runtime
+    purpose: >
+      Declared intent that compiles to enforcement — which tool/action is
+      allowed/held/scoped/denied, credential binding, and generated
+      network/mesh controls.
+    produced_by: "platform + security engineers, generated by mcpnuke"
+    default_trust: n/a
+    risk: >
+      Overly permissive rules, missing default-deny, tampered policy, broad
+      generated network/authz, or a credential bound to the wrong action.
+    atlas_domains: [F, J]
+    threats: [MCP-T04, MCP-T29]
+    vetted_by: nullfield
+    when: [apply, CI]
+    fail_closed_test: >
+      Submit an AgenticFlow with generatedControls apply mode but a broad
+      selector / no ports; the compiler rejects it and status reports
+      Compiled=False (fail-closed on ambiguous intent).
+    coverage: strong
+
+  - id: cli-subprocess-fncall
+    name: "CLI / subprocess / native function-calling flows"
+    category: runtime
+    purpose: >
+      Non-MCP tool paths — spawning kubectl/terraform, in-process SDK calls,
+      native LLM function-calling — transports B-E where identity boundaries
+      often do not exist.
+    produced_by: "agent frameworks, developer code"
+    default_trust: medium
+    risk: >
+      Credential inheritance across the process boundary, identity dilution in
+      agent chains, function-calling context leak, shell-wrap injection, and
+      bypass of an MCP-only arbiter entirely.
+    atlas_domains: [B, F, I]
+    threats: [MCP-T34, MCP-T35, MCP-T45, MCP-T48, MCP-T49, MCP-T53]
+    vetted_by: camazotz + mcpnuke
+    when: [eval, runtime]
+    fail_closed_test: >
+      Run the camazotz transport B-E chain labs on hard difficulty; the
+      enforcement stack must block credential forwarding / identity erasure
+      (result is an info finding, not a critical).
+    coverage: partial
+    notes: >
+      Transports B-E frequently bypass an MCP-only arbiter. Runtime enforcement
+      here is a known ecosystem gap.
+
+  - id: models-inference
+    name: "Models / inference backends"
+    category: model
+    purpose: >
+      The LLM and its serving backend (Ollama, vLLM, TGI, etc.) that produce
+      the agent's decisions.
+    produced_by: "model providers, platform inference deployments"
+    default_trust: medium
+    risk: >
+      Unauthenticated inference backend exposure, model integrity drift or
+      tampering, and guardrail-resistance variance across models.
+    atlas_domains: [A, G]
+    threats: [MCP-T54, MCP-T55, MCP-T56]
+    vetted_by: stoneburner
+    when: [eval]
+    fail_closed_test: >
+      Run stoneburner adversarial + guardrail-resistance suites plus the live
+      infra probe; an unauthenticated backend or a changed model digest
+      produces a finding against the known-good baseline.
+    coverage: strong
+
+  - id: evals-benchmarks
+    name: "Evals / benchmarks"
+    category: model
+    purpose: >
+      The harnesses that measure model behavior — adversarial fixtures,
+      red/blue capability eval, archreview, multi-judge consensus.
+    produced_by: "security + platform teams (stoneburner suites)"
+    default_trust: n/a
+    risk: >
+      Eval gaming, non-deterministic pass/variance masking regressions,
+      single-judge bias, or fixtures drifting from live threats.
+    atlas_domains: [A, E]
+    threats: [MCP-T56]
+    vetted_by: stoneburner
+    when: [eval, CI]
+    fail_closed_test: >
+      Run a known-vulnerable fixture through the suite; multi-judge consensus
+      and multi-pass variance must flag it rather than pass on a lucky run.
+    coverage: strong
+
+  - id: identity-credentials
+    name: "Identity, tokens, credentials"
+    category: identity
+    purpose: >
+      How callers authenticate and how credentials reach tools — OAuth tokens,
+      machine identity (tbot/SPIFFE), certificates, the token vault, and
+      per-action credential binding.
+    produced_by: "IdP (Teleport/ZITADEL), platform credential broker"
+    default_trust: high
+    risk: >
+      Ambient broad tokens, confused deputy / replay, token theft, credential
+      inheritance, cross-IdP pollution, DPoP key forgery, plaintext cached tokens.
+    atlas_domains: [F, K]
+    threats: [MCP-T04, MCP-T18, MCP-T21, MCP-T42, MCP-T43, MCP-T57]
+    vetted_by: platform + nullfield
+    when: [runtime]
+    fail_closed_test: >
+      Trigger a denied tool that would need a credential and confirm the
+      credential was never attached (bound only to declared allowed actions);
+      confirm a replayed/expired token is rejected.
+    coverage: partial
+    notes: >
+      Issuance (Teleport/ZITADEL) and per-action binding (nullfield SCOPE) are
+      covered; end-to-end downscoping to per-invocation least privilege across
+      all providers remains partial.
+
+  - id: memory-rag-state
+    name: "Memory / RAG / state"
+    category: model
+    purpose: >
+      Durable and retrieved context an agent reads — conversation memory,
+      vector stores, RAG document pipelines.
+    produced_by: "agent runtime, ingestion pipelines, untrusted documents"
+    default_trust: high
+    risk: >
+      RAG/document poisoning hijacking the synthesizer, cross-tenant memory
+      leak, temporal consistency drift, pre-auth input stored raw and inherited.
+    atlas_domains: [C]
+    threats: [MCP-T11, MCP-T16, MCP-T39, MCP-T52]
+    vetted_by: camazotz
+    when: [eval]
+    fail_closed_test: >
+      Run the RAG-injection lab with a poisoned document; enforcement/inspection
+      must catch the injected instruction before it drives a tool call.
+    coverage: partial
+    notes: >
+      Demonstrated in camazotz (Domain C); runtime detection of poisoned
+      retrieved content is thin.
+
+  - id: audit-observability
+    name: "Audit / observability"
+    category: infra
+    purpose: >
+      The decision-level record of what happened and why — audit events,
+      metrics, OTLP traces, the controller event stream, and detections.
+    produced_by: "platform (nullfield audit), observability stack"
+    default_trust: n/a
+    risk: >
+      Audit log evasion, identity dilution making sub-agents invisible, missing
+      decision provenance, and no attack-to-alert correlation.
+    atlas_domains: [E]
+    threats: [MCP-T13, MCP-T22, MCP-T32]
+    vetted_by: nullfield + manual
+    when: [runtime]
+    fail_closed_test: >
+      Run a known attack (camazotz lab) and assert the corresponding audit event
+      and detection fired, with rule/gate/identity present (purple-team
+      correlation).
+    coverage: partial
+    notes: >
+      nullfield emits decision-level audit context; a consolidated detection
+      catalog and attack-to-alert correlation is a roadmap gap.
+
+  - id: automation-triggers
+    name: "Automation / CI triggers"
+    category: control-plane-config
+    purpose: >
+      Event-driven automation config — CI workflow triggers, agent automations,
+      and hooks that fire on events with write permissions.
+    produced_by: "developers, platform CI, shared workflows"
+    default_trust: high
+    risk: >
+      Wildcard event triggers, shell exec inside automations, broad write
+      permissions, or remote bootstrap on trigger.
+    atlas_domains: [J3, J4]
+    threats: [MCP-T09, MCP-T14]
+    vetted_by: skillseraph
+    when: [CI]
+    fail_closed_test: >
+      Add an automation with a wildcard trigger, shell exec, and broad write
+      scope; skillseraph automation_triggers flags it and fails CI.
+    coverage: strong
