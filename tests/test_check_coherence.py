@@ -213,6 +213,71 @@ def test_skillseraph_reference_missing_file(tmp_path: Path) -> None:
 
 
 # --------------------------------------------------------------------------
+# surface taxonomy assertion
+# --------------------------------------------------------------------------
+
+
+def _write_surface_fixture(root: Path, *, lane_threats: list[str],
+                           surface_threats: list[str], vetted_by: str,
+                           ref_tools: list[str]) -> None:
+    base = root / "agentic-sec" / "docs"
+    (base / "taxonomy").mkdir(parents=True, exist_ok=True)
+    (base / "reference").mkdir(parents=True, exist_ok=True)
+    lanes = "\n".join(f'  - threat_id: "{t}"' for t in lane_threats)
+    (base / "taxonomy" / "lanes.yaml").write_text(f"threats:\n{lanes}\n")
+    (base / "taxonomy" / "surfaces.yaml").write_text(
+        "surfaces:\n"
+        "  - id: s1\n"
+        f"    threats: [{', '.join(surface_threats)}]\n"
+        f"    vetted_by: {vetted_by}\n"
+    )
+    for tool in ref_tools:
+        (base / "reference" / f"{tool}.md").write_text(f"# {tool}\n")
+
+
+def test_surface_taxonomy_ok(tmp_path: Path) -> None:
+    _write_surface_fixture(
+        tmp_path, lane_threats=["MCP-T01", "MCP-T02"],
+        surface_threats=["MCP-T01"], vetted_by="nullfield + mcpnuke",
+        ref_tools=["nullfield", "mcpnuke"],
+    )
+    report = checker.Report()
+    checker._check_surface_taxonomy(tmp_path / "agentic-sec", report)
+    assert report.ok(), [str(f) for f in report.failures]
+
+
+def test_surface_taxonomy_unknown_threat_id(tmp_path: Path) -> None:
+    _write_surface_fixture(
+        tmp_path, lane_threats=["MCP-T01"],
+        surface_threats=["MCP-T01", "MCP-T99"], vetted_by="nullfield",
+        ref_tools=["nullfield"],
+    )
+    report = checker.Report()
+    checker._check_surface_taxonomy(tmp_path / "agentic-sec", report)
+    assert not report.ok()
+    assert "MCP-T99" in "\n".join(str(f) for f in report.failures)
+
+
+def test_surface_taxonomy_missing_tool_reference(tmp_path: Path) -> None:
+    _write_surface_fixture(
+        tmp_path, lane_threats=["MCP-T01"],
+        surface_threats=["MCP-T01"], vetted_by="nullfield + mcpnuke",
+        ref_tools=["nullfield"],  # mcpnuke reference deliberately absent
+    )
+    report = checker.Report()
+    checker._check_surface_taxonomy(tmp_path / "agentic-sec", report)
+    assert not report.ok()
+    assert "mcpnuke" in "\n".join(str(f) for f in report.failures)
+
+
+def test_surface_taxonomy_absent_is_noop(tmp_path: Path) -> None:
+    (tmp_path / "agentic-sec").mkdir()
+    report = checker.Report()
+    checker._check_surface_taxonomy(tmp_path / "agentic-sec", report)
+    assert report.ok()
+
+
+# --------------------------------------------------------------------------
 # gather_truth layout contract
 # --------------------------------------------------------------------------
 

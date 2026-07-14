@@ -429,6 +429,59 @@ def _check_skillseraph_reference(agentic_sec_root: Path, truth: Truth,
 
 
 # --------------------------------------------------------------------------
+# Surface taxonomy (docs/taxonomy/surfaces.yaml) cross-references
+# --------------------------------------------------------------------------
+
+_KNOWN_TOOLS = ("camazotz", "mcpnuke", "nullfield", "stoneburner", "skillseraph")
+
+
+def _read_lane_threat_ids(agentic_sec_root: Path) -> set[str]:
+    lanes = agentic_sec_root / "docs/taxonomy/lanes.yaml"
+    if not lanes.exists():
+        return set()
+    return set(re.findall(r'threat_id:\s*"?(MCP-T\d+)"?', lanes.read_text()))
+
+
+def _check_surface_taxonomy(agentic_sec_root: Path, report: Report) -> None:
+    """surfaces.yaml must reference only real threat IDs and documented tools.
+
+    Optional file: if docs/taxonomy/surfaces.yaml is absent, this is a no-op.
+    Otherwise every MCP-T* it references must exist in lanes.yaml (the identity
+    lens is the truth source for threat IDs), and every ecosystem tool named in
+    a `vetted_by:` value must have a docs/reference/<tool>.md.
+    """
+    surfaces = agentic_sec_root / "docs/taxonomy/surfaces.yaml"
+    if not surfaces.exists():
+        return
+    text = surfaces.read_text()
+
+    lane_threats = _read_lane_threat_ids(agentic_sec_root)
+    referenced = set(re.findall(r"\bMCP-T\d+\b", text))
+    missing = sorted(referenced - lane_threats)
+    if missing:
+        report.fail(
+            surfaces,
+            f"references threat IDs absent from lanes.yaml: {missing}",
+        )
+
+    vetted_values = re.findall(r"^\s*vetted_by:\s*(.+)$", text, re.M)
+    referenced_tools = {
+        tool
+        for value in vetted_values
+        for tool in _KNOWN_TOOLS
+        if re.search(rf"\b{tool}\b", value)
+    }
+    for tool in sorted(referenced_tools):
+        ref = agentic_sec_root / "docs/reference" / f"{tool}.md"
+        if not ref.exists():
+            report.fail(
+                surfaces,
+                f"vetted_by names '{tool}' but docs/reference/{tool}.md is missing",
+            )
+    report.checks_run += 1
+
+
+# --------------------------------------------------------------------------
 # Driver
 # --------------------------------------------------------------------------
 
@@ -457,6 +510,7 @@ def main() -> int:
     _check_stoneburner_reference(args.root / "agentic-sec", truth, report)
     _check_mcpnuke_reference(args.root / "agentic-sec", truth, report)
     _check_skillseraph_reference(args.root / "agentic-sec", truth, report)
+    _check_surface_taxonomy(args.root / "agentic-sec", report)
     for repo, label in [
         (args.root / "camazotz", "camazotz"),
         (args.root / "agentic-sec", "agentic-sec"),
