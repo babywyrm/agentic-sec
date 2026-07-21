@@ -10,6 +10,21 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the sibling repos.
 
+## [2026-07 pt.21] stoneburner v0.11.0 reference sync (API server mode, real RAG retrieval, richer multi-turn fixtures)
+
+- **`docs/reference/stoneburner.md`** synced to **v0.11.0** / schema v20 / 1683 tests.
+  Documents the API server mode (`atomics server`), real RAG retrieval pipeline
+  (`rag-index`, `rag --index`, `rag-retrieval`), 35 multi-turn conversation fixtures,
+  code-generation eval, multilingual eval, webhook notifications, cost advisor,
+  Groq/Together/Gemini/llama.cpp providers, and the expanded adversarial suite (72 fixtures).
+- **`docs/ecosystem.md`** — stoneburner scorecard entry rewritten for v0.11.0; Shipped
+  timeline gains v0.11.0.
+- **`README.md`** — stoneburner badge and goal links refreshed for v0.11.0 surface.
+- **Cross-repo coherence** (`scripts/check_coherence.py`) re-run green: reads live
+  `stoneburner v0.11.0 schema v20`, no drift.
+
+---
+
 ## [2026-07 pt.20] stoneburner v0.8.0 reference sync (new suites + structure/hardening)
 
 - **`docs/reference/stoneburner.md`** synced to **v0.8.0** / schema v15 / 1078 tests.

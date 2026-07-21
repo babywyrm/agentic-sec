@@ -18,7 +18,7 @@ should be built next to **unify the shared vocabulary**, **mature the tools**, a
 | Vulnerable target (camazotz) | **Strong** | 52 labs, 5 lanes × 5 transports, full OWASP MCP Top 10 |
 | Policy arbiter (nullfield) | **Strong** | 5 actions, sidecar/gateway/webhook, 139-tool camazotz policy |
 | Scanner (mcpnuke) | **Strong** | static + behavioral + AI-assisted, emits nullfield policy |
-| Benchmarking + eval (stoneburner) | **Strong** | provider benchmarking, adversarial/redblue suites, security-architecture review (`archreview`) |
+| Benchmarking + eval (stoneburner) | **Strong** | provider benchmarking, adversarial/redblue suites, security-architecture review (`archreview`), API server mode (`atomics server`) |
 | Shared taxonomy (MCP-T01–T14, lanes, transports) | **Medium** | canonical in `lanes.yaml`; OWASP MCP Top 10 bridge not yet first-class |
 | Defensive operations (detection, IR, purple team) | **Thin** | scattered across campaigns/walkthroughs; no consolidated catalog |
 | Tool security posture (supply chain, authz, secrets) | **Medium** | per-tool; no unified hardening checklist |

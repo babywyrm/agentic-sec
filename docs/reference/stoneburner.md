@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.9.0 · 1078 tests · schema v19
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.11.0 · 1683 tests · schema v20
 
 ---
 
@@ -16,6 +16,29 @@ the LLM itself behave under pressure?*
 
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
+
+### v0.11.0 — API server, real RAG retrieval, richer eval surface (2026-07)
+
+Latest release. Schema v20, 1683 tests. Headline additions since the v0.8.0 /
+structure pass:
+
+- **API server mode** — `atomics server` (optional `[api]` extra) exposes a
+  FastAPI service with async job scheduling: `POST /api/v1/runs`,
+  `POST /api/v1/evals`, `GET /api/v1/jobs/{id}`, plus comparison and recent-run
+  reports. API key auth via `X-API-Key`.
+- **RAG with real retrieval** — `atomics rag-index`, `atomics rag --index`, and
+  `atomics rag-retrieval` (recall@k, precision@k, MRR, nDCG@k); optional
+  `[rag]` extra (`sqlite-vec`, `sentence-transformers`).
+- **Richer multi-turn fixtures** — 35 conversations covering contradiction
+  detection, persona drift/stability, long-context retention (8+ turns),
+  multi-turn tool-use chaining, and security-focused scenarios.
+- **New eval suites** — `atomics codegen` (15 fixtures, functional correctness
+  via execution), multilingual eval (10 fixtures / 8 languages), cost advisor
+  (`atomics advisor`), webhook notifications (Slack/Discord/generic HTTP) with
+  regression detection.
+- **New providers** — Groq, Together AI, Google Gemini, and llama.cpp join
+  Claude, OpenAI/Bedrock, Ollama, vLLM, and brain-gateway.
+- **Adversarial suite expanded** — 64 → **72 fixtures**.
 
 ### v0.8.0 + structure/hardening pass (2026-07-04)
 
@@ -63,10 +86,14 @@ made the project contributor-ready:
 | Provider | Flag | Auth | Notes |
 |----------|------|------|-------|
 | **Claude** (Anthropic) | `--provider claude` | `ANTHROPIC_API_KEY` | Default. Extended thinking via `budget_tokens`. |
-| **OpenAI / Codex** | `--provider openai` | `OPENAI_API_KEY` | Reasoning tokens tracked for o3/o4/gpt-5.x. |
+| **OpenAI / Codex** | `--provider openai` | `OPENAI_API_KEY` | Reasoning tokens tracked for o3/o4/gpt-5.x. Install: `uv sync --extra openai`. |
 | **Bedrock** (AWS) | `--provider bedrock --region us-east-1` | AWS credentials | Uses `boto3`. Install: `uv sync --extra bedrock`. |
 | **Ollama** (local) | `--provider ollama` | None | Zero-cost local inference. `--ollama-host` for remote. |
-| **vLLM / OpenAI-compatible** | `--provider vllm` | None | Speaks `/v1/chat/completions`. Targets vLLM, LiteLLM, llama.cpp. `--vllm-host` for remote. `ATOMICS_VLLM_HOST` / `ATOMICS_VLLM_MODEL`. |
+| **vLLM / OpenAI-compatible** | `--provider vllm` | None | Speaks `/v1/chat/completions`. Targets vLLM, LiteLLM, etc. `--vllm-host` for remote. `ATOMICS_VLLM_HOST` / `ATOMICS_VLLM_MODEL`. |
+| **Groq** (cloud) | `--provider groq` | `GROQ_API_KEY` | Fast cloud inference via httpx. |
+| **Together AI** (cloud) | `--provider together` | `TOGETHER_API_KEY` | Cloud open-model hosting via httpx. |
+| **Google Gemini** | `--provider gemini` | `GEMINI_API_KEY` | Google AI Studio / Gemini API via httpx. |
+| **llama.cpp** (local) | `--provider llamacpp` | None | Direct llama-server / llama-cpp-python. `ATOMICS_LLAMACPP_HOST` (default `http://localhost:8080`). |
 | **brain-gateway** (camazotz) | `--provider brain-gateway` | None | Routes through camazotz at `--gateway-url`. |
 
 ---
@@ -162,7 +189,7 @@ sanitized evidence from the actual player chain, preferably over repeated rounds
 
 | Command | What it does |
 |---------|-------------|
-| `atomics adversarial` | Adversarial resilience eval (64 fixtures across 8 suites) |
+| `atomics adversarial` | Adversarial resilience eval (72 fixtures across suites) |
 | `atomics adversarial --runs 5` | Multi-pass with mean ± stddev |
 | `atomics adversarial --extra-judges ollama:deepseek-r1:14b` | Multi-judge consensus |
 | `atomics adversarial --category tool_desc_injection` | Filter by category/group (multiturn, rag_poisoning, mcp, zerotrust, agentic, tool_safety, …) |
@@ -175,6 +202,20 @@ sanitized evidence from the actual player chain, preferably over repeated rounds
 | `atomics probe --probes-file probes.yaml` | Live infrastructure artifact analysis |
 | `atomics probe --alert-on-regression` | Alert when scores drop >10% |
 | `atomics eval` | Standard quality evaluation (25 fixtures) |
+| `atomics codegen` | Code generation eval (15 fixtures; functional correctness via test execution) |
+| `atomics multiturn` | Multi-turn conversation eval (35 fixtures: contradiction, persona drift, long-context, tool chaining) |
+| `atomics refusal` / `atomics codereview` | Refusal and code-review evaluation suites |
+
+### RAG Pipeline
+
+Real retrieval requires `uv sync --extra rag` (`sqlite-vec`, `sentence-transformers`).
+
+| Command | What it does |
+|---------|-------------|
+| `atomics rag` | RAG pipeline evaluation (grounding, faithfulness, abstention) |
+| `atomics rag --index ./index.vec` | Run RAG eval against a real sqlite-vec index |
+| `atomics rag-index ./docs --db ./index.vec` | Build a sqlite-vec index from a directory of documents |
+| `atomics rag-retrieval --index ./index.vec --gold gold.json` | Retrieval quality: recall@k, precision@k, MRR, nDCG@k |
 
 ### Operations
 
@@ -184,12 +225,27 @@ sanitized evidence from the actual player chain, preferably over repeated rounds
 | `atomics export` | Export task results (default suite) |
 | `atomics export --suite {eval,redblue,adversarial,stress,sweep,soak}` | Suite-isolated export |
 | `atomics export --suite all --format csv` | Export all suites as CSV |
+| `atomics advisor` | Cost optimization recommendations from benchmark history |
+| `atomics advisor --min-quality 0.9` | Higher quality threshold for advisor suggestions |
 | `atomics secrets get KEY` / `--show` | Read a keychain secret (masked by default) |
 | `atomics login` | OAuth/OIDC login |
 
+### API Server Mode
+
+Optional `[api]` extra (`uv sync --extra api`). Runs atomics as a FastAPI HTTP
+service for CI/CD, dashboards, or remote scheduling.
+
+| Command | What it does |
+|---------|-------------|
+| `atomics server` | Start the HTTP API server (default bind localhost:8000) |
+| `atomics server --no-auth` | Disable API key auth (local development only) |
+| `atomics server --api-key KEY` | Allow an API key (repeatable); clients send `X-API-Key` |
+| `atomics server --host 0.0.0.0 --port 8080` | Bind address/port |
+| `atomics server --log-level debug` | Verbose uvicorn logging |
+
 ---
 
-## Adversarial Suite (64 fixtures across 8 suites)
+## Adversarial Suite (72 fixtures across suites)
 
 Tests whether a model **resists** adversarial manipulation. Uses inverted
 scoring — higher score = better resistance. Suites (each selectable via
@@ -407,9 +463,43 @@ Environment variable: `ATOMICS_BRAIN_GATEWAY_URL` (default `http://localhost:808
 
 ---
 
+## API Server Mode
+
+Install with `uv sync --extra api`, then:
+
+```bash
+# local development (no auth — do not use in production)
+uv run atomics server --no-auth
+
+# production with API key(s)
+uv run atomics server --api-key sk-abc123 --api-key sk-xyz789
+```
+
+When API keys are configured, API routes (except health) require an
+`X-API-Key` header.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/health` | Health check (public) |
+| `POST` | `/api/v1/runs` | Start a benchmark run (async job) |
+| `POST` | `/api/v1/evals` | Start an eval suite (`accuracy`, `rag`, `multiturn`, `adversarial`, `codegen`) |
+| `GET` | `/api/v1/jobs/{job_id}` | Poll job status / result |
+| `GET` | `/api/v1/compare` | Compare providers/models |
+| `GET` | `/api/v1/reports/recent-runs` | Recent run report |
+
+```bash
+JOB_ID=$(curl -s -H "X-API-Key: sk-abc123" -H "Content-Type: application/json" \
+  -d '{"provider": "ollama", "model": "qwen3:14b", "tier": "ez", "iterations": 3}' \
+  http://127.0.0.1:8000/api/v1/runs | jq -r '.job_id')
+
+curl -s -H "X-API-Key: sk-abc123" http://127.0.0.1:8000/api/v1/jobs/$JOB_ID | jq
+```
+
+---
+
 ## Storage
 
-SQLite database (schema v19) with tables:
+SQLite database (schema v20) with tables:
 
 | Table | Content |
 |-------|---------|
@@ -434,10 +524,14 @@ Export via `atomics export --suite {tasks,stress,sweep,all} --format {jsonl,csv}
 |----------|---------|---------|
 | `ANTHROPIC_API_KEY` | — | Claude API key |
 | `OPENAI_API_KEY` | — | OpenAI API key |
+| `GROQ_API_KEY` | — | Groq API key |
+| `TOGETHER_API_KEY` | — | Together AI API key |
+| `GEMINI_API_KEY` | — | Google Gemini API key |
 | `ATOMICS_OLLAMA_HOST` | `http://localhost:11434` | Ollama endpoint for local inference |
 | `ATOMICS_OLLAMA_MODEL` | `qwen2.5:7b` | Default model for Ollama provider |
 | `ATOMICS_VLLM_HOST` | `http://localhost:8000/v1` | vLLM / OpenAI-compatible base URL (e.g. a LiteLLM gateway) |
 | `ATOMICS_VLLM_MODEL` | `qwen2.5:3b` | Default model for vllm provider |
+| `ATOMICS_LLAMACPP_HOST` | `http://localhost:8080` | llama.cpp server endpoint |
 | `ATOMICS_BRAIN_GATEWAY_URL` | `http://localhost:8080` | brain-gateway endpoint |
 | `ATOMICS_DB_PATH` | `~/.atomics/metrics.db` | SQLite database location |
 
