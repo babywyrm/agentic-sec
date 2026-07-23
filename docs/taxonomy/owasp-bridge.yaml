@@ -1,0 +1,101 @@
+# agentic-sec ↔ OWASP MCP Top 10 bridge — machine-readable crosswalk
+#
+# schema_version: 1.0.0
+#
+# A faithful projection of the `owasp_mcp` field in lanes.yaml. This file lets
+# external teams who speak OWASP MCP Top 10 translate into the hub's MCP-T
+# threat vocabulary, and vice versa.
+#
+# Source of truth: docs/taxonomy/lanes.yaml (the `owasp_mcp` field per threat).
+# This bridge is GENERATED to mirror it and is gated by
+# scripts/check_coherence.py — it cannot drift from lanes.yaml without failing
+# CI. Do not hand-edit threat lists here; change lanes.yaml and regenerate.
+#
+# Category titles are the hub's working labels, inferred from the threats
+# lanes.yaml assigns to each category. Reconcile against the published OWASP
+# MCP Top 10 wording when that is finalized.
+
+schema_version: "1.0.0"
+generated: "2026-07-22"
+
+owasp_mcp_top10:
+  - id: MCP01
+    title: "Prompt Injection"
+    threats: [MCP-T01, MCP-T52, MCP-T53, MCP-T56]
+  - id: MCP02
+    title: "Indirect / Tool-Description Injection"
+    threats: [MCP-T02, MCP-T35, MCP-T36]
+  - id: MCP03
+    title: "Tool Definition Mutation & Content Drift"
+    threats: [MCP-T03, MCP-T16, MCP-T39]
+  - id: MCP04
+    title: "Authentication, Authorization & Credential Theft"
+    threats: [MCP-T04, MCP-T33, MCP-T34, MCP-T38, MCP-T44]
+  - id: MCP05
+    title: "Excessive Scope & Cross-Agent Identity Dilution"
+    threats: [MCP-T05, MCP-T17, MCP-T37, MCP-T42, MCP-T43, MCP-T45, MCP-T46, MCP-T47, MCP-T48, MCP-T49]
+  - id: MCP06
+    title: "Server-Side Request Forgery"
+    threats: [MCP-T06]
+  - id: MCP07
+    title: "Sensitive Information Disclosure"
+    threats: [MCP-T07, MCP-T15, MCP-T41, MCP-T57]
+  - id: MCP08
+    title: "Supply Chain"
+    threats: [MCP-T08]
+  - id: MCP09
+    title: "Insecure Configuration & Infrastructure"
+    threats: [MCP-T09, MCP-T50, MCP-T54, MCP-T55, MCP-T58]
+  - id: MCP10
+    title: "Denial of Service & Resource Exhaustion"
+    threats: [MCP-T10, MCP-T51]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Beyond the Top 10
+# ─────────────────────────────────────────────────────────────────────────────
+# The hub's threat taxonomy is broader than the OWASP MCP Top 10. These threats
+# carry an owasp_mcp value outside MCP01-MCP10 in lanes.yaml (placeholder IDs
+# that mirror the T-number). They have no direct Top 10 category yet.
+#
+# Normalizing these into MCP01-MCP10 is a deliberate, separate decision — each
+# is a security-categorization judgment and should be reviewed, not inferred
+# mechanically. Until then the bridge records them faithfully.
+beyond_top10:
+  - threat: MCP-T11
+    lanes_owasp_mcp: MCP11
+  - threat: MCP-T12
+    lanes_owasp_mcp: MCP12
+  - threat: MCP-T13
+    lanes_owasp_mcp: MCP13
+  - threat: MCP-T14
+    lanes_owasp_mcp: MCP14
+  - threat: MCP-T18
+    lanes_owasp_mcp: MCP18
+  - threat: MCP-T19
+    lanes_owasp_mcp: MCP19
+  - threat: MCP-T20
+    lanes_owasp_mcp: MCP20
+  - threat: MCP-T21
+    lanes_owasp_mcp: MCP21
+  - threat: MCP-T22
+    lanes_owasp_mcp: MCP22
+  - threat: MCP-T23
+    lanes_owasp_mcp: MCP23
+  - threat: MCP-T24
+    lanes_owasp_mcp: MCP24
+  - threat: MCP-T25
+    lanes_owasp_mcp: MCP25
+  - threat: MCP-T26
+    lanes_owasp_mcp: MCP26
+  - threat: MCP-T27
+    lanes_owasp_mcp: MCP27
+  - threat: MCP-T28
+    lanes_owasp_mcp: MCP28
+  - threat: MCP-T29
+    lanes_owasp_mcp: MCP29
+  - threat: MCP-T30
+    lanes_owasp_mcp: MCP30
+  - threat: MCP-T31
+    lanes_owasp_mcp: MCP31
+  - threat: MCP-T32
+    lanes_owasp_mcp: MCP32

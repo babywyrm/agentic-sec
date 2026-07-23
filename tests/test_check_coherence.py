@@ -278,6 +278,76 @@ def test_surface_taxonomy_absent_is_noop(tmp_path: Path) -> None:
 
 
 # --------------------------------------------------------------------------
+# OWASP MCP Top 10 bridge assertion
+# --------------------------------------------------------------------------
+
+
+def _write_owasp_bridge_fixture(root: Path, *, lanes: dict[str, str],
+                                bridge_top10: dict[str, list[str]],
+                                bridge_beyond: list[str]) -> None:
+    base = root / "agentic-sec" / "docs" / "taxonomy"
+    base.mkdir(parents=True, exist_ok=True)
+    lane_blocks = "".join(
+        f'  - threat_id: "{tid}"\n    owasp_mcp: "{ow}"\n'
+        for tid, ow in lanes.items()
+    )
+    (base / "lanes.yaml").write_text(f"threats:\n{lane_blocks}")
+    cats = "".join(
+        f"  - id: {cid}\n    title: \"{cid} category\"\n"
+        f"    threats: [{', '.join(bridge_top10.get(cid, []))}]\n"
+        for cid in [f"MCP{i:02d}" for i in range(1, 11)]
+    )
+    beyond = "".join(f"  - threat: {t}\n" for t in bridge_beyond)
+    (base / "owasp-bridge.yaml").write_text(
+        f"owasp_mcp_top10:\n{cats}beyond_top10:\n{beyond}"
+    )
+
+
+def test_owasp_bridge_ok(tmp_path: Path) -> None:
+    lanes = {"MCP-T01": "MCP01", "MCP-T06": "MCP06", "MCP-T21": "MCP21"}
+    top10 = {"MCP01": ["MCP-T01"], "MCP06": ["MCP-T06"]}
+    _write_owasp_bridge_fixture(
+        tmp_path, lanes=lanes, bridge_top10=top10, bridge_beyond=["MCP-T21"],
+    )
+    report = checker.Report()
+    checker._check_owasp_bridge(tmp_path / "agentic-sec", report)
+    assert report.ok(), [str(f) for f in report.failures]
+
+
+def test_owasp_bridge_category_drift(tmp_path: Path) -> None:
+    lanes = {"MCP-T01": "MCP01", "MCP-T02": "MCP01"}
+    # bridge omits MCP-T02 from MCP01 -> drift
+    top10 = {"MCP01": ["MCP-T01"]}
+    _write_owasp_bridge_fixture(
+        tmp_path, lanes=lanes, bridge_top10=top10, bridge_beyond=[],
+    )
+    report = checker.Report()
+    checker._check_owasp_bridge(tmp_path / "agentic-sec", report)
+    assert not report.ok()
+    assert "MCP01" in "\n".join(str(f) for f in report.failures)
+
+
+def test_owasp_bridge_beyond_drift(tmp_path: Path) -> None:
+    lanes = {"MCP-T01": "MCP01", "MCP-T21": "MCP21"}
+    # lanes says MCP-T21 is beyond, but bridge forgets it
+    _write_owasp_bridge_fixture(
+        tmp_path, lanes=lanes, bridge_top10={"MCP01": ["MCP-T01"]},
+        bridge_beyond=[],
+    )
+    report = checker.Report()
+    checker._check_owasp_bridge(tmp_path / "agentic-sec", report)
+    assert not report.ok()
+    assert "MCP-T21" in "\n".join(str(f) for f in report.failures)
+
+
+def test_owasp_bridge_absent_is_noop(tmp_path: Path) -> None:
+    (tmp_path / "agentic-sec").mkdir()
+    report = checker.Report()
+    checker._check_owasp_bridge(tmp_path / "agentic-sec", report)
+    assert report.ok()
+
+
+# --------------------------------------------------------------------------
 # gather_truth layout contract
 # --------------------------------------------------------------------------
 

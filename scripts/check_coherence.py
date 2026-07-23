@@ -442,6 +442,76 @@ def _read_lane_threat_ids(agentic_sec_root: Path) -> set[str]:
     return set(re.findall(r'threat_id:\s*"?(MCP-T\d+)"?', lanes.read_text()))
 
 
+def _read_lane_owasp_map(agentic_sec_root: Path) -> dict[str, str]:
+    """threat_id -> owasp_mcp, as declared per-threat in lanes.yaml."""
+    lanes = agentic_sec_root / "docs/taxonomy/lanes.yaml"
+    if not lanes.exists():
+        return {}
+    out: dict[str, str] = {}
+    for block in re.split(r"\n\s*- threat_id:", lanes.read_text())[1:]:
+        tid = re.search(r'"?(MCP-T\d+)"?', block)
+        ow = re.search(r'owasp_mcp:\s*"?(MCP\d+)"?', block)
+        if tid and ow:
+            out[tid.group(1)] = ow.group(1)
+    return out
+
+
+_OWASP_TOP10_IDS = [f"MCP{i:02d}" for i in range(1, 11)]
+
+
+def _check_owasp_bridge(agentic_sec_root: Path, report: Report) -> None:
+    """owasp-bridge.yaml must be a faithful projection of lanes.yaml.
+
+    Optional file: no-op if absent. Otherwise the bridge's Top-10 category IDs
+    must be exactly MCP01-MCP10; each category's threat list must equal the set
+    of lanes.yaml threats tagged with that owasp_mcp; and the bridge's
+    beyond_top10 list must equal the lanes.yaml threats tagged outside MCP01-10.
+    """
+    bridge = agentic_sec_root / "docs/taxonomy/owasp-bridge.yaml"
+    if not bridge.exists():
+        return
+    text = bridge.read_text()
+
+    lane_map = _read_lane_owasp_map(agentic_sec_root)
+    exp_top: dict[str, set[str]] = {}
+    exp_beyond: set[str] = set()
+    for tid, ow in lane_map.items():
+        if ow in _OWASP_TOP10_IDS:
+            exp_top.setdefault(ow, set()).add(tid)
+        else:
+            exp_beyond.add(tid)
+
+    cats = re.findall(
+        r"-\s*id:\s*(MCP\d+)\s*\n\s*title:[^\n]*\n\s*threats:\s*\[([^\]]*)\]",
+        text,
+    )
+    bridge_ids = [c[0] for c in cats]
+    if bridge_ids != _OWASP_TOP10_IDS:
+        report.fail(
+            bridge,
+            f"category ids {bridge_ids} are not exactly the OWASP MCP Top 10 "
+            f"{_OWASP_TOP10_IDS}",
+        )
+    for cid, threat_list in cats:
+        got = {x.strip() for x in threat_list.split(",") if x.strip()}
+        want = exp_top.get(cid, set())
+        if got != want:
+            report.fail(
+                bridge,
+                f"{cid} threats {sorted(got)} != lanes.yaml owasp_mcp={cid} "
+                f"set {sorted(want)}",
+            )
+
+    got_beyond = set(re.findall(r"^\s*- threat:\s*(MCP-T\d+)", text, re.M))
+    if got_beyond != exp_beyond:
+        report.fail(
+            bridge,
+            f"beyond_top10 {sorted(got_beyond)} != lanes.yaml out-of-range set "
+            f"{sorted(exp_beyond)}",
+        )
+    report.checks_run += 1
+
+
 def _check_surface_taxonomy(agentic_sec_root: Path, report: Report) -> None:
     """surfaces.yaml must reference only real threat IDs and documented tools.
 
@@ -511,6 +581,7 @@ def main() -> int:
     _check_mcpnuke_reference(args.root / "agentic-sec", truth, report)
     _check_skillseraph_reference(args.root / "agentic-sec", truth, report)
     _check_surface_taxonomy(args.root / "agentic-sec", report)
+    _check_owasp_bridge(args.root / "agentic-sec", report)
     for repo, label in [
         (args.root / "camazotz", "camazotz"),
         (args.root / "agentic-sec", "agentic-sec"),
