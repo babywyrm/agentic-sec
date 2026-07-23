@@ -219,7 +219,7 @@ threats:
     category: "isolation"
     lane: 1
     transport: "A"
-    owasp_mcp: "MCP11"
+    owasp_mcp: "MCP05"
     camazotz_lab: "tenant_lab"
 
   - threat_id: "MCP-T12"
@@ -227,7 +227,7 @@ threats:
     category: "exfiltration"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP12"
+    owasp_mcp: "MCP07"
     camazotz_lab: "comms_lab"
 
   - threat_id: "MCP-T13"
@@ -235,7 +235,7 @@ threats:
     category: "audit"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP13"
+    owasp_mcp: "MCP09"
     camazotz_lab: "audit_lab"
 
   - threat_id: "MCP-T14"
@@ -243,7 +243,7 @@ threats:
     category: "persistence"
     lane: 5
     transport: "A"
-    owasp_mcp: "MCP14"
+    owasp_mcp: "MCP09"
     camazotz_lab: "shadow_lab"
 
   - threat_id: "MCP-T15"
@@ -275,7 +275,7 @@ threats:
     category: "identity"
     lane: 3
     transport: "A"
-    owasp_mcp: "MCP18"
+    owasp_mcp: "MCP04"
     camazotz_lab: "bot_identity_theft_lab"
 
   - threat_id: "MCP-T19"
@@ -283,7 +283,7 @@ threats:
     category: "identity"
     lane: 3
     transport: "A"
-    owasp_mcp: "MCP19"
+    owasp_mcp: "MCP04"
     camazotz_lab: "cert_replay_lab"
 
   - threat_id: "MCP-T20"
@@ -291,7 +291,7 @@ threats:
     category: "authorization"
     lane: 1
     transport: "A"
-    owasp_mcp: "MCP20"
+    owasp_mcp: "MCP04"
     camazotz_lab: "rbac_lab"
 
   - threat_id: "MCP-T21"
@@ -299,7 +299,7 @@ threats:
     category: "credential_theft"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP21"
+    owasp_mcp: "MCP04"
     camazotz_lab: "oauth_delegation_lab"
 
   - threat_id: "MCP-T22"
@@ -307,7 +307,7 @@ threats:
     category: "attribution"
     lane: 4
     transport: "A"
-    owasp_mcp: "MCP22"
+    owasp_mcp: "MCP04"
     camazotz_lab: "attribution_lab"
 
   - threat_id: "MCP-T23"
@@ -315,7 +315,7 @@ threats:
     category: "isolation"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP23"
+    owasp_mcp: "MCP04"
     camazotz_lab: "credential_broker_lab"
 
   - threat_id: "MCP-T24"
@@ -323,7 +323,7 @@ threats:
     category: "authentication"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP24"
+    owasp_mcp: "MCP04"
     camazotz_lab: "pattern_downgrade_lab"
 
   - threat_id: "MCP-T25"
@@ -331,7 +331,7 @@ threats:
     category: "authorization"
     lane: 4
     transport: "A"
-    owasp_mcp: "MCP25"
+    owasp_mcp: "MCP05"
     camazotz_lab: "delegation_chain_lab"
 
   - threat_id: "MCP-T26"
@@ -339,7 +339,7 @@ threats:
     category: "lifecycle"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP26"
+    owasp_mcp: "MCP04"
     camazotz_lab: "revocation_lab"
 
   - threat_id: "MCP-T27"
@@ -347,7 +347,7 @@ threats:
     category: "availability"
     lane: 4
     transport: "A"
-    owasp_mcp: "MCP27"
+    owasp_mcp: "MCP10"
     camazotz_lab: "cost_exhaustion_lab"
 
   - threat_id: "MCP-T28"
@@ -355,7 +355,7 @@ threats:
     category: "rbac"
     lane: 3
     transport: "A"
-    owasp_mcp: "MCP28"
+    owasp_mcp: "MCP04"
     camazotz_lab: "teleport_role_escalation_lab"
 
   - threat_id: "MCP-T29"
@@ -363,7 +363,7 @@ threats:
     category: "defense"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP29"
+    owasp_mcp: "MCP05"
     camazotz_lab: "policy_authoring_lab"
 
   - threat_id: "MCP-T30"
@@ -371,7 +371,7 @@ threats:
     category: "defense"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP30"
+    owasp_mcp: "MCP07"
     camazotz_lab: "response_inspection_lab"
 
   - threat_id: "MCP-T31"
@@ -379,7 +379,7 @@ threats:
     category: "defense"
     lane: 2
     transport: "A"
-    owasp_mcp: "MCP31"
+    owasp_mcp: "MCP10"
     camazotz_lab: "budget_tuning_lab"
 
   - threat_id: "MCP-T32"
@@ -387,7 +387,7 @@ threats:
     category: "delegation"
     lane: 4
     transport: "A"
-    owasp_mcp: "MCP32"
+    owasp_mcp: "MCP05"
     camazotz_lab: "delegation_depth_lab"
 
   - threat_id: "MCP-T33"

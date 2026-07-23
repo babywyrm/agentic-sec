@@ -20,7 +20,7 @@ should be built next to **unify the shared vocabulary**, **mature the tools**, a
 | Scanner (mcpnuke) | **Strong** | static + behavioral + AI-assisted, emits nullfield policy |
 | Benchmarking + eval (stoneburner) | **Strong** | provider benchmarking, adversarial/redblue suites, security-architecture review (`archreview`), API server mode (`atomics server`) |
 | Config scanner (skillseraph) | **Strong** | scans `AGENTS.md`/`SKILL.md`/rules/hooks/MCP configs across 11 platforms; covers Attack Path Atlas Domain J |
-| Shared taxonomy (MCP-T threats, lanes, transports) | **Strong** | canonical in `lanes.yaml`; surface lens (`surfaces.yaml`) and OWASP MCP Top 10 bridge (`owasp-bridge.yaml`) now first-class and CI-gated; 19 threats await Top 10 normalization |
+| Shared taxonomy (MCP-T threats, lanes, transports) | **Strong** | canonical in `lanes.yaml`; surface lens (`surfaces.yaml`) and OWASP MCP Top 10 bridge (`owasp-bridge.yaml`) now first-class and CI-gated; all threats normalized to MCP01–MCP10 (no out-of-range) |
 | Taxonomy lenses (identity / attack / surface / tool) | **Strong** | four-lens model documented in `docs/taxonomy/` with a machine-readable surface inventory |
 | Defensive operations (detection, IR, purple team) | **Thin** | scattered across campaigns/walkthroughs; no consolidated catalog |
 | Tool security posture (supply chain, authz, secrets) | **Medium** | per-tool; no unified hardening checklist |
@@ -39,9 +39,10 @@ to the last hard-coded threat-ID consumers.
 - [x] **First-class OWASP MCP Top 10 bridge.** Published
   [`docs/taxonomy/owasp-bridge.{yaml,md}`](taxonomy/owasp-bridge.md) as a
   faithful, CI-gated projection of the `owasp_mcp` field in `lanes.yaml` — the
-  translation layer for teams that speak OWASP terms. Remaining: normalize the
-  19 threats carrying out-of-range placeholder values into MCP01–MCP10 (a
-  reviewed, per-threat taxonomy decision).
+  translation layer for teams that speak OWASP terms. All 57 threats are now
+  normalized into MCP01–MCP10 (the auth/authz cluster into MCP04, delegation and
+  scope into MCP05, disclosure into MCP07); `beyond_top10` is empty and the
+  per-threat rationale is recorded in `owasp-bridge.md`.
 - [ ] **Taxonomy as a contract, enforced in CI.** `scripts/check_coherence.py`
   now gates `surfaces.yaml` and `owasp-bridge.yaml` against `lanes.yaml`, and
   `lanes.yaml` is consumed by `mcpnuke --coverage-report` and nullfield policy

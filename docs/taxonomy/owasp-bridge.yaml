@@ -1,6 +1,6 @@
 # agentic-sec ↔ OWASP MCP Top 10 bridge — machine-readable crosswalk
 #
-# schema_version: 1.0.0
+# schema_version: 1.1.0
 #
 # A faithful projection of the `owasp_mcp` field in lanes.yaml. This file lets
 # external teams who speak OWASP MCP Top 10 translate into the hub's MCP-T
@@ -14,8 +14,13 @@
 # Category titles are the hub's working labels, inferred from the threats
 # lanes.yaml assigns to each category. Reconcile against the published OWASP
 # MCP Top 10 wording when that is finalized.
+#
+# Normalization status: COMPLETE. Every hub threat now maps to a canonical
+# MCP01-MCP10 category; beyond_top10 is empty. See owasp-bridge.md for the
+# rationale behind the auth/authz (MCP04), delegation/scope (MCP05), and
+# defense-lab placements.
 
-schema_version: "1.0.0"
+schema_version: "1.1.0"
 generated: "2026-07-22"
 
 owasp_mcp_top10:
@@ -30,72 +35,32 @@ owasp_mcp_top10:
     threats: [MCP-T03, MCP-T16, MCP-T39]
   - id: MCP04
     title: "Authentication, Authorization & Credential Theft"
-    threats: [MCP-T04, MCP-T33, MCP-T34, MCP-T38, MCP-T44]
+    threats: [MCP-T04, MCP-T18, MCP-T19, MCP-T20, MCP-T21, MCP-T22, MCP-T23, MCP-T24, MCP-T26, MCP-T28, MCP-T33, MCP-T34, MCP-T38, MCP-T44]
   - id: MCP05
     title: "Excessive Scope & Cross-Agent Identity Dilution"
-    threats: [MCP-T05, MCP-T17, MCP-T37, MCP-T42, MCP-T43, MCP-T45, MCP-T46, MCP-T47, MCP-T48, MCP-T49]
+    threats: [MCP-T05, MCP-T11, MCP-T17, MCP-T25, MCP-T29, MCP-T32, MCP-T37, MCP-T42, MCP-T43, MCP-T45, MCP-T46, MCP-T47, MCP-T48, MCP-T49]
   - id: MCP06
     title: "Server-Side Request Forgery"
     threats: [MCP-T06]
   - id: MCP07
     title: "Sensitive Information Disclosure"
-    threats: [MCP-T07, MCP-T15, MCP-T41, MCP-T57]
+    threats: [MCP-T07, MCP-T12, MCP-T15, MCP-T30, MCP-T41, MCP-T57]
   - id: MCP08
     title: "Supply Chain"
     threats: [MCP-T08]
   - id: MCP09
     title: "Insecure Configuration & Infrastructure"
-    threats: [MCP-T09, MCP-T50, MCP-T54, MCP-T55, MCP-T58]
+    threats: [MCP-T09, MCP-T13, MCP-T14, MCP-T50, MCP-T54, MCP-T55, MCP-T58]
   - id: MCP10
     title: "Denial of Service & Resource Exhaustion"
-    threats: [MCP-T10, MCP-T51]
+    threats: [MCP-T10, MCP-T27, MCP-T31, MCP-T51]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Beyond the Top 10
 # ─────────────────────────────────────────────────────────────────────────────
-# The hub's threat taxonomy is broader than the OWASP MCP Top 10. These threats
-# carry an owasp_mcp value outside MCP01-MCP10 in lanes.yaml (placeholder IDs
-# that mirror the T-number). They have no direct Top 10 category yet.
-#
-# Normalizing these into MCP01-MCP10 is a deliberate, separate decision — each
-# is a security-categorization judgment and should be reviewed, not inferred
-# mechanically. Until then the bridge records them faithfully.
-beyond_top10:
-  - threat: MCP-T11
-    lanes_owasp_mcp: MCP11
-  - threat: MCP-T12
-    lanes_owasp_mcp: MCP12
-  - threat: MCP-T13
-    lanes_owasp_mcp: MCP13
-  - threat: MCP-T14
-    lanes_owasp_mcp: MCP14
-  - threat: MCP-T18
-    lanes_owasp_mcp: MCP18
-  - threat: MCP-T19
-    lanes_owasp_mcp: MCP19
-  - threat: MCP-T20
-    lanes_owasp_mcp: MCP20
-  - threat: MCP-T21
-    lanes_owasp_mcp: MCP21
-  - threat: MCP-T22
-    lanes_owasp_mcp: MCP22
-  - threat: MCP-T23
-    lanes_owasp_mcp: MCP23
-  - threat: MCP-T24
-    lanes_owasp_mcp: MCP24
-  - threat: MCP-T25
-    lanes_owasp_mcp: MCP25
-  - threat: MCP-T26
-    lanes_owasp_mcp: MCP26
-  - threat: MCP-T27
-    lanes_owasp_mcp: MCP27
-  - threat: MCP-T28
-    lanes_owasp_mcp: MCP28
-  - threat: MCP-T29
-    lanes_owasp_mcp: MCP29
-  - threat: MCP-T30
-    lanes_owasp_mcp: MCP30
-  - threat: MCP-T31
-    lanes_owasp_mcp: MCP31
-  - threat: MCP-T32
-    lanes_owasp_mcp: MCP32
+# Normalization is complete: every hub threat now carries a canonical
+# MCP01-MCP10 owasp_mcp value in lanes.yaml, so there are no residual
+# out-of-range threats. This list is intentionally empty and is kept as an
+# explicit anchor — if a future threat is added without a Top 10 category, it
+# will surface here (and fail the coherence gate until reconciled).
+beyond_top10: []
