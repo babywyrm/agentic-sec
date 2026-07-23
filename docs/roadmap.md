@@ -1,7 +1,7 @@
 # Roadmap & Future Work
 
-> **Status:** Living document · **Scope:** the agentic-sec hub and its four tools
-> (camazotz, nullfield, mcpnuke, stoneburner)
+> **Status:** Living document · **Scope:** the agentic-sec hub and its five tools
+> (camazotz, nullfield, mcpnuke, stoneburner, skillseraph)
 
 This document tracks where the ecosystem is mature, where it is thin, and what
 should be built next to **unify the shared vocabulary**, **mature the tools**, and
@@ -19,7 +19,9 @@ should be built next to **unify the shared vocabulary**, **mature the tools**, a
 | Policy arbiter (nullfield) | **Strong** | 5 actions, sidecar/gateway/webhook, 139-tool camazotz policy |
 | Scanner (mcpnuke) | **Strong** | static + behavioral + AI-assisted, emits nullfield policy |
 | Benchmarking + eval (stoneburner) | **Strong** | provider benchmarking, adversarial/redblue suites, security-architecture review (`archreview`), API server mode (`atomics server`) |
-| Shared taxonomy (MCP-T01–T14, lanes, transports) | **Medium** | canonical in `lanes.yaml`; OWASP MCP Top 10 bridge not yet first-class |
+| Config scanner (skillseraph) | **Strong** | scans `AGENTS.md`/`SKILL.md`/rules/hooks/MCP configs across 11 platforms; covers Attack Path Atlas Domain J |
+| Shared taxonomy (MCP-T threats, lanes, transports) | **Strong** | canonical in `lanes.yaml`; surface lens (`surfaces.yaml`) and OWASP MCP Top 10 bridge (`owasp-bridge.yaml`) now first-class and CI-gated; 19 threats await Top 10 normalization |
+| Taxonomy lenses (identity / attack / surface / tool) | **Strong** | four-lens model documented in `docs/taxonomy/` with a machine-readable surface inventory |
 | Defensive operations (detection, IR, purple team) | **Thin** | scattered across campaigns/walkthroughs; no consolidated catalog |
 | Tool security posture (supply chain, authz, secrets) | **Medium** | per-tool; no unified hardening checklist |
 
@@ -27,18 +29,24 @@ should be built next to **unify the shared vocabulary**, **mature the tools**, a
 
 ## Theme 1 — Unify the shared vocabulary
 
-The four tools already share lane/transport/threat IDs through
-[`docs/taxonomy/lanes.yaml`](taxonomy/lanes.yaml). The remaining work makes that
-vocabulary the *single source of truth* every tool and external consumer maps to.
+The tools already share lane/transport/threat IDs through
+[`docs/taxonomy/lanes.yaml`](taxonomy/lanes.yaml). The taxonomy now also has a
+machine-readable **surface lens** ([`surfaces.yaml`](taxonomy/surfaces.yaml)) and
+an **OWASP MCP Top 10 bridge** ([`owasp-bridge.yaml`](taxonomy/owasp-bridge.yaml)),
+both CI-gated. The remaining work extends that single-source-of-truth discipline
+to the last hard-coded threat-ID consumers.
 
-- [ ] **First-class OWASP MCP Top 10 bridge.** Publish a committed
-  `MCP-T01–T14 ↔ OWASP MCP01–10` mapping table (machine-readable) so external
-  teams using OWASP terminology can translate into the hub's lane/transport
-  model. The relationships exist informally across docs today; consolidate them.
-- [ ] **Taxonomy as a contract, enforced in CI.** `lanes.yaml` is already
-  consumed by `mcpnuke --coverage-report` and nullfield policy generators.
-  Extend `scripts/check_coherence.py` to assert the OWASP bridge stays in sync
-  with camazotz `scenario.yaml` and any tool that hard-codes threat IDs.
+- [x] **First-class OWASP MCP Top 10 bridge.** Published
+  [`docs/taxonomy/owasp-bridge.{yaml,md}`](taxonomy/owasp-bridge.md) as a
+  faithful, CI-gated projection of the `owasp_mcp` field in `lanes.yaml` — the
+  translation layer for teams that speak OWASP terms. Remaining: normalize the
+  19 threats carrying out-of-range placeholder values into MCP01–MCP10 (a
+  reviewed, per-threat taxonomy decision).
+- [ ] **Taxonomy as a contract, enforced in CI.** `scripts/check_coherence.py`
+  now gates `surfaces.yaml` and `owasp-bridge.yaml` against `lanes.yaml`, and
+  `lanes.yaml` is consumed by `mcpnuke --coverage-report` and nullfield policy
+  generators. Extend the same gating to camazotz `scenario.yaml` threat IDs and
+  any other tool that hard-codes them.
 - [ ] **Document tool lineage.** A short "how the tools relate" note: which tool
   enforces (nullfield), which finds (mcpnuke), which measures (stoneburner),
   which is the target (camazotz) — plus a clear statement of what each tool
