@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.11.0 · 1683 tests · schema v20
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.12.0 · 1715 tests · schema v20
 
 ---
 
@@ -17,9 +17,30 @@ the LLM itself behave under pressure?*
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
 
+### v0.12.0 — Distributed benchmark runs (2026-07-23)
+
+Latest release. Schema v20, 1715 tests. Builds on the v0.11.0 surface with
+split-task distributed benchmarking:
+
+- **Distributed runs** — `atomics distributed run` submits split-mode jobs to
+  the FastAPI coordinator; `atomics worker` polls the coordinator, executes tasks,
+  and reports results. Workers target any provider/model/host via `--provider`,
+  `--model`, `--host`. Supports mixed local-LAN and remote workers with
+  per-worker API key authentication (`X-API-Key`).
+- **Distributed API endpoints** — `POST /api/v1/workers/register`,
+  `POST /api/v1/workers/{id}/heartbeat`, `GET /api/v1/workers/poll`,
+  `POST /api/v1/distributed/runs`, `GET /api/v1/distributed/runs/{id}`, and
+  `POST /api/v1/distributed/assignments/{id}/result`.
+- **Coordinator resilience** — heartbeat/offline detection, assignment timeout
+  requeue, retry limits, idempotent submission, and restart recovery via SQLite
+  (`distributed_jobs`, `distributed_assignments`, `workers` tables).
+- **Test coverage** — unit tests for coordinator edge cases (timeout, requeue,
+  retry, partial failure, recovery), worker loop tests, e2e local test, and CLI
+  tests for `atomics worker` and `atomics distributed`.
+
 ### v0.11.0 — API server, real RAG retrieval, richer eval surface (2026-07)
 
-Latest release. Schema v20, 1683 tests. Headline additions since the v0.8.0 /
+Release. Schema v20, 1683 tests. Headline additions since the v0.8.0 /
 structure pass:
 
 - **API server mode** — `atomics server` (optional `[api]` extra) exposes a
@@ -216,6 +237,15 @@ Real retrieval requires `uv sync --extra rag` (`sqlite-vec`, `sentence-transform
 | `atomics rag --index ./index.vec` | Run RAG eval against a real sqlite-vec index |
 | `atomics rag-index ./docs --db ./index.vec` | Build a sqlite-vec index from a directory of documents |
 | `atomics rag-retrieval --index ./index.vec --gold gold.json` | Retrieval quality: recall@k, precision@k, MRR, nDCG@k |
+
+### Distributed Benchmarking
+
+| Command | What it does |
+|---------|-------------|
+| `atomics distributed run --coordinator http://coordinator:8000 --api-key KEY` | Submit a split-task distributed job to the coordinator |
+| `atomics distributed status --job-id JOB_ID ...` | Poll and emit clean JSON for a distributed job |
+| `atomics worker --coordinator http://coordinator:8000 --api-key KEY --provider ollama` | Start a worker that polls, executes, and reports tasks |
+| `atomics worker --provider brain-gateway --model qwen3:14b --host http://nuc:30080` | Run a worker against a specific model endpoint |
 
 ### Operations
 
@@ -486,6 +516,12 @@ When API keys are configured, API routes (except health) require an
 | `GET` | `/api/v1/jobs/{job_id}` | Poll job status / result |
 | `GET` | `/api/v1/compare` | Compare providers/models |
 | `GET` | `/api/v1/reports/recent-runs` | Recent run report |
+| `POST` | `/api/v1/workers/register` | Register a distributed worker |
+| `POST` | `/api/v1/workers/{worker_id}/heartbeat` | Worker heartbeat |
+| `GET` | `/api/v1/workers/poll` | Worker claims a pending task assignment |
+| `POST` | `/api/v1/distributed/runs` | Submit a distributed split-task job |
+| `GET` | `/api/v1/distributed/runs/{job_id}` | Poll distributed job status |
+| `POST` | `/api/v1/distributed/assignments/{assignment_id}/result` | Submit completed assignment result |
 
 ```bash
 JOB_ID=$(curl -s -H "X-API-Key: sk-abc123" -H "Content-Type: application/json" \
@@ -504,6 +540,9 @@ SQLite database (schema v20) with tables:
 | Table | Content |
 |-------|---------|
 | `runs` | Benchmark run metadata |
+| `distributed_jobs` | Distributed split-task job metadata and summary |
+| `distributed_assignments` | Per-task assignment state, results, and retry count |
+| `workers` | Registered worker identity, labels, capabilities, and heartbeat status |
 | `task_results` | Per-task outcomes (`suite` column eval/redblue); fidelity columns: cache read/write tokens + `tps_basis` (v12), `criteria_coverage` (v13), `judge_score_stdev` (v14) |
 | `adversarial_results` | Adversarial fixture results |
 | `probe_results` | Live probe results |

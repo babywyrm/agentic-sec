@@ -10,6 +10,21 @@ The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions are dated rather than semver because this is a docs hub and the
 "release" is the alignment of the sibling repos.
 
+## [2026-07 pt.22] stoneburner v0.12.0 reference sync (distributed benchmark runs)
+
+- **`docs/reference/stoneburner.md`** synced to **v0.12.0** / schema v20 / 1715 tests.
+  Documents the distributed benchmarking surface (`atomics distributed run`,
+  `atomics distributed status`, `atomics worker`), the coordinator/worker API endpoints,
+  per-worker API-key authentication, coordinator resilience (heartbeat, requeue,
+  retry, recovery), and the new distributed storage tables.
+- **`docs/ecosystem.md`** — stoneburner scorecard entry rewritten for v0.12.0; Shipped
+  timeline gains v0.12.0.
+- **`README.md`** — stoneburner badge and description refreshed for the distributed API surface.
+- **Cross-repo coherence** (`scripts/check_coherence.py`) re-run green: reads live
+  `stoneburner v0.12.0 schema v20`, no drift.
+
+---
+
 ## [2026-07 pt.21] stoneburner v0.11.0 reference sync (API server mode, real RAG retrieval, richer multi-turn fixtures)
 
 - **`docs/reference/stoneburner.md`** synced to **v0.11.0** / schema v20 / 1683 tests.
