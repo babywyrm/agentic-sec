@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.15.0 · 2011 tests · schema v20
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.15.1 · 2031 tests · schema v20
 
 ---
 
@@ -16,6 +16,22 @@ the LLM itself behave under pressure?*
 
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
+
+### v0.15.1 — Web dashboard + server CLI improvements (2026-07-30)
+
+Latest release. Schema v20, 2031 tests. Adds an optional web dashboard and
+listing endpoints for distributed monitoring:
+
+- **Web dashboard** — `atomics server --with-dashboard` serves a read-only web UI
+  at `/dashboard`. It visualizes recent runs, distributed jobs, registered workers,
+  and provider/model success-rate comparisons. Disabled by default; pass the API key
+  via `?api_key=YOUR_KEY` when authentication is enabled.
+- **Distributed job list** — `GET /api/v1/distributed/runs` returns recent
+  distributed jobs for dashboard and external tooling.
+- **Worker list** — `GET /api/v1/workers` returns registered workers with their
+  status, capabilities, and labels.
+- **`--db-path` option** — `atomics server --db-path PATH` explicitly sets the
+  SQLite database path used by the API server and coordinator.
 
 ### v0.15.0 — Distributed full-mode runs + npm worker bridge (2026-07-29)
 

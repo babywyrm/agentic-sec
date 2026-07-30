@@ -2,6 +2,20 @@
 
 All notable hub-level changes
 
+## [2026-07 pt.24] stoneburner v0.15.1 reference sync (web dashboard + list endpoints)
+
+- **`docs/reference/stoneburner.md`** synced to **v0.15.1** / schema v20 / 2031 tests.
+  Documents the optional web dashboard (`atomics server --with-dashboard`, `/dashboard`),
+  distributed job list (`GET /api/v1/distributed/runs`), worker list (`GET /api/v1/workers`),
+  and the `--db-path` server option.
+- **`docs/ecosystem.md`** — stoneburner scorecard entry updated to v0.15.1 / 2031 tests;
+  Shipped timeline gains v0.15.1.
+- **`README.md`** — stoneburner badge and description refreshed for the dashboard.
+- **Cross-repo coherence** (`scripts/check_coherence.py`) re-run green: reads live
+  `stoneburner v0.15.1 schema v20`, no drift.
+
+----
+
 ## [2026-07 pt.23] stoneburner v0.15.0 reference sync (distributed full mode + npm worker bridge)
 
 - **`docs/reference/stoneburner.md`** synced to **v0.15.0** / schema v20 / 2011 tests.
