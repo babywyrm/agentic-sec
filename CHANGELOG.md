@@ -1,6 +1,22 @@
 # Changelog
 
-All notable hub-level changes to the agentic-security ecosystem (camazotz +
+All notable hub-level changes
+
+## [2026-07 pt.23] stoneburner v0.15.0 reference sync (distributed full mode + npm worker bridge)
+
+- **`docs/reference/stoneburner.md`** synced to **v0.15.0** / schema v20 / 2011 tests.
+  Documents distributed full-mode runs (`atomics distributed run --mode full`), the
+  npm worker bridge (`atomics worker-npm` with `--runtime node` capability routing
+  and `--pool-size N`), and the expanded distributed benchmarking surface.
+- **`docs/ecosystem.md`** — stoneburner scorecard entry rewritten for v0.15.0; Shipped
+  timeline gains v0.15.0.
+- **`README.md`** — stoneburner description refreshed for the npm worker bridge.
+- **Cross-repo coherence** (`scripts/check_coherence.py`) re-run green: reads live
+  `stoneburner v0.15.0 schema v20`, no drift.
+
+----
+
+ to the agentic-security ecosystem (camazotz +
 nullfield + mcpnuke + stoneburner + this docs hub). Per-project code changes
 live in each project's own CHANGELOG; this file narrates **ecosystem
 milestones** — moments where the shared vocabulary, the lane/transport

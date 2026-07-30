@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.12.0 · 1715 tests · schema v20
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.15.0 · 2011 tests · schema v20
 
 ---
 
@@ -16,6 +16,24 @@ the LLM itself behave under pressure?*
 
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
+
+### v0.15.0 — Distributed full-mode runs + npm worker bridge (2026-07-29)
+
+Latest release. Schema v20, 2011 tests. Extends distributed benchmarking with
+full-mode delegation and a Node.js worker bridge:
+
+- **Distributed full mode** — `atomics distributed run --mode full` delegates an
+  entire run to one worker, which executes the full `LoopEngine` locally and returns
+  the run summary plus per-task results. Optionally pinned to the first worker matching
+  a label selector.
+- **npm worker bridge** — `atomics worker-npm` starts a Node.js worker that registers
+  with the coordinator, polls for assignments, and executes them via a JSON-over-stdin
+  bridge command (`--worker-cmd`).
+- **Capability routing** — workers advertise capabilities (`python`, `node`) and the
+  coordinator routes tasks whose `runtime` matches. Use `--runtime node` with
+  `atomics distributed run` to target npm workers.
+- **npm worker pool** — `atomics worker-npm --pool-size N` spawns N independent
+  workers on the same host, each registering separately and polling for its own work.
 
 ### v0.12.0 — Distributed benchmark runs (2026-07-23)
 

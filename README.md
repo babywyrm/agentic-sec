@@ -50,7 +50,7 @@ transfers and what doesn't.
 | **[camazotz](https://github.com/babywyrm/camazotz)** | Vulnerable target | Intentionally vulnerable MCP server — 52 labs across five identity lanes and five transport surfaces (A–E), covering the OWASP MCP Top 10 |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar that intercepts every `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP scanner — static, behavioral, and AI-assisted probes; emits findings **and** a nullfield policy |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM eval | Provider benchmarking plus adversarial / red-blue resilience eval, security-architecture review (`archreview`), live probing, **API server mode** (`atomics server`), and **distributed benchmark runs** (`atomics distributed run` / `atomics worker`) with multi-judge consensus |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM eval | Provider benchmarking plus adversarial / red-blue resilience eval, security-architecture review (`archreview`), live probing, **API server mode** (`atomics server`), **distributed benchmark runs** (`atomics distributed run` / `atomics worker`), and **npm worker bridge** (`atomics worker-npm`) with multi-judge consensus |
 | **[skillseraph](https://github.com/babywyrm/skillseraph)** | Config scanner | Static analyzer for the control plane — scans `AGENTS.md`, `SKILL.md`, rules, hooks, and MCP configs across 11 platforms for poisoning and supply-chain tampering |
 
 Each ships independently. They are stronger together.
