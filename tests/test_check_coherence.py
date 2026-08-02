@@ -122,6 +122,133 @@ def test_read_stoneburner_schema_missing(tmp_path: Path) -> None:
 
 
 # --------------------------------------------------------------------------
+# mcpnuke check registry
+# --------------------------------------------------------------------------
+
+
+def _write_mcpnuke_checks_init(mcpnuke_root: Path, body: str) -> Path:
+    """Write a checks/__init__.py; `mcpnuke_root` is the mcpnuke repo root."""
+    init = mcpnuke_root / "mcpnuke" / "checks" / "__init__.py"
+    init.parent.mkdir(parents=True, exist_ok=True)
+    init.write_text(body)
+    return init
+
+
+# Mirrors the real module: typed module-level tuples, plus a run_all_checks
+# body that accumulates `total_checks` from their lengths.
+_REAL_SHAPE = '''"""Check orchestrator."""
+
+_STATIC_CHECK_NAMES: tuple[str, ...] = (
+    "prompt_injection_t01",
+    "tool_poisoning",
+    "credential_in_schema",
+)
+_JWT_CHECK_NAMES: tuple[str, ...] = ("jwt_audience", "jwt_replay")
+_DPOP_CHECK_NAMES: tuple[str, ...] = ("dpop_not_enforced",)
+_AGGREGATE_CHECK_NAMES: tuple[str, ...] = ("multi_vector", "attack_chains")
+
+
+def run_all_checks(result, session=None):
+    total_checks = 0
+    if session:
+        total_checks = len(_STATIC_CHECK_NAMES)
+        total_checks += len(_JWT_CHECK_NAMES)
+        total_checks += len(_DPOP_CHECK_NAMES)
+    return total_checks
+'''
+
+
+def test_count_mcpnuke_checks_unions_the_registry_tables(tmp_path: Path) -> None:
+    _write_mcpnuke_checks_init(tmp_path, _REAL_SHAPE)
+    assert checker._count_mcpnuke_checks(tmp_path) == 8
+
+
+def test_count_mcpnuke_checks_ignores_the_total_checks_accumulator(tmp_path: Path) -> None:
+    """Regression: `total_checks = 0` must not be mistaken for the registry size.
+
+    The original regex matched the accumulator's initialiser and reported 0
+    registered checks while the suite still passed green.
+    """
+    _write_mcpnuke_checks_init(tmp_path, _REAL_SHAPE)
+    assert "total_checks = 0" in _REAL_SHAPE
+    assert checker._count_mcpnuke_checks(tmp_path) != 0
+
+
+def test_count_mcpnuke_checks_reads_unannotated_tables(tmp_path: Path) -> None:
+    _write_mcpnuke_checks_init(
+        tmp_path, '_STATIC_CHECK_NAMES = ("a", "b")\n_JWT_CHECK_NAMES = ("c",)\n'
+    )
+    assert checker._count_mcpnuke_checks(tmp_path) == 3
+
+
+def test_count_mcpnuke_checks_counts_each_name_once(tmp_path: Path) -> None:
+    _write_mcpnuke_checks_init(
+        tmp_path,
+        '_STATIC_CHECK_NAMES: tuple[str, ...] = ("a", "b")\n'
+        '_TELEPORT_ALWAYS_CHECK_NAMES: tuple[str, ...] = ("b", "c")\n',
+    )
+    assert checker._count_mcpnuke_checks(tmp_path) == 3
+
+
+def test_count_mcpnuke_checks_missing_file_exits(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit):
+        checker._count_mcpnuke_checks(tmp_path)
+
+
+def test_count_mcpnuke_checks_empty_registry_exits_loudly(tmp_path: Path) -> None:
+    """No recognisable table is a parser failure, not a zero-check scanner."""
+    _write_mcpnuke_checks_init(tmp_path, "def run_all_checks(result):\n    return 0\n")
+    with pytest.raises(SystemExit):
+        checker._count_mcpnuke_checks(tmp_path)
+
+
+def test_count_mcpnuke_checks_survives_a_syntax_error(tmp_path: Path) -> None:
+    _write_mcpnuke_checks_init(tmp_path, "def broken(:\n")
+    with pytest.raises(SystemExit):
+        checker._count_mcpnuke_checks(tmp_path)
+
+
+def test_mcpnuke_check_registry_ok(tmp_path: Path) -> None:
+    _write_mcpnuke_checks_init(tmp_path, _REAL_SHAPE)
+    report = checker.Report()
+    checker._check_mcpnuke_check_registry(tmp_path, _make_truth(), report)
+    assert report.ok(), [str(f) for f in report.failures]
+    assert report.checks_run == 1
+
+
+def test_mcpnuke_check_registry_rejects_a_degenerate_count(tmp_path: Path) -> None:
+    _write_mcpnuke_checks_init(tmp_path, _REAL_SHAPE)
+    report = checker.Report()
+    checker._check_mcpnuke_check_registry(
+        tmp_path, _make_truth(mcpnuke_registered_checks=0), report
+    )
+    assert not report.ok()
+
+
+def test_mcpnuke_check_registry_flags_a_name_in_two_tables(tmp_path: Path) -> None:
+    _write_mcpnuke_checks_init(
+        tmp_path,
+        '_STATIC_CHECK_NAMES: tuple[str, ...] = ("a", "b")\n'
+        '_JWT_CHECK_NAMES: tuple[str, ...] = ("b",)\n',
+    )
+    report = checker.Report()
+    checker._check_mcpnuke_check_registry(
+        tmp_path, _make_truth(mcpnuke_registered_checks=2), report
+    )
+    assert not report.ok()
+    assert "b" in str(report.failures[0])
+
+
+@pytest.mark.skipif(
+    not (_REPO_ROOT.parent / "mcpnuke" / "mcpnuke" / "checks" / "__init__.py").exists(),
+    reason="mcpnuke sibling checkout not present",
+)
+def test_count_mcpnuke_checks_against_the_live_sibling() -> None:
+    """The live repo must yield a plausible count, not a silent zero."""
+    assert checker._count_mcpnuke_checks(_REPO_ROOT.parent / "mcpnuke") > 20
+
+
+# --------------------------------------------------------------------------
 # stoneburner reference assertion
 # --------------------------------------------------------------------------
 

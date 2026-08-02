@@ -2,6 +2,29 @@
 
 All notable hub-level changes
 
+## [2026-08 pt.1] coherence: repair the mcpnuke check-registry extractor
+
+- **`scripts/check_coherence.py`** was reporting **0 mcpnuke checks instead of 59**,
+  and had been since mcpnuke replaced its hard-coded progress arithmetic with a
+  derived accumulator. `_count_mcpnuke_checks` searched the source text for
+  `total_checks = (\d+)` and matched the accumulator's `total_checks = 0`
+  initialiser inside `run_all_checks`, so the regex "succeeded" and the fallback
+  counters never ran. The script still printed `OK — no cross-repo drift detected`.
+- **Extraction now uses AST**, unioning mcpnuke's eleven `*_CHECK_NAMES` registry
+  tables. These are typed module-level tuples, so both annotated and plain
+  assignments are read; a text search could not see the difference. A refactor
+  that renames the tables now **exits loudly** rather than degrading to zero.
+- **`_check_mcpnuke_check_registry`** added — the count was previously only
+  printed, never asserted, so nothing gated it. It now fails on a degenerate
+  count and on any check registered in two tables (which would double-count it
+  in mcpnuke's scan-progress denominator).
+- **Coverage:** 11 new tests, including a regression fixture that reproduces the
+  `total_checks = 0` shape and a guarded assertion against the live sibling
+  checkout. Suite 23 → 34 tests, all passing; coherence run 362 → 363 checks,
+  now reading `mcpnuke_checks=59`.
+
+----
+
 ## [2026-07 pt.24] stoneburner v0.15.1 reference sync (web dashboard + list endpoints)
 
 - **`docs/reference/stoneburner.md`** synced to **v0.15.1** / schema v20 / 2031 tests.

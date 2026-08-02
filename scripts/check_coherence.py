@@ -38,6 +38,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import ast
 import os
 import re
 import sys
@@ -97,21 +98,59 @@ def _count_nullfield_tools(nullfield_root: Path) -> int:
     )
 
 
-def _count_mcpnuke_checks(mcpnuke_root: Path) -> int:
+_CHECK_TABLE_SUFFIX = "_CHECK_NAMES"
+
+
+def _read_mcpnuke_check_tables(mcpnuke_root: Path) -> list[tuple[str, list[str]]]:
+    """Return mcpnuke's `*_CHECK_NAMES` registry tables as (name, members).
+
+    Parsed via AST rather than regex. mcpnuke declares these as typed
+    module-level tuples (`_STATIC_CHECK_NAMES: tuple[str, ...] = (...)`), so
+    both annotated and plain assignments are accepted. Reading the source
+    text instead is what broke here before: a regex for `total_checks = (\\d+)`
+    matched the accumulator's `total_checks = 0` initialiser inside
+    `run_all_checks` and reported zero registered checks.
+    """
     init = mcpnuke_root / "mcpnuke/checks/__init__.py"
     if not init.exists():
         raise SystemExit(f"coherence: mcpnuke checks/__init__.py not found: {init}")
-    text = init.read_text()
-    m = re.search(r"total_checks\s*=\s*(\d+)", text)
-    if m:
-        return int(m.group(1))
-    # Fall back to counting CHECK_FUNCS / register() / appended check refs
-    candidates = [
-        len(re.findall(r"^\s*register\s*\(", text, re.M)),
-        len(re.findall(r"^\s*[A-Z_]+_CHECKS\s*=", text, re.M)),
-        len(re.findall(r"\bcheck_[a-z_]+\b", text)),
-    ]
-    return max(candidates)
+    try:
+        tree = ast.parse(init.read_text())
+    except SyntaxError as exc:
+        raise SystemExit(f"coherence: could not parse {init}: {exc}") from exc
+
+    tables: list[tuple[str, list[str]]] = []
+    for node in tree.body:
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            name = node.target.id
+        elif (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)):
+            name = node.targets[0].id
+        else:
+            continue
+        if not name.endswith(_CHECK_TABLE_SUFFIX):
+            continue
+        if not isinstance(node.value, (ast.Tuple, ast.List, ast.Set)):
+            continue
+        members = [
+            el.value for el in node.value.elts
+            if isinstance(el, ast.Constant) and isinstance(el.value, str)
+        ]
+        tables.append((name, members))
+
+    if not tables:
+        raise SystemExit(
+            f"coherence: no *{_CHECK_TABLE_SUFFIX} registry tables found in {init} — "
+            "the extractor is stale, not the scanner empty"
+        )
+    return tables
+
+
+def _count_mcpnuke_checks(mcpnuke_root: Path) -> int:
+    names: set[str] = set()
+    for _, members in _read_mcpnuke_check_tables(mcpnuke_root):
+        names.update(members)
+    return len(names)
 
 
 _PYPROJECT_VERSION_RE = re.compile(r'^version\s*=\s*["\']([^"\']+)["\']', re.M)
@@ -310,6 +349,38 @@ def _check_nullfield_tool_count_consistency(nullfield_root: Path, truth: Truth,
             readme,
             f"asserts 'all {m.group(1)} tools' but tools.yaml registers {target}",
         )
+    report.checks_run += 1
+
+
+def _check_mcpnuke_check_registry(mcpnuke_root: Path, truth: Truth,
+                                  report: Report) -> None:
+    """mcpnuke's check registry must be non-degenerate and free of duplicates.
+
+    Nothing downstream cites the check count verbatim, so there is no doc to
+    diff it against. What is worth gating is the extractor itself: a silent
+    zero means this script stopped observing mcpnuke, and a name appearing in
+    two tables means a check is counted twice in the scan progress denominator.
+    """
+    init = mcpnuke_root / "mcpnuke/checks/__init__.py"
+    tables = _read_mcpnuke_check_tables(mcpnuke_root)
+
+    if truth.mcpnuke_registered_checks <= 0:
+        report.fail(
+            init,
+            f"registry parsed to {truth.mcpnuke_registered_checks} checks across "
+            f"{len(tables)} table(s) — the extractor has lost track of mcpnuke",
+        )
+    seen: dict[str, str] = {}
+    for table, members in tables:
+        for name in members:
+            if name in seen:
+                report.fail(
+                    init,
+                    f"check {name!r} is registered in both {seen[name]} and "
+                    f"{table} — it will be counted twice in scan progress",
+                )
+            else:
+                seen[name] = table
     report.checks_run += 1
 
 
@@ -576,6 +647,7 @@ def main() -> int:
     report = Report()
     _check_adr_transports(args.root / "camazotz", truth, report)
     _check_lane_slugs(args.root / "camazotz", truth, report)
+    _check_mcpnuke_check_registry(args.root / "mcpnuke", truth, report)
     _check_nullfield_tool_count_consistency(args.root / "nullfield", truth, report)
     _check_stoneburner_reference(args.root / "agentic-sec", truth, report)
     _check_mcpnuke_reference(args.root / "agentic-sec", truth, report)
