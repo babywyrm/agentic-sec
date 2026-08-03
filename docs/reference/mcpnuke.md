@@ -2,7 +2,7 @@
 
 MCP red teaming and security scanner.
 
-**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.13.0 · 635 tests · 40/57 taxonomy IDs · MIT
+**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.13.0 · 993 tests · 40/57 taxonomy IDs · MIT
 
 **In the framework:** mcpnuke is the validator that exercises every cell of
 the [Identity Flow Framework](../identity-flows.md). New checks should
@@ -12,25 +12,60 @@ were ratified 2026-04-28 — see
 [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md)
 for the full taxonomy.
 
-## Recent maturity pass (2026-06-28)
+## Recent work (2026-07 → 2026-08)
 
-mcpnuke had a substantial coverage and verification pass focused on becoming a
-more complete outside-in MCP red-team scanner:
+- **MCP 2026-07-28 stateless protocol** (`core/protocol.py`) — mcpnuke scans
+  servers speaking the stateless spec alongside legacy handshake servers. See
+  [Protocol Modes](#protocol-modes) below.
+- **Quality hardening.** `ruff` strict at zero (370 → 0 violations) and `mypy` on
+  a tightening ratchet (81 → 48), with `disallow_untyped_defs` enforced across
+  `core/`. Credential and prompt-injection regexes were consolidated into single
+  sources of truth (`patterns/credentials.py`, `patterns/rules.py`) after five
+  divergent copies were found to disagree about what a secret looks like. The
+  repo carries no `# type: ignore`.
+- **CI runs for the first time.** The Tests workflow had been dying before pytest
+  on every run; it now gates lint plus the full suite on Python 3.11, 3.12 and 3.13.
+- **Docs restructured** — the README became a navigable front door and the
+  reference material moved into `docs/`, with the CLI reference generated from
+  the argument parser. See [Upstream Documentation](#upstream-documentation).
 
-- **Taxonomy coverage:** 14/57 → **40/57 IDs (70%)**. Tier 1 in the roadmap is
-  complete; remaining gaps are mostly multi-auth, RAG/governance, and transport
-  identity dilution scenarios that require specialized fixtures.
+### Earlier: coverage pass (2026-06-28)
+
+- **Taxonomy coverage:** 14/57 → **40/57 IDs (70%)**. Tier 1 is complete;
+  remaining gaps are mostly multi-auth, RAG/governance, and transport identity
+  dilution scenarios that require specialized fixtures.
 - **New runtime/static checks:** MCP-T01 prompt injection via tool args, MCP-T02
   tool output poisoning, MCP-T03 credential forwarding, MCP-T05 broad command
   injection, MCP-T08 remote package execution, MCP-T10 agentic loops, MCP-T13
   unsigned inter-agent comms, MCP-T15 model routing, plus thin detectors for
   T17/T28/T32/T34/T35/T36/T52/T53/T57/T58.
-- **Verification loop:** every new check was unit-tested, registered, live-scanned
-  against DVMCP targets on the NUC, and validated against the full pytest suite.
-  Final stress test: DVMCP 10-port sweep + brainbox qwen2.5:14b AI analysis,
-  238 findings across 10 targets with clean exit.
-- **Roadmap added:** `ROADMAP.md` now tracks covered IDs, Tier 2 audit results,
-  live targets (DVMCP, camazotz, zerotrust), and infrastructure gaps.
+- **Roadmap added:** `ROADMAP.md` tracks covered IDs, Tier 2 audit results, live
+  targets, and infrastructure gaps.
+
+## Protocol Modes
+
+The 2026-07-28 spec retires the `initialize`/`initialized` handshake and the
+`Mcp-Session-Id` header. mcpnuke speaks both dialects rather than choosing one.
+
+| Mode | Flag | Behaviour |
+|------|------|-----------|
+| Auto | `--protocol-mode auto` *(default)* | Probes for whichever protocol the server speaks |
+| Legacy | `--protocol-mode legacy` | `initialize`/`initialized` handshake, `Mcp-Session-Id` correlation |
+| Stateless | `--protocol-mode stateless` | 2026-07-28 spec — routing headers, no session |
+
+In stateless mode every request carries `Mcp-Method`, `Mcp-Name` and
+`MCP-Protocol-Version` routing headers (SEP-2243), with CR/LF stripped so a
+hostile tool name cannot smuggle additional headers, and client identity moves
+into `params._meta` (`io.modelcontextprotocol/clientInfo`) in place of the
+retired handshake. `Mcp-Session-Id` and `notifications/initialized` are sent in
+legacy mode only, per SEP-2567.
+
+Two consequences matter for scanning. `server/discover` is probed directly, and
+an anonymous caller that can read server capabilities raises a Lane 5 /
+Transport A finding, **"Unauthenticated MCP server/discover accepted"**. And
+`TargetResult.protocol_mode` records what was negotiated, so a report says which
+dialect the target actually spoke. HTTP+SSE stays on the legacy path
+deliberately — the spec deprecates that transport with a twelve-month offramp.
 
 ## Scan Modes
 
@@ -260,3 +295,19 @@ Each target in `--json` output now includes:
 | token_theft, credential_in_schema | SCOPE (redact) |
 | rate_limit | BUDGET |
 | prompt_injection + code_execution | HOLD (strict timeout) |
+
+## Upstream Documentation
+
+This page is a hub-level summary. mcpnuke's own `docs/` carries the full
+reference, and `docs/cli-reference.md` is generated from the argument parser, so
+it cannot drift from `--help`.
+
+| Document | Contents |
+|----------|----------|
+| [`docs/cli-reference.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/cli-reference.md) | Every flag, grouped by concern — generated from the parser |
+| [`docs/checks.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/checks.md) | All 59 registered checks plus 24 deep behavioral probes, with severities |
+| [`docs/scan-modes.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/scan-modes.md) | Scan modes and fast-mode scoring |
+| [`docs/methodology.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/methodology.md) | Behavioral probing, attack chain detection, risk scoring, DVMCP testing |
+| [`docs/ai-analysis.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/ai-analysis.md) | Claude-backed analysis phases |
+| [`docs/kubernetes.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/kubernetes.md) | In-cluster deployment and service discovery |
+| [`docs/ci-cd-guide.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/ci-cd-guide.md) | GitHub Actions, GitLab CI, mcpnuke-runner |

@@ -2,6 +2,33 @@
 
 All notable hub-level changes
 
+## [2026-08 pt.2] mcpnuke reference sync (dual-stack protocol, quality pass, docs split)
+
+- **`docs/reference/mcpnuke.md`** — the hub had no mention anywhere of the
+  **MCP 2026-07-28 stateless protocol** work. New **Protocol Modes** section
+  covers `--protocol-mode {auto,legacy,stateless}`, the SEP-2243
+  `Mcp-Method`/`Mcp-Name`/`MCP-Protocol-Version` routing headers with CR/LF
+  stripped, client identity in `params._meta` replacing the retired handshake,
+  `Mcp-Session-Id` and `notifications/initialized` as legacy-only per SEP-2567,
+  and `server/discover` probing with its Lane 5 / Transport A finding for
+  anonymous capability reads.
+- Header test count corrected **635 → 993**. The `40/57 taxonomy IDs` claim was
+  checked against the code rather than carried forward, and holds: 40 distinct
+  `MCP-T*` IDs are referenced across `mcpnuke/checks/` against 57 in the
+  taxonomy. Version v6.13.0 was already correct.
+- The dated *Recent maturity pass (2026-06-28)* section is now *Recent work
+  (2026-07 → 2026-08)*, adding the quality pass (`ruff` 370 → 0, `mypy` 81 → 48
+  on a ratchet, credential and injection regexes consolidated after five
+  divergent copies were found to disagree) and the first green CI run.
+- New **Upstream Documentation** table pointing at mcpnuke's `docs/`, which was
+  split out of a 1018-line README. `docs/cli-reference.md` there is generated
+  from the argument parser, so it cannot drift from `--help`.
+- **`docs/ecosystem.md`** — mcpnuke scorecard entry gains dual-stack protocol
+  support, the check and test counts, and the version; three Shipped-timeline
+  entries added. **`README.md`** — one-line summary notes both protocol dialects.
+
+----
+
 ## [2026-08 pt.1] coherence: repair the mcpnuke check-registry extractor
 
 - **`scripts/check_coherence.py`** was reporting **0 mcpnuke checks instead of 59**,
