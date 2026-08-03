@@ -279,7 +279,7 @@ Real retrieval requires `uv sync --extra rag` (`sqlite-vec`, `sentence-transform
 | `atomics distributed run --coordinator http://coordinator:8000 --api-key KEY` | Submit a split-task distributed job to the coordinator |
 | `atomics distributed status --job-id JOB_ID ...` | Poll and emit clean JSON for a distributed job |
 | `atomics worker --coordinator http://coordinator:8000 --api-key KEY --provider ollama` | Start a worker that polls, executes, and reports tasks |
-| `atomics worker --provider brain-gateway --model qwen3:14b --host http://nuc:30080` | Run a worker against a specific model endpoint |
+| `atomics worker --provider brain-gateway --model qwen3:14b --host http://<cluster-node>:30080` | Run a worker against a specific model endpoint |
 
 ### Operations
 

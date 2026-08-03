@@ -211,7 +211,7 @@ Exit code is 1 when new findings exist — use this in CI pipelines.
 ### Scan against a cluster (same commands, different target)
 
 ```bash
-# K3s / self-hosted NUC
+# K3s / self-hosted cluster
 mcpnuke --targets http://<NODE_IP>:30080/mcp \
   --coverage 15 --claude \
   --claude-model claude-sonnet-4-20250514 \

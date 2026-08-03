@@ -322,7 +322,7 @@ spec:
 # One-liner: full campaign loop (local Compose)
 make campaign SCENARIO=multi-tenant-saas
 
-# NUC / k3s
+# K3s cluster
 K8S_HOST=<NODE_IP> make campaign SCENARIO=multi-tenant-saas
 
 # Manual baseline then policed re-scan with diff

@@ -318,7 +318,7 @@ extended with scenario-specific comments explaining the threat rationale:
 
 ```
 make campaign-print SCENARIO=customer-support-bot
-make campaign       SCENARIO=cicd-pipeline-agent K8S_HOST=192.168.1.85
+make campaign       SCENARIO=cicd-pipeline-agent K8S_HOST=<cluster-node>
 make campaign-list
 ```
 

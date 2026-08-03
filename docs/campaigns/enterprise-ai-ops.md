@@ -586,7 +586,7 @@ spec:
 # Full campaign loop (local Compose)
 make campaign SCENARIO=enterprise-ai-ops
 
-# NUC / k3s
+# K3s cluster
 K8S_HOST=<NODE_IP> make campaign SCENARIO=enterprise-ai-ops
 
 # Manual — switch to hard difficulty and re-test each step

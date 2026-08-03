@@ -266,7 +266,7 @@ make campaign SCENARIO=customer-support-bot
 # Preview only — scan + show policy, no apply
 make campaign-print SCENARIO=customer-support-bot
 
-# NUC / k3s
+# K3s cluster
 K8S_HOST=<NODE_IP> make campaign SCENARIO=customer-support-bot
 
 # Manual baseline scan with profile

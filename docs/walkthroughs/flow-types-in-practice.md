@@ -86,7 +86,7 @@ sdk_tamper_lab  (MCP-T33)                                         (Transport C)
 `auth_lab` demonstrates a direct-token bypass. On easy difficulty, `auth.issue_token` returns a token without verifying identity. On hard difficulty, identity verification is strict.
 
 ```bash
-# Attack against the running NUC deployment on easy difficulty
+# Attack against the running cluster deployment on easy difficulty
 curl -sS -X POST http://<NODE_IP>:30080/mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
@@ -120,7 +120,7 @@ rules:
 
 The unauthenticated bypass on `auth_lab` easy is the *target* of `nullfield`'s `requireIdentity`. With the template active, the request above would fail `requireIdentity` and fall through to the default DENY.
 
-**Applied to cluster** (verified on NUC):
+**Applied to cluster** (verified on the reference cluster):
 
 ```bash
 $ kubectl get nullfieldpolicies -n camazotz lane-1-human-starter
@@ -320,7 +320,7 @@ The `TestDelegationMaxDepth_RejectsDeepChains` case verifies the classic Lane 4 
 
 That's the primitive doing its job. The same truth table drives the `delegation_depth_lab` on camazotz — on hard difficulty, the lab's `_handle_delegate` denies depth > 2 with nullfield's `maxDepth` primitive as the recommended external enforcement.
 
-### Installed and wired end-to-end on the reference NUC
+### Installed and wired end-to-end on the reference cluster
 
 On the cluster:
 
@@ -389,13 +389,13 @@ would take* (which returns `-32000 "denied by rule"` on its allowlist
 check). The bridge is empirically swapping in the CRD-managed policy
 on a running sidecar.
 
-For day-to-day demo purposes the reference NUC keeps the chart-shipped
+For day-to-day demo purposes the reference cluster keeps the chart-shipped
 policy active (`activePolicySource` empty) so dev-user smoke tests stay
 green; the controller stays deployed and continues maintaining the
 `nullfield-active-policy` ConfigMap so flipping back is just a
 `helm upgrade` away.
 
-### What *is* live on the NUC right now
+### What *is* live on the cluster right now
 
 The sidecar is active with the chart-shipped policy:
 
@@ -477,7 +477,7 @@ Any `tools/call` from an anonymous caller that isn't on the allowlist gets rejec
 
 ## The Cross-Project Coverage Report
 
-Running `mcpnuke --coverage-report` against the live NUC camazotz gives us the honest picture of *where the lanes are covered by scanning today*. Captured 2026-04-27 after the lane-tag backfill across 10 check modules:
+Running `mcpnuke --coverage-report` against the live cluster camazotz gives us the honest picture of *where the lanes are covered by scanning today*. Captured 2026-04-27 after the lane-tag backfill across 10 check modules:
 
 ```
 $ python3 -m mcpnuke --targets http://<NODE_IP>:30080/mcp \
@@ -663,7 +663,7 @@ Concrete work items surfaced by this walkthrough, in rough value order:
 1. ✅ **`nullfield-controller` deployed to the reference cluster with the active-policy bridge.** Done 2026-04-27 — see the captured controller log + curl output above. The five installed `NullfieldPolicy` CRDs are now consumable by the sidecar via the `activePolicySource` chart values knob.
 2. ✅ **Lane/transport backfill across `mcpnuke` checks.** Done — 10 modules / 46 emission sites now lane-tagged. Coverage went from 0/5 lanes covered to 4/5. The remaining `excessive_permissions` findings need a per-tool lookup because the lane lives on the tool, not the check — explicitly deferred as a follow-up.
 3. ✅ **Fill a transport gap with a camazotz lab.** Done 2026-04-28 — `sdk_tamper_lab` (MCP-T33, Lane 1 / Transport C) added. An MCP SDK wrapper caches JWTs without re-validating the signature; three difficulty tiers model the blind-trust → expiry-only → full HS256 verification progression. 52 labs, 1298 tests passing. Lane 1's Transport C cell is now green in the coverage grid.
-4. ✅ **Per-lane attack→deny captures.** Done 2026-04-28 — Lanes 1/2/3/5 cycled via `kubectl label` on the NUC. All four return `identity verification failed` from the nullfield proxy, confirming enforcement is live. Lane 4 remains the canonical rule-level capture (act chain check fires post-identity). Results and analysis in the section above.
+4. ✅ **Per-lane attack→deny captures.** Done 2026-04-28 — Lanes 1/2/3/5 cycled via `kubectl label` on the cluster. All four return `identity verification failed` from the nullfield proxy, confirming enforcement is live. Lane 4 remains the canonical rule-level capture (act chain check fires post-identity). Results and analysis in the section above.
 5. ✅ **Sidecar hot-reload timing measured.** Done 2026-04-28 — Stage 1 (controller sync): 4–13 s. Stage 2 (kubelet propagation): ~30–90 s (dominant; tunable). Stage 3 (fsnotify reload): < 1 s. Full breakdown in the section above.
 
 **All five items from this walkthrough are now complete.** The ecosystem is in sync across all four repos on the reference cluster.

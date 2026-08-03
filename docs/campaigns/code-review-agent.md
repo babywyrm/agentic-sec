@@ -323,7 +323,7 @@ spec:
 # One-liner: full campaign loop (local Compose)
 make campaign SCENARIO=code-review-agent
 
-# NUC / k3s
+# K3s cluster
 K8S_HOST=<NODE_IP> make campaign SCENARIO=code-review-agent
 
 # Manual baseline then policed re-scan with diff
