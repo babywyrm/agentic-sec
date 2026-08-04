@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.15.2 · 2116 tests · schema v20
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.16.0 · 2267 tests · schema v20
 
 ---
 
@@ -17,9 +17,60 @@ the LLM itself behave under pressure?*
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
 
+### v0.16.0 — Bounded and observable (2026-08-04)
+
+Latest release. Schema v20, 2267 tests. Where v0.15.2 fixed what an attacker
+could reach, this bounds what a *legitimate* caller can consume and makes what
+happened afterwards knowable. No breaking changes.
+
+- **Spend ceilings on eval suites.** Benchmark runs were always metered by a
+  `RateBudgetGuard`; eval suites were metered on no path at all, so
+  `POST /api/v1/evals` let any key holder spend against provider accounts until
+  the accounts objected. Rather than thread a guard through eighteen
+  `provider.generate` call sites, the provider is wrapped, so every suite is
+  covered by construction — including judge traffic, which is where consensus
+  scoring actually spends. The model and all judges share **one** ceiling.
+
+  The API is always metered (`budget_usd`, default `$10`, capped at `$1000`;
+  `0` is a `422`). The CLI is opt-in via `--budget` on all twelve eval-running
+  commands, so no existing invocation changes. A dollar ceiling is inherently a
+  no-op for Ollama, vLLM, and llama.cpp, which report `$0.00`.
+- **Per-caller job quotas.** The global concurrency cap was
+  first-come-first-served: whoever submitted first held all sixteen slots and
+  every other key got `429` until that work drained — a denial of service
+  needing no malice, just one impatient script. `max_active_jobs_per_caller`
+  (default 4) bounds any single key, with the global check first so a busy
+  server reports its own load rather than blaming a caller.
+- **Correlation IDs that survive the async boundary.** Runs and evals are async
+  jobs, so the submitting request returns long before the work finishes, and a
+  failure hours later had nothing tying it back to who asked. Every response
+  carries `X-Request-ID`, and the ID propagates into job tasks via a context
+  variable so `job_submitted` / `job_finished` lines share it. Inbound IDs are
+  honored only as `[A-Za-z0-9._-]{1,64}` — an ID containing newlines can forge
+  log lines.
+- **`GET /api/v1/ready`** — readiness split from liveness. `/health` stays
+  liveness-only and unchanged; `/ready` returns `503` with a per-check breakdown
+  when the coordinator's database does not answer. Previously `/health` answered
+  `ok` unconditionally, keeping a server in rotation while every request it
+  received was going to fail. Wiring the database into *liveness* would be the
+  wrong fix: an orchestrator would restart a working process during a database
+  outage, killing in-flight jobs and removing the endpoint that could report the
+  problem.
+- **Access logs redact by omission** — one structured line per request with
+  correlation ID, caller digest, method, path, status, and duration; no query
+  strings, no bodies. Callers appear as a twelve-character SHA-256 prefix of
+  their key, never the key, because that identifier lands in log files.
+
+Three of these were found only by running a real server and reading its log
+file, invisible to `TestClient`: uvicorn's built-in access log wrote the raw
+request line including the query string (reintroducing the `?api_key=` leak the
+middleware avoids), `atomics server` never configured its own logging so the
+access log went nowhere, and Rich wrapped each entry across four lines at 80
+columns, leaving it unparseable by grep or any aggregator.
+
 ### v0.15.2 — Security hardening (2026-08-03)
 
-Latest release. Schema v20, 2116 tests. A project-wide audit on 2026-08-02
+Schema v20, 2116 tests. A project-wide audit on 2026-08-02
 produced one critical and four high findings, all fixed here. **Upgrade before
 exposing an API server.**
 

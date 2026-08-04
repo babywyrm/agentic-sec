@@ -2,6 +2,31 @@
 
 All notable hub-level changes
 
+## [2026-08 pt.4] stoneburner v0.16.0 sync
+
+- **`docs/reference/stoneburner.md`** — new v0.16.0 section. Where v0.15.2 fixed
+  what an attacker could reach, this release bounds what a *legitimate* caller
+  can consume: eval suites had no spend metering on any path (benchmark runs
+  always did), so `POST /api/v1/evals` let any key holder spend against provider
+  accounts until the accounts objected; and the global job concurrency cap was
+  first-come-first-served, so one key held every slot while others got `429`.
+  Also correlation IDs that propagate into async job logs, structured access
+  logging that omits query strings and bodies, and readiness split from liveness
+  via `GET /api/v1/ready`. Header bumped to v0.16.0 / 2267 tests.
+
+  Worth recording because it generalizes: three of the fixes were only visible
+  from running a real server and reading its log file. Uvicorn's own access log
+  wrote the raw request line including the query string, reintroducing the
+  `?api_key=` leak the middleware avoids; `atomics server` never configured
+  logging, so the access log went nowhere; and Rich wrapped each entry across
+  four lines at 80 columns when redirected, leaving it unparseable. A test
+  client that never starts the server cannot see any of these.
+- **`docs/ecosystem.md`** — scorecard bumped to v0.16.0 / 2267 tests, with the
+  server-mode summary gaining per-caller quotas, spend ceilings, correlation
+  IDs, and the readiness probe; timeline gains the v0.16.0 entry.
+- **`docs/roadmap.md`** — stoneburner maturity row notes the bounded and
+  observable server surface.
+
 ## [2026-08 pt.3] stoneburner v0.15.2 security sync
 
 - **`docs/reference/stoneburner.md`** — new v0.15.2 section covering the
