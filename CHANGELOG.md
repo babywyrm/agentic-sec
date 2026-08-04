@@ -2,6 +2,26 @@
 
 All notable hub-level changes
 
+## [2026-08 pt.3] stoneburner v0.15.2 security sync
+
+- **`docs/reference/stoneburner.md`** — new v0.15.2 section covering the
+  security release. A project-wide audit on 2026-08-02 produced one critical
+  and four high findings: model-generated code in the `codegen` suite ran
+  through `exec()` in the evaluating process (reachable via
+  `POST /api/v1/evals`, with the timeout armed only *after* the call), the
+  dashboard concatenated worker-supplied labels into `innerHTML`, the
+  assignment result endpoint ignored the `worker_id` it was given, worker and
+  submitter API keys came from the same set, and `--no-auth` could be combined
+  with a public bind. All fixed. Header bumped to v0.15.2 / 2092 tests.
+- **`docs/ecosystem.md`** — scorecard version and test count updated; timeline
+  gains the v0.15.2 entry, marked as a security release.
+- **`docs/roadmap.md`** — stoneburner maturity row notes the hardened server
+  surface and the new supply-chain scanning.
+- **`.gitignore`** — ignores `uv.lock`, which
+  `uv run scripts/check_coherence.py` regenerates on every invocation. This
+  repo declares no dependencies, so the lockfile carries nothing worth
+  committing, and it had already been removed once by hand.
+
 ## [2026-08 pt.2] mcpnuke reference sync (dual-stack protocol, quality pass, docs split)
 
 - **`docs/reference/mcpnuke.md`** — the hub had no mention anywhere of the

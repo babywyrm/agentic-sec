@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.15.1 · 2031 tests · schema v20
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.15.2 · 2092 tests · schema v20
 
 ---
 
@@ -17,9 +17,38 @@ the LLM itself behave under pressure?*
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
 
+### v0.15.2 — Security hardening (2026-08-03)
+
+Latest release. Schema v20, 2092 tests. A project-wide audit on 2026-08-02
+produced one critical and four high findings, all fixed here. **Upgrade before
+exposing an API server.**
+
+- **Sandboxed codegen execution** — the `codegen` suite ran model-generated
+  Python through `exec()` in the evaluating process, and armed its timeout only
+  *after* that call, so module-level statements ran unguarded. Reachable
+  remotely via `POST /api/v1/evals`. Now runs in a child interpreter with no
+  provider credentials in its environment, a scratch working directory,
+  address-space and CPU limits, blocked network calls, and a wall-clock kill.
+- **Dashboard XSS fixed** — worker labels and capabilities were concatenated
+  into `innerHTML`, so registering a worker was enough to run script in an
+  operator's browser. Rows now build through `textContent`.
+- **Assignment ownership enforced** — the result endpoint accepted a
+  `worker_id` and ignored it, letting any authenticated worker complete or
+  overwrite any assignment. Now guarded on the owning worker and the `assigned`
+  state, returning `409` otherwise.
+- **Separate worker keys** — `atomics server --worker-api-key` splits worker
+  credentials from submitter credentials, which were previously the same set.
+- **`--no-auth` is loopback-only** and API keys compare with
+  `hmac.compare_digest`.
+
+Follow-on hardening landed after the tag: bounded job retention and
+concurrency, upper bounds on `iterations`/`interval`/fixtures, security headers
+with a nonce-based dashboard CSP, and a `security` CI workflow running
+`pip-audit` and gitleaks weekly.
+
 ### v0.15.1 — Web dashboard + server CLI improvements (2026-07-30)
 
-Latest release. Schema v20, 2031 tests. Adds an optional web dashboard and
+Schema v20, 2031 tests. Adds an optional web dashboard and
 listing endpoints for distributed monitoring:
 
 - **Web dashboard** — `atomics server --with-dashboard` serves a read-only web UI
