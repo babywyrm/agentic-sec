@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.15.2 · 2092 tests · schema v20
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.15.2 · 2116 tests · schema v20
 
 ---
 
@@ -19,7 +19,7 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 
 ### v0.15.2 — Security hardening (2026-08-03)
 
-Latest release. Schema v20, 2092 tests. A project-wide audit on 2026-08-02
+Latest release. Schema v20, 2116 tests. A project-wide audit on 2026-08-02
 produced one critical and four high findings, all fixed here. **Upgrade before
 exposing an API server.**
 

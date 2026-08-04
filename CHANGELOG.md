@@ -12,7 +12,7 @@ All notable hub-level changes
   dashboard concatenated worker-supplied labels into `innerHTML`, the
   assignment result endpoint ignored the `worker_id` it was given, worker and
   submitter API keys came from the same set, and `--no-auth` could be combined
-  with a public bind. All fixed. Header bumped to v0.15.2 / 2092 tests.
+  with a public bind. All fixed. Header bumped to v0.15.2 / 2116 tests.
 - **`docs/ecosystem.md`** — scorecard version and test count updated; timeline
   gains the v0.15.2 entry, marked as a security release.
 - **`docs/roadmap.md`** — stoneburner maturity row notes the hardened server
