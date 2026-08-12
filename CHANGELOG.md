@@ -2,6 +2,71 @@
 
 All notable hub-level changes
 
+## [2026-08 pt.5] mcpnuke v6.14–v6.16 and stoneburner v0.16.1–v0.17.0 sync
+
+The nightly coherence run had been red for seven consecutive nights — last
+green 2026-08-04, the day of the previous sync — against two stale version
+headers. It was working correctly: all five sibling checkouts succeeded and it
+failed on exactly the two real drifts, the same two reproduced locally. So the
+gap this closes is not a missing check. It is the distance between a check that
+fires and a check somebody acts on, and seven nights is a long time for a
+signal nobody was reading.
+
+- **`docs/reference/mcpnuke.md`** — header bumped v6.13.0 → **v6.16.0** /
+  1531 tests, and "Recent work" gains three releases it had fallen behind on.
+  The interesting one is v6.16.0: three checks stopped reporting a missing
+  authentication boundary on stdio, which is a pipe to a subprocess the scanner
+  launched itself — no credential to withhold and no second caller. They had
+  fired on 5 of 5 pinned open-source servers, which is the signature of a
+  finding that carries no information rather than one that is wrong. All three
+  remain active on HTTP and SSE. Also v6.15.0's error-reflection grading (a
+  server quoting back the payload it refused was being read as compliance) and
+  v6.14.0's first false-positive harness.
+
+  Worth recording because it generalizes: the stdio false-positive harness
+  found a *third* check in that class on its first run, one that hand-triaging
+  five real servers had missed. Measuring a transport is not the same as
+  reasoning carefully about it.
+- **`docs/reference/stoneburner.md`** — header bumped v0.16.0 → **v0.17.0** /
+  2290 tests, with new v0.17.0 and v0.16.1 sections. v0.17.0 is a pure
+  structural release: the 1287-line `commands/security.py` became a package,
+  and `provider-test` plus the benchmark `run` loop now build providers through
+  the shared factory instead of each carrying a ten-branch copy that had
+  drifted from it and from each other.
+- **`docs/ecosystem.md`** — scorecard bumped for both projects; mcpnuke's row
+  gains installability and its three false-positive harnesses. Timeline gains
+  five entries (stoneburner v0.16.1, v0.17.0; mcpnuke v6.14.0, v6.15.0,
+  v6.16.0).
+- **The `40/57 taxonomy IDs` claim here was right; mcpnuke's own `ROADMAP.md`
+  was wrong at 22/56** — frozen at a Tier 1 milestone, and wrong in the
+  denominator too, since `lanes.yaml` defines 57. Fixed upstream to 40/57 and
+  pinned there by a new test, because a hand-counted number in a table is
+  exactly the fact that goes stale quietly. Nothing caught it:
+  `check_coherence.py` gates versions and the check registry but deliberately
+  leaves counts like this one alone.
+
+  Worth recording because re-deriving the number took three tries and each
+  wrong answer was wrong for an interesting reason. `rg | sort -u | wc -l`
+  gives 40 by accident, since ripgrep prefixes matches with the filename and
+  double-counts an ID used in two modules. Counting inline
+  `taxonomy_id="MCP-T.."` literals gives 37, missing the IDs passed as
+  module-level constants — including one named `_INTEGRITY_TAXONOMY_ID`, which
+  a regex anchored on `_?TAXONOMY_ID` skips. Counting the `taxonomy_id` field
+  alone gives 38, because two checks record their threat as a `threat_id` key
+  inside the evidence dict instead. 40 is the union, and it is only reproducible
+  because the definition now lives in a test rather than in someone's shell
+  history.
+- **Two real defects found while counting, both left for mcpnuke to decide.**
+  `shell_injection` emits T54, which `lanes.yaml` defines as unauthenticated
+  inference backend exposure; T53, "shell command wrapping injection", is what
+  it means. And `profile` (T06) and `dpop_enforcement` (T43) attribute their
+  threat only in the evidence dict, so lane attribution and the SARIF export —
+  which read the `taxonomy_id` field — see neither, though both still count as
+  covered. Not fixed here: changing a shipped finding's `taxonomy_id` is a
+  consumer-visible break, and this repo documents that contract rather than
+  owning it. The check modules otherwise agree with the `lanes.yaml` they
+  ship; it is mcpnuke's ROADMAP prose that had drifted.
+
 ## [2026-08 pt.4] stoneburner v0.16.0 sync
 
 - **`docs/reference/stoneburner.md`** — new v0.16.0 section. Where v0.15.2 fixed

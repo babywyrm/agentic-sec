@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.16.0 · 2267 tests · schema v20
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.17.0 · 2290 tests · schema v20
 
 ---
 
@@ -17,9 +17,43 @@ the LLM itself behave under pressure?*
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
 
+### v0.17.0 — Structural consolidation (2026-08-09)
+
+Latest release. Schema v20, 2290 tests. No behaviour change and no new
+surface; this one pays down two structural debts the architecture doc had
+already named.
+
+- **`commands/security.py` became the `commands/security/` package.** One
+  module per command instead of a single 1287-line file, the largest in the
+  repo. `adversarial`, `redblue`, `multiturn`, `refusal` and `codereview` each
+  moved into a `cmd_<name>` submodule and are re-exported, so both
+  `atomics.cli` and `from atomics.commands.security import adversarial` keep
+  working. The `cmd_` prefix is load-bearing: re-exporting a command named
+  `refusal` from a module also named `refusal` would shadow the module and
+  break patching it in tests.
+- **`provider-test` and the benchmark `run` loop build providers through the
+  shared `providers.factory`.** Both previously carried their own ten-branch
+  provider switch, and the two had drifted from the factory and from each
+  other — every new provider meant editing three copies. About 180 lines of
+  duplicated construction are gone. What stayed at the call site is what the
+  factory legitimately cannot own: the keyless OpenAI path reaches into local
+  auth and prints what it found, which is a CLI affordance the factory keeps
+  out of so the API server and distributed workers stay headless.
+- **Provider tests no longer depend on machine speed.** Three tests asserted
+  on wall-clock timing a test double never actually spends: providers round
+  latency to two decimals of a millisecond, so a stub returning in under five
+  microseconds recorded `0.0 ms`, `compute_tps` returned `None` for an
+  undefined rate, and the assertion raised `TypeError` — on fast machines
+  only. A `scripted_clock` fixture now pins measured elapsed time.
+
+### v0.16.1 — Every eval suite reports run integrity (2026-08-04)
+
+A reporting-honesty fix. Five suites could publish a healthy-looking score
+computed from a small fraction of a run with nothing to say so.
+
 ### v0.16.0 — Bounded and observable (2026-08-04)
 
-Latest release. Schema v20, 2267 tests. Where v0.15.2 fixed what an attacker
+Schema v20, 2267 tests. Where v0.15.2 fixed what an attacker
 could reach, this bounds what a *legitimate* caller can consume and makes what
 happened afterwards knowable. No breaking changes.
 

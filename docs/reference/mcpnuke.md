@@ -2,7 +2,7 @@
 
 MCP red teaming and security scanner.
 
-**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.13.0 · 993 tests · 40/57 taxonomy IDs · MIT
+**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.16.0 · 1531 tests · 40/57 taxonomy IDs · MIT
 
 **In the framework:** mcpnuke is the validator that exercises every cell of
 the [Identity Flow Framework](../identity-flows.md). New checks should
@@ -13,6 +13,53 @@ were ratified 2026-04-28 — see
 for the full taxonomy.
 
 ## Recent work (2026-07 → 2026-08)
+
+### v6.16.0 — installable, and quieter on stdio (2026-08-11)
+
+- **Distribution.** `install.sh` picks `uv tool`, `pipx` or `pip --user`,
+  whichever is present; all three isolate the install. A tag-triggered publish
+  workflow uses PyPI **trusted publishing (OIDC)** rather than a stored API
+  token, and refuses to build when the tag disagrees with the packaged
+  version, because a PyPI version can never be replaced or reused. The upload
+  is armed by a `PYPI_PUBLISH` variable and is not yet enabled, so mcpnuke is
+  still installed from source or via `install.sh --from`.
+- **Fixed: `mcpnuke-runner` tracebacked in a base install.** It ships in the
+  base package but is implemented behind the optional `server` extra, so a
+  fresh install's second command printed a raw `ModuleNotFoundError`. It now
+  names the extra and exits 2.
+- **Three checks stop firing on stdio.** `pre_auth_injection`,
+  `anon_budget_exhaust` and `native_function_identity_erasure` reported a
+  missing authentication boundary on a pipe to a subprocess the scanner
+  launched itself — no credential to withhold, no second caller. They fired on
+  5 of 5 pinned open-source servers: 100%, the signature of a finding carrying
+  no information. All three remain active on HTTP and SSE. Across those five
+  servers, **185 findings → 170 and 34 HIGH → 24**, as a pure deletion.
+- **A stdio false-positive harness.** stdio was unmeasured while being the
+  transport most users have, which is how the three checks above shipped. It
+  found the third of them on its first run.
+
+### v6.15.0 — 75% fewer false CRITICALs (2026-08-10)
+
+- **Error-reflection grading.** A server that quoted back the payload it
+  refused was being read as compliance. Findings whose only evidence is the
+  input echoed in an error are re-graded to LOW rather than deleted, and
+  `--error-reflection keep` restores the previous severities exactly.
+- **Chaining severity floor.** `multi_vector` and `attack_chain` only treat
+  MEDIUM-and-above findings as active vectors, so chains can no longer be
+  assembled out of LOW-graded evidence.
+- Across the five pinned servers: **211 findings → 185, and 71 CRITICAL → 18.**
+  Only two findings disappeared outright; the other 61 were re-graded and stay
+  visible.
+
+### v6.14.0 — actionable reporting and the first false-positive measurement (2026-08-09)
+
+- Proof-ranked **priority actions** with deterministic impact/fix/verify
+  guidance on every console and JSON report.
+- **The first false-positive harness** — a hardened reference target scanned by
+  the real pipeline in default CI, with a ceiling that ratchets down and every
+  remaining finding justified in writing.
+
+### Earlier: protocol, quality and docs (2026-08-01 → 08-02)
 
 - **MCP 2026-07-28 stateless protocol** (`core/protocol.py`) — mcpnuke scans
   servers speaking the stateless spec alongside legacy handshake servers. See
@@ -31,9 +78,9 @@ for the full taxonomy.
 
 ### Earlier: coverage pass (2026-06-28)
 
-- **Taxonomy coverage:** 14/57 → **40/57 IDs (70%)**. Tier 1 is complete;
-  remaining gaps are mostly multi-auth, RAG/governance, and transport identity
-  dilution scenarios that require specialized fixtures.
+- **Taxonomy coverage:** 14/57 → **22/57 IDs** at this milestone, 40/57 today.
+  Tier 1 is complete; remaining gaps are mostly multi-auth, RAG/governance, and
+  transport identity dilution scenarios that require specialized fixtures.
 - **New runtime/static checks:** MCP-T01 prompt injection via tool args, MCP-T02
   tool output poisoning, MCP-T03 credential forwarding, MCP-T05 broad command
   injection, MCP-T08 remote package execution, MCP-T10 agentic loops, MCP-T13
