@@ -13,7 +13,7 @@ that protects AI-agent deployments built on the
   <a href="https://github.com/babywyrm/camazotz"><img alt="camazotz" src="https://img.shields.io/badge/camazotz-52%20labs-fb923c"></a>
   <a href="https://github.com/babywyrm/nullfield"><img alt="nullfield" src="https://img.shields.io/badge/nullfield-5%20actions-a78bfa"></a>
   <a href="https://github.com/babywyrm/mcpnuke"><img alt="mcpnuke" src="https://img.shields.io/badge/mcpnuke-scan%20%2B%20generate-34d399"></a>
-  <a href="https://github.com/babywyrm/stoneburner"><img alt="stoneburner LLM eval + distributed API + dashboard" src="https://img.shields.io/badge/stoneburner-LLM%20eval%20%2B%20distributed%20API%20%2B%20dashboard-ef4444"></a>
+  <a href="https://github.com/babywyrm/stoneburner"><img alt="stoneburner LLM eval + API + MCP" src="https://img.shields.io/badge/stoneburner-LLM%20eval%20%2B%20API%20%2B%20MCP-ef4444"></a>
   <a href="https://github.com/babywyrm/skillseraph"><img alt="skillseraph" src="https://img.shields.io/badge/skillseraph-11%20platforms-8b5cf6"></a>
 </p>
 
@@ -50,7 +50,7 @@ transfers and what doesn't.
 | **[camazotz](https://github.com/babywyrm/camazotz)** | Vulnerable target | Intentionally vulnerable MCP server — 52 labs across five identity lanes and five transport surfaces (A–E), covering the OWASP MCP Top 10 |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar that intercepts every `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP scanner — static, behavioral, and AI-assisted probes across both the legacy handshake and the 2026-07-28 stateless spec; emits findings **and** a nullfield policy |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM eval | Provider benchmarking plus adversarial / red-blue resilience eval, security-architecture review (`archreview`), live probing, **API server mode** (`atomics server`) with optional **web dashboard**, **distributed benchmark runs** (`atomics distributed run` / `atomics worker`), and **npm worker bridge** (`atomics worker-npm`) with multi-judge consensus |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM eval | Provider benchmarking plus adversarial / red-blue resilience eval, security-architecture review (`archreview`), live probing, **API server + MCP stdio proxy** (`atomics server` / `atomics mcp`) with optional **web dashboard**, shared **`--effort`** dial, **distributed benchmark runs** (`atomics distributed run` / `atomics worker`), and **npm worker bridge**. Install as `stoneburner-atomics`. |
 | **[skillseraph](https://github.com/babywyrm/skillseraph)** | Config scanner | Static analyzer for the control plane — scans `AGENTS.md`, `SKILL.md`, rules, hooks, and MCP configs across 11 platforms for poisoning and supply-chain tampering |
 
 Each ships independently. They are stronger together.

@@ -2,6 +2,26 @@
 
 All notable hub-level changes
 
+## [2026-08 pt.6] stoneburner v0.18.0–v0.20.0 sync
+
+Nine days behind a tool that shipped five releases and a schema bump.
+mcpnuke is still v6.16.0 — no drift there. The nightly coherence run
+would have been red on the stoneburner header the day 0.18.0 tagged.
+
+- **`docs/reference/stoneburner.md`** — header bumped v0.17.0 / schema v20
+  / 2290 tests → **v0.20.0 / schema v21 / 2686 tests**. New sections for
+  0.18.0–0.18.2 (PyPI as `stoneburner-atomics`), 0.19.0 (MCP stdio proxy,
+  in-place schema v21, security suites on `POST /evals`), and 0.20.0
+  (shared `--effort` / `--reasoning-mode`, `eval --verbose`). API table
+  gains sweeps / stress / soak / provider-test / ready. Inlined `sk-`
+  placeholders replaced with `$ATOMICS_API_KEY` so the example cannot
+  trip a credential detector or train a reader to paste a key.
+- **`docs/ecosystem.md`** — scorecard row and shipped timeline catch up
+  through v0.20.0. Source-of-truth cell now names schema v21 and the MCP
+  proxy.
+- **`README.md`** — stoneburner one-liner names the MCP proxy, the
+  effort dial, and the PyPI package.
+
 ## [2026-08 pt.5] mcpnuke v6.14–v6.16 and stoneburner v0.16.1–v0.17.0 sync
 
 The nightly coherence run had been red for seven consecutive nights — last

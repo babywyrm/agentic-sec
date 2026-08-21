@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.17.0 · 2290 tests · schema v20
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.20.0 · 2686 tests · schema v21
 
 ---
 
@@ -17,11 +17,70 @@ the LLM itself behave under pressure?*
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
 
+Install from PyPI as **`stoneburner-atomics`**. The import and CLI stay
+`atomics`. `atomics` on PyPI is a different package.
+
+### v0.20.0 — Shared effort dial and eval transcripts (2026-08-19)
+
+Latest tagged release. Schema v21, 2686 tests. Cloud reasoning is one dial
+across CLI, HTTP, and MCP. `main` after the tag also forwards that dial on
+`POST /runs` / `submit_run`; the package version is still 0.20.0.
+
+- **`--effort` / `--reasoning-mode`.** One vocabulary (`none` / `minimal` /
+  `low` / `medium` / `high` / `xhigh` / `max`; aliases `xl`, `ultra`) maps
+  to OpenAI `reasoning.effort`, Claude adaptive thinking +
+  `output_config.effort`, Bedrock `additionalModelRequestFields`, and
+  `reasoning_effort` on OpenAI-compatible clouds. `--reasoning-mode pro` is
+  OpenAI-only and uses the Responses API. `--thinking-budget` stays the
+  local token cap. The native payload is recorded as `reasoning_request`.
+- **HTTP / MCP take the same fields** on `POST /runs`, `POST /evals`,
+  `POST /sweeps`, and `POST /provider-test` (and the matching `submit_*` /
+  `provider_test` tools). Unknown values are `422`. `probe` stays CLI-only.
+- **`eval --verbose`** (and `atomics -v eval`) prints the full transcript
+  instead of the truncated results table. `sweep --verbose` uses the same
+  dump.
+
+### v0.19.0 — Agent surface and durable schema (2026-08-18)
+
+The MCP stdio proxy caught up to the API, and the metrics database stopped
+wiping itself on a version bump.
+
+- **MCP is a stdio proxy over a running `atomics server`.** Trust model =
+  the API. Auth is `X-API-Key` / `$ATOMICS_API_KEY`. No HTTP MCP transport.
+  New tools require an API endpoint first. Job status is `completed`, not
+  `finished`.
+- **`list_jobs`, `get_run`, `trends`** are read-only tools. `submit_sweep`,
+  `submit_stress`, and `submit_soak` spend tokens and require `budget_usd`.
+  Hours-long soaks, contention, profiles, and `probe` stay CLI-only.
+- **`POST /evals` accepts the security suites** the CLI already ran:
+  `refusal`, `redblue`, `toolcall`, `codereview` (plus `accuracy`, `rag`,
+  `multiturn`, `adversarial`, `codegen`). Sweep suite names use `eval`, not
+  `accuracy`.
+- **Schema v21 migrates in place.** A timestamped `.bak` is written; tables
+  are not dropped. Existing run history, schedules, and the evaluation
+  ledger survive.
+
+### v0.18.0–0.18.2 — PyPI listing and storefront (2026-08-16–17)
+
+First public listing, then the landing-page and doctor polish that follow
+from shipping a package people install without cloning.
+
+- **PyPI is `stoneburner-atomics`.** `stoneburner` is blocked as too similar
+  to `stone-burner`. From a clone, `uv sync --all-extras` — bare `uv sync`
+  drops the API, MCP, RAG, and test extras.
+- **Dashboard depth** and a CI-executed page script so XSS and hash-route
+  rendering stay tests, not a visual check.
+- **`inference.env` reaches `doctor` and `make_provider`.** The control
+  file's backend, URL, and model are reported; the API key is not. The
+  provider name is never taken from the file.
+- **`--extra-judges` on `rag`, `probe`, and `archreview`.** Extra judges
+  share the spend ceiling. `doctor` prints one `Next:` command after a
+  healthy check.
+
 ### v0.17.0 — Structural consolidation (2026-08-09)
 
-Latest release. Schema v20, 2290 tests. No behaviour change and no new
-surface; this one pays down two structural debts the architecture doc had
-already named.
+Schema v20, 2290 tests. No behaviour change and no new surface; this one
+pays down two structural debts the architecture doc had already named.
 
 - **`commands/security.py` became the `commands/security/` package.** One
   module per command instead of a single 1287-line file, the largest in the
@@ -279,6 +338,9 @@ made the project contributor-ready:
 | `atomics run --thinking` | Enable thinking/reasoning mode |
 | `atomics run --no-thinking` | Force thinking off (A/B comparison) |
 | `atomics run --thinking-budget 20000` | Set max thinking tokens |
+| `atomics run --effort high` | Shared cloud reasoning dial (none/minimal/low/medium/high/xhigh/max) |
+| `atomics run --effort max --reasoning-mode pro` | OpenAI pro mode via the Responses API |
+| `atomics eval --verbose` | Print the full eval transcript instead of the truncated table |
 | `atomics compare` | Compare providers side-by-side |
 | `atomics compare --by model` | Compare individual models |
 | `atomics compare --output results.json` | Write JSON comparison alongside table |
@@ -420,6 +482,8 @@ service for CI/CD, dashboards, or remote scheduling.
 | `atomics server --api-key KEY` | Allow an API key (repeatable); clients send `X-API-Key` |
 | `atomics server --host 0.0.0.0 --port 8080` | Bind address/port |
 | `atomics server --log-level debug` | Verbose uvicorn logging |
+| `atomics mcp` | Stdio MCP proxy over a running API server (optional `[mcp]` extra) |
+| `atomics mcp --api-url URL --api-key KEY` | Point the proxy at a remote authenticated server |
 
 ---
 
@@ -650,18 +714,24 @@ Install with `uv sync --extra api`, then:
 uv run atomics server --no-auth
 
 # production with API key(s)
-uv run atomics server --api-key sk-abc123 --api-key sk-xyz789
+uv run atomics server --api-key "$ATOMICS_API_KEY"
 ```
 
 When API keys are configured, API routes (except health) require an
-`X-API-Key` header.
+`X-API-Key` header. MCP (`atomics mcp`) is a stdio proxy over this server —
+same key, same ceilings, no extra attack surface.
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/v1/health` | Health check (public) |
-| `POST` | `/api/v1/runs` | Start a benchmark run (async job) |
-| `POST` | `/api/v1/evals` | Start an eval suite (`accuracy`, `rag`, `multiturn`, `adversarial`, `codegen`) |
-| `GET` | `/api/v1/jobs/{job_id}` | Poll job status / result |
+| `GET` | `/api/v1/ready` | Readiness (database answers) |
+| `POST` | `/api/v1/runs` | Start a benchmark run (async job; accepts `effort`) |
+| `POST` | `/api/v1/evals` | Start an eval suite (`accuracy`, `rag`, `multiturn`, `adversarial`, `codegen`, `refusal`, `redblue`, `toolcall`, `codereview`) |
+| `POST` | `/api/v1/sweeps` | Multi-model campaign; `budget_usd` required |
+| `POST` | `/api/v1/stress` | Ramp concurrency; `budget_usd` required |
+| `POST` | `/api/v1/soak` | Bounded soak (30–300s); `budget_usd` required |
+| `POST` | `/api/v1/provider-test` | Fixed 2+2 probe |
+| `GET` | `/api/v1/jobs/{job_id}` | Poll job status / result (`completed`, not `finished`) |
 | `GET` | `/api/v1/compare` | Compare providers/models |
 | `GET` | `/api/v1/reports/recent-runs` | Recent run report |
 | `POST` | `/api/v1/workers/register` | Register a distributed worker |
@@ -672,18 +742,19 @@ When API keys are configured, API routes (except health) require an
 | `POST` | `/api/v1/distributed/assignments/{assignment_id}/result` | Submit completed assignment result |
 
 ```bash
-JOB_ID=$(curl -s -H "X-API-Key: sk-abc123" -H "Content-Type: application/json" \
+JOB_ID=$(curl -s -H "X-API-Key: $ATOMICS_API_KEY" -H "Content-Type: application/json" \
   -d '{"provider": "ollama", "model": "qwen3:14b", "tier": "ez", "iterations": 3}' \
   http://127.0.0.1:8000/api/v1/runs | jq -r '.job_id')
 
-curl -s -H "X-API-Key: sk-abc123" http://127.0.0.1:8000/api/v1/jobs/$JOB_ID | jq
+curl -s -H "X-API-Key: $ATOMICS_API_KEY" http://127.0.0.1:8000/api/v1/jobs/$JOB_ID | jq
 ```
 
 ---
 
 ## Storage
 
-SQLite database (schema v20) with tables:
+SQLite database (schema v21) with tables. Opening an older file upgrades
+in place (timestamped `.bak`; tables are not dropped):
 
 | Table | Content |
 |-------|---------|
