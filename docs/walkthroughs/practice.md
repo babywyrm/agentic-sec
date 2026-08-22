@@ -92,9 +92,9 @@ Output (easy difficulty):
     "status": "ok",
     "data": {
       "username": "admin",
-      "password": "Sup3rS3cret!2026",
+      "password": "EXAMPLE-PASSWORD-NOT-A-SECRET",
       "database": "production-db",
-      "connection_string": "postgres://admin:Sup3rS3cret!2026@db.internal:5432/prod"
+      "connection_string": "postgres://<example-user>:<example-password>@db.example.invalid:5432/prod"
     }
   }
 }
@@ -110,7 +110,7 @@ $ curl -s -X POST http://localhost:8080/mcp \
     -H "Content-Type: application/json" \
     -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
          "params":{"name":"response_inspection.submit_redaction","arguments":{
-           "patterns":["Sup3rS3cret!2026","password","connection_string","postgres://[^\\\\s]+"]
+           "patterns":["EXAMPLE-PASSWORD-NOT-A-SECRET","password","connection_string","postgres://[^\\\\s]+"]
          }}}'
 ```
 
@@ -124,7 +124,7 @@ Output:
   "_defense_status": "REDACTION EFFECTIVE",
   "scope_config": {
     "response": {
-      "redactPatterns": ["Sup3rS3cret!2026", "password", "connection_string", "postgres://[^\\s]+"],
+      "redactPatterns": ["EXAMPLE-PASSWORD-NOT-A-SECRET", "password", "connection_string", "postgres://[^\\s]+"],
       "redactReplacement": "[REDACTED]"
     }
   }

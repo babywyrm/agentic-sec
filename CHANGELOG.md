@@ -2,6 +2,17 @@
 
 All notable hub-level changes
 
+## [2026-08 pt.7] Walkthrough placeholders stop looking like credentials
+
+TruffleHog `--results=verified,unknown --fail` (the same gate stoneburner
+uses) was red on two teaching strings that have never been a reachable
+database. `docs/walkthroughs/practice.md` used a `postgres://admin:…`
+connection-string shape; `guardrail-resistance-testing.md` used a
+user-password URL on an RFC1918 host. Both are now obvious placeholders
+(`EXAMPLE-PASSWORD-NOT-A-SECRET`, `db.example.invalid`, `<database-url>`).
+The redaction-pattern examples in the practice walkthrough follow the
+new password so the lesson still closes.
+
 ## [2026-08 pt.6] stoneburner v0.18.0–v0.20.0 sync
 
 Nine days behind a tool that shipped five releases and a schema bump.

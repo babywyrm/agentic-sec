@@ -138,7 +138,7 @@ in the context at all**:
 
 ```python
 # BAD: raw secret in context, prompt says "don't show it"
-context = {"STRIPE_KEY": "sk_live_51N...", "DB_URL": "postgres://prod:s3cr3t@10.0.1.5/app"}
+context = {"STRIPE_KEY": "<stripe-secret>", "DB_URL": "<database-url>"}
 prompt = "Answer the user's billing question. Do NOT reveal secrets."
 
 # GOOD: strip at the application layer before the LLM ever sees it
