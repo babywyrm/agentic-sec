@@ -2,7 +2,7 @@
 
 MCP red teaming and security scanner.
 
-**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.16.0 · 1531 tests · 40/57 taxonomy IDs · MIT
+**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.19.0 · ~1940 tests · 40/57 taxonomy IDs · MIT
 
 **In the framework:** mcpnuke is the validator that exercises every cell of
 the [Identity Flow Framework](../identity-flows.md). New checks should
@@ -12,7 +12,29 @@ were ratified 2026-04-28 — see
 [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md)
 for the full taxonomy.
 
-## Recent work (2026-07 → 2026-08)
+## Recent work (2026-08 → 2026-09)
+
+### v6.19.0 — runner token leak closed; OWASP report (2026-09-07)
+
+- **`mcpnuke-runner` no longer serializes callers' bearer tokens.**
+  `ScanJob` used to embed the full `ScanRequest`; `GET /scans` is
+  unauthenticated. `auth_token` is `exclude=True`.
+- **`--owasp`** maps findings to the OWASP MCP Top 10 (2025). Empty
+  buckets surface coverage gaps. Suite ~1940 tests.
+- Ollama structured calls send `think: false` so thinking models emit
+  the JSON the phases parse.
+
+### v6.18.0 — chain replay transforms (2026-09-02)
+
+Multi-hop replay with JSON-path extraction and transform filters
+(`|b64`, `|urlencode`, …). AI findings inherit lane/transport from
+taxonomy so `--by-lane` stops dumping them as Uncategorized.
+
+### v6.17.0 — current-spec scan surface (2026-08-26)
+
+SEP-2243 `routing_header_binding` and SEP-2549 `list_cache`. Taxonomy
+IDs reach `Finding.taxonomy_id` so SARIF / `--by-lane` can see them.
+Both halves of a dual `tools/call` body are scanned.
 
 ### v6.16.0 — installable, and quieter on stdio (2026-08-11)
 
@@ -352,7 +374,7 @@ it cannot drift from `--help`.
 | Document | Contents |
 |----------|----------|
 | [`docs/cli-reference.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/cli-reference.md) | Every flag, grouped by concern — generated from the parser |
-| [`docs/checks.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/checks.md) | All 59 registered checks plus 24 deep behavioral probes, with severities |
+| [`docs/checks.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/checks.md) | All 77 registered checks plus 24 deep behavioral probes, with severities |
 | [`docs/scan-modes.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/scan-modes.md) | Scan modes and fast-mode scoring |
 | [`docs/methodology.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/methodology.md) | Behavioral probing, attack chain detection, risk scoring, DVMCP testing |
 | [`docs/ai-analysis.md`](https://github.com/babywyrm/mcpnuke/blob/main/docs/ai-analysis.md) | Claude-backed analysis phases |

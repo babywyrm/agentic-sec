@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.20.0 · 2686 tests · schema v21
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.22.3 · 2915 tests · schema v21
 
 ---
 
@@ -20,11 +20,41 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 Install from PyPI as **`stoneburner-atomics`**. The import and CLI stay
 `atomics`. `atomics` on PyPI is a different package.
 
+### v0.22.3 — Thinking dials reach Ollama and Qwen (2026-09-05)
+
+Latest tagged release. Schema v21, 2915 tests. PyPI `stoneburner-atomics`
+0.22.3. `--effort` now reaches the local wire, not only cloud APIs.
+
+- **Qwen on `--provider vllm`.** `--effort` dual-writes top-level
+  `reasoning_effort` and Jinja `chat_template_kwargs.reasoning_effort`
+  (`low` / `medium` / `xhigh`) so the template cannot fall through to
+  xhigh. `--thinking-budget` is SGLang `custom_params.thinking_budget`.
+  A hard cap still needs the server flag `--enable-strict-thinking`.
+  `generate_with_tools` sends the same Qwen keys as `generate()`.
+- **Ollama native `think` levels.** `low` / `medium` / `high` / `max`.
+  `--no-thinking` sends `false` (never the string `none`, which 400s)
+  and no longer prefixes `/no_think` into the prompt. Leaked CoT
+  (`</think>` spans) move to `thinking_text`.
+- **`provider-test` visible budget is 256.** Empty visible with thinking
+  tokens prints `THINK`. HTTP `POST /provider-test` (and MCP
+  `provider_test`) gains `think: true` in that case.
+- **`doctor` Next follows `inference.env`.** Backend `vllm` wins over a
+  reachable Ollama.
+
+### v0.21.0–0.22.2 — REPL, live jobs, HTTP knobs (2026-08-22–24)
+
+- **`atomics repl`** — API-client prompt over a running `atomics server`.
+  Quiet submit / `wait` until done (Ctrl-C stops polling, not the job).
+- **Live job documents.** Eval / sweep / stress / soak / run grow
+  `result` rows while they run. `progress.trail` so a 2s poll cannot
+  skip `judge`.
+- **0.22.1** storefront README. **0.22.2** uncapped eval trails;
+  `POST /evals` takes `runs` / `judge_host` / `channel` / `fixtures`.
+
 ### v0.20.0 — Shared effort dial and eval transcripts (2026-08-19)
 
-Latest tagged release. Schema v21, 2686 tests. Cloud reasoning is one dial
-across CLI, HTTP, and MCP. `main` after the tag also forwards that dial on
-`POST /runs` / `submit_run`; the package version is still 0.20.0.
+Cloud reasoning became one dial across CLI, HTTP, and MCP. Schema v21,
+2686 tests at that tag.
 
 - **`--effort` / `--reasoning-mode`.** One vocabulary (`none` / `minimal` /
   `low` / `medium` / `high` / `xhigh` / `max`; aliases `xl`, `ultra`) maps
@@ -347,7 +377,10 @@ made the project contributor-ready:
 | `atomics report` | Display usage reports and trends |
 | `atomics tiers` | Show burn tier profiles (ez/baseline/mega) |
 | `atomics provider-test` | Health check the configured provider |
-| `atomics doctor` | Check installation health and config |
+| `atomics provider-test -p ollama --effort low` | Native Ollama `think: "low"` |
+| `atomics provider-test -p ollama --no-thinking` | `think: false`; leaked CoT stripped from visible text |
+| `atomics doctor` | Check installation health; Next follows `inference.env` |
+| `atomics repl` | API-client prompt over a running `atomics server` |
 
 ### Model Discovery & Multi-Model Sweeps
 
@@ -730,7 +763,7 @@ same key, same ceilings, no extra attack surface.
 | `POST` | `/api/v1/sweeps` | Multi-model campaign; `budget_usd` required |
 | `POST` | `/api/v1/stress` | Ramp concurrency; `budget_usd` required |
 | `POST` | `/api/v1/soak` | Bounded soak (30–300s); `budget_usd` required |
-| `POST` | `/api/v1/provider-test` | Fixed 2+2 probe |
+| `POST` | `/api/v1/provider-test` | Fixed 2+2 probe; `think` is true when visible text is empty and thinking tokens/text are present |
 | `GET` | `/api/v1/jobs/{job_id}` | Poll job status / result (`completed`, not `finished`) |
 | `GET` | `/api/v1/compare` | Compare providers/models |
 | `GET` | `/api/v1/reports/recent-runs` | Recent run report |

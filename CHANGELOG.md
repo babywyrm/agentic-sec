@@ -2,6 +2,26 @@
 
 All notable hub-level changes
 
+## [2026-09 pt.8] stoneburner v0.21.0–v0.22.3 and mcpnuke v6.17.0–v6.19.0 sync
+
+The nightly coherence run was red on two headers: stoneburner still said
+v0.20.0 against a live 0.22.3, mcpnuke still said v6.16.0 against a live
+6.19.0. Schema is still v21. skillseraph v0.2.0 was already current.
+
+- **`docs/reference/stoneburner.md`** — header bumped v0.20.0 / 2686 tests
+  → **v0.22.3 / 2915 tests**. New sections for 0.21.0–0.22.2 (REPL, live
+  jobs, HTTP knobs) and 0.22.3 (Ollama native `think`, Qwen template keys,
+  HTTP `think`, doctor Next follows `inference.env`).
+- **`docs/reference/mcpnuke.md`** — header bumped v6.16.0 / 1531 tests →
+  **v6.19.0 / ~1940 tests**. Recent work covers 6.17 (current-spec scan
+  surface), 6.18 (chain replay transforms), 6.19 (runner token leak,
+  `--owasp`).
+- **`docs/ecosystem.md`** / **`README.md`** — scorecard and one-liner
+  catch up. mcpnuke check count **59 → 77** (plus 24 deep probes).
+- **`docs/reference/nullfield.md`** — header and versions table catch
+  **v0.12.0** (first tag; `ext_authz` / mesh arbiter). Not gated by
+  coherence.
+
 ## [2026-08 pt.7] Walkthrough placeholders stop looking like credentials
 
 TruffleHog `--results=verified,unknown --fail` (the same gate stoneburner

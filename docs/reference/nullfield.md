@@ -2,7 +2,7 @@
 
 Lightweight MCP arbiter proxy. One binary, one YAML policy.
 
-**Repo:** [github.com/babywyrm/nullfield](https://github.com/babywyrm/nullfield)
+**Repo:** [github.com/babywyrm/nullfield](https://github.com/babywyrm/nullfield) · v0.12.0
 
 **In the framework:** nullfield is the per-cell policy enforcer in the
 [Identity Flow Framework](../identity-flows.md). Each of the five actions
@@ -153,3 +153,4 @@ All configuration is via environment variables (no CLI flags).
 | v0.7 | Vault credentials, gateway mode, admission webhook |
 | v0.8 | CRD controller (NullfieldPolicy as K8s resource) |
 | v0.9 | Response inspection, tool lifecycle/rug-pull detection, per-identity cost attribution, 139-tool camazotz sync |
+| v0.12 | First tagged release. Envoy `ext_authz` decision service, mesh-native arbiter, workload attestation |
