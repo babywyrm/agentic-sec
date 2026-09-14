@@ -2,6 +2,22 @@
 
 All notable hub-level changes
 
+## [2026-09 pt.9] stoneburner v0.22.7 batteries; mcpnuke still v6.19.0
+
+Coherence would have been red on the stoneburner header the day 0.22.7
+tagged. mcpnuke is still v6.19.0 — no drift there.
+
+- **`docs/reference/stoneburner.md`** — header bumped v0.22.3 / 2915 tests
+  → **v0.22.7 / 3036 tests**. New section for named batteries, red/blue 14
+  fixtures, `qa` exit 1, Groq/Together/Gemini keychain. `qa` CLI is
+  `--file`, not `--fixtures`. `submit_battery` is not on HTTP/MCP.
+- **`docs/ecosystem.md`** / **`README.md`** — scorecard, timeline, start-here,
+  and who-this-is-for catch up. Batteries are the desk start; the 72-fixture
+  adversarial suite is the deep pass.
+- **Walkthrough 12** and the model-compat note start with `atomics battery`.
+- **mcpnuke** — still v6.19.0 (`--owasp`, runner token leak closed). No hub
+  change required.
+
 ## [2026-09 pt.8] stoneburner v0.21.0–v0.22.3 and mcpnuke v6.17.0–v6.19.0 sync
 
 The nightly coherence run was red on two headers: stoneburner still said

@@ -97,6 +97,26 @@ attack → scan → defend → validate narrative.*
 
 ---
 
+## Also — Model eval (~20 min)
+
+*For operators choosing a tag for an AI-mediated gate or challenge.*
+
+mcpnuke `--inference` is the light scan on the live server. stoneburner
+measures the model. Start with a battery:
+
+```bash
+atomics battery list
+atomics battery show desk-pass -p ollama -m granite4.2:3b
+atomics battery run desk-pass -p ollama -m granite4.2:3b
+```
+
+Then [Walkthrough 12](walkthroughs/guardrail-resistance-testing.md) and
+the [compatibility labels](walkthroughs/model-compatibility-for-agentic-challenges.md).
+Capability, resilience, and tools stay separate scores. The 72-fixture
+adversarial suite is not the desk start.
+
+---
+
 ## All Tracks Together (~13 hours)
 
 If you want the full picture: Tracks 1–3 build the mental model and tool fluency.

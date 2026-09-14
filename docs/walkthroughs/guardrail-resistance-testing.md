@@ -114,6 +114,9 @@ Empirical findings from production testing:
 mcpnuke --targets http://acme-mcp:9090 \
         --inference-host ollama.internal:11434
 # Look for: inference_guardrail_variance finding
+
+# stoneburner desk-pass on each tag (model reasoning, not protocol):
+atomics battery run desk-pass -p ollama -m <tag> --keep-going
 ```
 
 ---
@@ -188,4 +191,6 @@ guardrail resistance, not just the default.
 - **Walkthrough 10** — Token Cross-Pollution and Shared Identity (MCP-T42/T43)
 - **mcpnuke check** — `ai_guardrail_bypass` (MCP-T56)
 - **mcpnuke check** — `inference_guardrail_variance` (MCP-T56)
-- **stoneburner** — adversarial eval suites for systematic model resistance testing
+- **stoneburner** — start with `atomics battery run desk-pass`, then
+  `agent-gate`. The 72-fixture adversarial suite is the deep pass, not
+  the default. Tool-channel skip is not refusal.

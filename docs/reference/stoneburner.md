@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.22.3 · 2915 tests · schema v21
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.22.7 · 3036 tests · schema v21
 
 ---
 
@@ -20,10 +20,39 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 Install from PyPI as **`stoneburner-atomics`**. The import and CLI stay
 `atomics`. `atomics` on PyPI is a different package.
 
+### v0.22.7 — Named security batteries (2026-09-13)
+
+Latest tagged release. Schema still v21. 3036 tests. PyPI
+`stoneburner-atomics` 0.22.7. The operator start is a named job, not the
+full 72-fixture adversarial suite.
+
+- **`atomics battery list` / `show` / `run`.** Five jobs: `desk-pass`,
+  `blue-capability`, `red-capability`, `agent-gate`, `threat-model`.
+  `show` prints copy-pasteable commands and does not spend. `run` stops
+  on the first nonzero step unless `--keep-going`. Paid `-p` or
+  `--judge-provider` (`openai`, `claude`, `bedrock`, `groq`, `together`,
+  `gemini`) needs a positive `--budget`. `show` does not.
+- **Axes stay separate.** Capability (blue/red) is not resilience.
+  Tool-channel skip is not refusal. Battery `toolcall` steps pass
+  `--no-skip-incapable`.
+- **Red/blue STRIDE fixtures.** Catalog is 6 red + 8 blue = 14
+  (`rb-b06`–`rb-b08`, `rb-r06`). `threat-model` runs `rb-b04,rb-b06`.
+- **`atomics qa` exits 1 on FAIL or ERROR.** A printed FAIL table used to
+  return 0. `--fail-fast` also exits 1. Raw `--file` is Ollama HTTP;
+  other `-p` skip `qa` unless `--profile`.
+- **Keychain backfill** for Groq, Together, and Gemini (`atomics secrets`).
+  Empty env is falsy; the stored key still loads.
+- **Not in this tag:** API/MCP `submit_battery`. Next slice if asked.
+  Do not mix that into a batteries tag.
+
+0.22.4–0.22.6 (2026-09-10–12) were fixture subsets, QA thinking/token
+counts, and Ollama think-field honesty for new tags. Do not retag
+those versions.
+
 ### v0.22.3 — Thinking dials reach Ollama and Qwen (2026-09-05)
 
-Latest tagged release. Schema v21, 2915 tests. PyPI `stoneburner-atomics`
-0.22.3. `--effort` now reaches the local wire, not only cloud APIs.
+Schema v21, 2915 tests at that tag. `--effort` reached the local wire,
+not only cloud APIs.
 
 - **Qwen on `--provider vllm`.** `--effort` dual-writes top-level
   `reasoning_effort` and Jinja `chat_template_kwargs.reasoning_effort`
@@ -421,8 +450,8 @@ made the project contributor-ready:
 
 | Command | What it does |
 |---------|-------------|
-| `atomics qa --fixtures qa/examples/gate.yaml` | Validate CTF solvability / AI-gate regression from a YAML fixture (pass/fail/must-match regex) |
-| `atomics qa --fail-fast` | Stop at first failing fixture |
+| `atomics qa --file qa/examples/app-gate-guardrails.yaml` | Validate CTF solvability / AI-gate regression from a YAML fixture (pass/fail/must-match regex). Exit 1 on FAIL or ERROR |
+| `atomics qa --fail-fast` | Stop at first failing fixture; also exits 1 |
 | `atomics qa --profile profiles/local/gate.yaml` | Route fixture queries through a TargetProfile (app HTTP endpoint or Ollama w/ custom system prompt) |
 
 Custom **target profiles** (`--profile`) also apply to `soak`, `stress`, and
@@ -453,14 +482,18 @@ sanitized evidence from the actual player chain, preferably over repeated rounds
 
 | Command | What it does |
 |---------|-------------|
-| `atomics adversarial` | Adversarial resilience eval (72 fixtures across suites) |
+| `atomics battery list` | Named security jobs (desk-pass, blue/red, agent-gate, threat-model) |
+| `atomics battery show desk-pass -m granite4.2:3b` | Purpose, labels, copy-pasteable commands. Does not spend |
+| `atomics battery run desk-pass -p ollama -m granite4.2:3b` | Execute those steps. Stops on first failure unless `--keep-going` |
+| `atomics battery run desk-pass -p openai -m gpt-4.1 --budget 5` | Paid `-p` or `--judge-provider` needs a positive `--budget` |
+| `atomics adversarial` | Adversarial resilience eval (72 fixtures across suites). Start with a battery instead |
 | `atomics adversarial --runs 5` | Multi-pass with mean ± stddev |
 | `atomics adversarial --extra-judges ollama:deepseek-r1:14b` | Multi-judge consensus |
 | `atomics adversarial --category tool_desc_injection` | Filter by category/group (multiturn, rag_poisoning, mcp, zerotrust, agentic, tool_safety, …) |
 | `atomics adversarial --compare mistral-small:24b` | Run a second model on the same fixtures, print a per-fixture diff |
 | `atomics adversarial --json-out run.json` | Machine-readable per-fixture export |
 | `atomics adversarial --fail-on-resilience 60` | CI gate — non-zero exit if resilience < 60% |
-| `atomics redblue --runs 3` | Red/blue capability eval (10 fixtures) with variance |
+| `atomics redblue --runs 3` | Red/blue capability eval (14 fixtures: 6 red + 8 blue) with variance |
 | `atomics redblue --mode red` / `--mode blue` | Offensive / defensive tasks only |
 | `atomics archreview --repo juice-shop --models qwen2.5:7b` | Security-architecture repo review |
 | `atomics probe --probes-file probes.yaml` | Live infrastructure artifact analysis |
@@ -570,16 +603,19 @@ model testing.
 
 ---
 
-## Red/Blue Suite (10 fixtures)
+## Red/Blue Suite (14 fixtures)
 
-Benchmarks LLM performance on real security domain tasks.
+Benchmarks LLM performance on real security domain tasks. Capability,
+not resilience.
 
 | Team | Fixtures | Domain |
 |------|----------|--------|
-| **Red** (5) | OSINT, vuln analysis, privesc, log forensics, lateral movement | Offensive security |
-| **Blue** (5) | Incident response, hardening, threat modelling, detection engineering, policy review | Defensive security |
+| **Red** (6) | OSINT, vuln analysis, privesc, log forensics, lateral movement, conceptual MCP confused deputy (`rb-r06`) | Offensive security |
+| **Blue** (8) | Incident response, hardening, threat modelling, detection engineering, policy review, RAG-corpus STRIDE (`rb-b06`), agent tool-channel IR (`rb-b07`), tool-channel detection (`rb-b08`) | Defensive security |
 
 Uses the same quality-based LLM-as-judge scoring as `atomics eval`.
+Start with `atomics battery run blue-capability` / `red-capability`
+rather than the raw suite unless you need a fixture subset.
 
 ---
 
@@ -815,9 +851,9 @@ Export via `atomics export --suite {tasks,stress,sweep,all} --format {jsonl,csv}
 |----------|---------|---------|
 | `ANTHROPIC_API_KEY` | — | Claude API key |
 | `OPENAI_API_KEY` | — | OpenAI API key |
-| `GROQ_API_KEY` | — | Groq API key |
-| `TOGETHER_API_KEY` | — | Together AI API key |
-| `GEMINI_API_KEY` | — | Google Gemini API key |
+| `GROQ_API_KEY` | — | Groq API key (env, `.env`, or `atomics secrets`) |
+| `TOGETHER_API_KEY` | — | Together AI API key (env, `.env`, or `atomics secrets`) |
+| `GEMINI_API_KEY` | — | Google Gemini API key (env, `.env`, or `atomics secrets`) |
 | `ATOMICS_OLLAMA_HOST` | `http://localhost:11434` | Ollama endpoint for local inference |
 | `ATOMICS_OLLAMA_MODEL` | `qwen2.5:7b` | Default model for Ollama provider |
 | `ATOMICS_VLLM_HOST` | `http://localhost:8000/v1` | vLLM / OpenAI-compatible base URL (e.g. a LiteLLM gateway) |
@@ -852,8 +888,16 @@ a completely different security posture.
 
 ### stoneburner for Guardrail Evaluation
 
-Use the adversarial suite to benchmark guardrail resistance before
-deploying a model behind security gates:
+Use a named battery first. The 72-fixture adversarial suite is the
+deep pass, not the desk pass:
+
+```bash
+atomics battery run desk-pass -p ollama -m granite4.2:3b --keep-going
+atomics battery show agent-gate -p ollama -m granite4.2:8b
+```
+
+Then, if the tag is worth it, sweep resistance before putting a model
+behind a security gate:
 
 ```bash
 # Sweep all models on an Ollama host
@@ -892,10 +936,18 @@ CI pipeline integration and formal model approval.
 
 Recommended workflow:
 
-1. **Pre-deploy:** `atomics adversarial --runs 5` on the candidate model
-2. **Gate:** Reject models scoring below threshold on `social_engineering`
-3. **Post-deploy:** `mcpnuke --inference` scans detect runtime model swaps
-4. **Monitor:** `atomics probe --alert-on-regression` catches guardrail drift
+1. **Desk-pass:** `atomics battery run desk-pass -p ollama -m <tag>`
+   (health + app-gate `qa` + two tool fixtures). Job exits 1 if `qa`
+   is not clean. `--keep-going` still reaches toolcall.
+2. **Gate / agent:** `atomics battery run agent-gate` with a separate
+   judge. Score prose and tools separately. Probe skip ≠ refusal.
+3. **Deep resistance:** `atomics adversarial --runs 3` only when the
+   battery says the tag is worth it. Do not treat the 72-fixture
+   suite as the default.
+4. **Post-deploy:** `mcpnuke --inference` detects runtime model swaps
+5. **Monitor:** `atomics probe --alert-on-regression` catches guardrail drift
+
+`submit_battery` is not on the HTTP/MCP surface yet. Batteries are CLI.
 
 ---
 

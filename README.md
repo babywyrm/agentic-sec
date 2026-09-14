@@ -50,7 +50,7 @@ transfers and what doesn't.
 | **[camazotz](https://github.com/babywyrm/camazotz)** | Vulnerable target | Intentionally vulnerable MCP server — 52 labs across five identity lanes and five transport surfaces (A–E), covering the OWASP MCP Top 10 |
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar that intercepts every `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP scanner — static, behavioral, and AI-assisted probes across both the legacy handshake and the 2026-07-28 stateless spec; emits findings **and** a nullfield policy |
-| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM eval | Provider benchmarking plus adversarial / red-blue resilience eval, security-architecture review (`archreview`), live probing, **API server + MCP stdio proxy** (`atomics server` / `atomics mcp`) with optional **web dashboard**, shared **`--effort`** dial (including Ollama native `think` and Qwen template keys), **`atomics repl`**, **distributed benchmark runs** (`atomics distributed run` / `atomics worker`), and **npm worker bridge**. Install as `stoneburner-atomics`. |
+| **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM eval | Provider benchmarking plus adversarial / red-blue resilience eval, named **security batteries** (`atomics battery`), security-architecture review (`archreview`), live probing, **API server + MCP stdio proxy** (`atomics server` / `atomics mcp`) with optional **web dashboard**, shared **`--effort`** dial (including Ollama native `think` and Qwen template keys), **`atomics repl`**, **distributed benchmark runs** (`atomics distributed run` / `atomics worker`), and **npm worker bridge**. Install as `stoneburner-atomics`. |
 | **[skillseraph](https://github.com/babywyrm/skillseraph)** | Config scanner | Static analyzer for the control plane — scans `AGENTS.md`, `SKILL.md`, rules, hooks, and MCP configs across 11 platforms for poisoning and supply-chain tampering |
 
 Each ships independently. They are stronger together.
@@ -125,6 +125,7 @@ Kubernetes, Helm, and Teleport options: [`docs/deployment-guide.md`](docs/deploy
 | Defend with runtime policy | [Walkthrough 2 — The Defense](docs/walkthroughs/defense.md) |
 | Run the full scan → enforce → validate loop | [Walkthrough 5 — Live Loop](docs/walkthroughs/live-loop.md) |
 | Scan agent config files before an agent reads them | [`docs/reference/skillseraph.md`](docs/reference/skillseraph.md) |
+| Evaluate a model for an AI gate (start here, not the 72-fixture suite) | [`docs/reference/stoneburner.md`](docs/reference/stoneburner.md) · `atomics battery run desk-pass` · [Walkthrough 12](docs/walkthroughs/guardrail-resistance-testing.md) |
 | Run a full deployment scenario (bot, CI/CD, code review, SaaS) | [`docs/campaigns/`](docs/campaigns/README.md) |
 | Stand up a zero-trust control plane (runnable) | [`blueprints/zero-trust-control-plane/`](blueprints/zero-trust-control-plane/README.md) |
 | Follow a structured curriculum | [`docs/learning-path.md`](docs/learning-path.md) |
@@ -138,6 +139,7 @@ Kubernetes, Helm, and Teleport options: [`docs/deployment-guide.md`](docs/deploy
 - **Red team** testing MCP defenses → [Walkthrough 1](docs/walkthroughs/attack.md)
 - **Blue team** authoring runtime policy → [Walkthrough 2](docs/walkthroughs/defense.md)
 - **Config / supply-chain defenders** hardening the agent control plane → [skillseraph](docs/reference/skillseraph.md)
+- **Model / gate operators** choosing a tag for an AI-mediated workflow → [stoneburner batteries](docs/reference/stoneburner.md) · [Walkthrough 12](docs/walkthroughs/guardrail-resistance-testing.md)
 - **Platform engineers** building agentic infrastructure → [Deployment Guide](docs/deployment-guide.md)
 
 ---
@@ -153,7 +155,7 @@ path is **1 → 2 → 5**:
 
 The rest go deeper: delegation-chain identity dilution, attacks beyond MCP
 (LangChain / CLI agents), AI-governance-gate bypass, token cross-pollution, and
-guardrail-resistance testing.
+guardrail-resistance testing (`atomics battery` then mcpnuke `--inference`).
 
 ---
 

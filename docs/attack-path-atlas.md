@@ -112,7 +112,7 @@ graph TD
 | [camazotz threat map](https://github.com/babywyrm/camazotz) | camazotz | Lab corpus by category |
 | [mcpnuke](https://github.com/babywyrm/mcpnuke) | mcpnuke | Scanner modules and profiles |
 | [nullfield](https://github.com/babywyrm/nullfield) | nullfield | Policy CRDs and action reference |
-| [stoneburner](https://github.com/babywyrm/stoneburner) | stoneburner | Adversarial, redblue, archreview suites |
+| [stoneburner](https://github.com/babywyrm/stoneburner) | stoneburner | Batteries, adversarial, redblue, archreview suites |
 | [OWASP MCP Top 10](../docs/bridge.md) | agentic-sec | Practitioner bridge document |
 | [Learning Paths](../docs/learning-path.md) | agentic-sec | Red/Blue/Full Loop/Campaign tracks |
 

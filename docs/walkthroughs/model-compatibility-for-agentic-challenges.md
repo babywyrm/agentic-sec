@@ -92,6 +92,18 @@ Do not promote a model to challenge-compatible until:
 Use five or more rounds when investigating nondeterministic behavior or when
 promoting a model as a long-lived default.
 
+On the stoneburner side, start with a named battery, not the full
+adversarial suite:
+
+```bash
+atomics battery run desk-pass -p ollama -m <tag>
+# FUNCTION_COMPATIBLE hint if provider-test and qa hold.
+# qa FAIL exits 1. --keep-going still reaches toolcall.
+# Tool-channel skip is not refusal.
+```
+
+Paid `-p` or `--judge-provider` needs `--budget`. `show` does not spend.
+
 ---
 
 ## Evidence Hygiene
