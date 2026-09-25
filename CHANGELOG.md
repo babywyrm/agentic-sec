@@ -2,6 +2,19 @@
 
 All notable hub-level changes
 
+## [2026-09 pt.10] stoneburner v0.23.0–v0.23.2 sync
+
+Coherence was red on the stoneburner header: v0.22.7 against a live
+0.23.2. Schema is still v21. mcpnuke v6.20.0 drift is separate.
+
+- **`docs/reference/stoneburner.md`** — header v0.22.7 / 3036 tests →
+  **v0.23.2 / 3111 tests**. One section for 0.23.0–0.23.2: honest exit
+  codes, `submit_battery` on HTTP/MCP, bounded Ollama context, and
+  cut-off replies no longer scored. Adds the 2026-09-23 judge finding:
+  `granite4.2:8b` ranks like larger judges but scores 0.1–0.3 higher.
+- **`docs/ecosystem.md`** — scorecard version and test count, timeline
+  entry. `submit_battery` is no longer described as CLI-only.
+
 ## [2026-09 pt.9] stoneburner v0.22.7 batteries; mcpnuke still v6.19.0
 
 Coherence would have been red on the stoneburner header the day 0.22.7

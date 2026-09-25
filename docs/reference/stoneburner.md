@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.22.7 · 3036 tests · schema v21
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.23.2 · 3111 tests · schema v21
 
 ---
 
@@ -20,11 +20,39 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 Install from PyPI as **`stoneburner-atomics`**. The import and CLI stay
 `atomics`. `atomics` on PyPI is a different package.
 
+### v0.23.0–v0.23.2 — Honest exits, bounded context, cut-off replies (2026-09-20–24)
+
+Latest tagged release is 0.23.2. Schema still v21. 3111 tests. PyPI
+`stoneburner-atomics` 0.23.2. All three releases stop a number from
+looking finished when it was not.
+
+- **0.23.0 — Honest exit codes.** `rag`, `codegen`, `toolcall`,
+  `redblue`, and `multiturn` exit 1 on a partial run, like `adversarial`,
+  `refusal`, and `codereview`. `--allow-partial` restores the old exit.
+  `submit_battery` is on the HTTP API and MCP as one metered job.
+- **0.23.1 — Bounded Ollama context.** Ollama gets `num_ctx` 8192 unless
+  the caller sets one. `granite4.2:30b` at its full 131072 window had
+  allocated a 52 GiB runner on a 64 GiB box. `battery run` exits nonzero
+  when a step fails. Local endpoint URLs must be `http`/`https` with no
+  embedded credentials.
+- **0.23.2 — Cut-off replies are not scored.** Ollama reports
+  `done_reason`. A reply that hit the token cap while reasoning is
+  `thinking_budget` in every judged suite and is not sent to the judge.
+  `gpt-oss:20b` ignores `--no-thinking` and had left a bare heading that
+  two of three judges called a false positive. A tool reply cut off with
+  no call is an error, not `no_call`, so it no longer reads as refusal.
+  `judge-agreement` gains `--no-thinking`, keeps the judged answer, and
+  judges red/blue on the same text the suite shows.
+- **Judge finding (lab, 2026-09-23).** A three-judge red/blue study on
+  six local models: `granite4.2:8b` ranks them in the same order as
+  `gemma4:26b` and `qwen3.8:27b`, but scores 0.1–0.3 higher. Rankings
+  from a granite-judged sweep hold. Absolute red/blue numbers do not.
+
 ### v0.22.7 — Named security batteries (2026-09-13)
 
-Latest tagged release. Schema still v21. 3036 tests. PyPI
-`stoneburner-atomics` 0.22.7. The operator start is a named job, not the
-full 72-fixture adversarial suite.
+Schema v21, 3036 tests at that tag. PyPI `stoneburner-atomics` 0.22.7.
+The operator start is a named job, not the full 72-fixture adversarial
+suite.
 
 - **`atomics battery list` / `show` / `run`.** Five jobs: `desk-pass`,
   `blue-capability`, `red-capability`, `agent-gate`, `threat-model`.
@@ -42,8 +70,7 @@ full 72-fixture adversarial suite.
   other `-p` skip `qa` unless `--profile`.
 - **Keychain backfill** for Groq, Together, and Gemini (`atomics secrets`).
   Empty env is falsy; the stored key still loads.
-- **Not in this tag:** API/MCP `submit_battery`. Next slice if asked.
-  Do not mix that into a batteries tag.
+- **Not in this tag:** API/MCP `submit_battery`. It shipped in 0.23.0.
 
 0.22.4–0.22.6 (2026-09-10–12) were fixture subsets, QA thinking/token
 counts, and Ollama think-field honesty for new tags. Do not retag
@@ -947,7 +974,8 @@ Recommended workflow:
 4. **Post-deploy:** `mcpnuke --inference` detects runtime model swaps
 5. **Monitor:** `atomics probe --alert-on-regression` catches guardrail drift
 
-`submit_battery` is not on the HTTP/MCP surface yet. Batteries are CLI.
+`submit_battery` runs a named battery over the HTTP API and MCP as one
+metered job (budget required). `archreview` stays on the CLI.
 
 ---
 
