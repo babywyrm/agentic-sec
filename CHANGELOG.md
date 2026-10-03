@@ -2,6 +2,20 @@
 
 All notable hub-level changes
 
+## [2026-10 pt.1] stoneburner v0.24.0 sync
+
+Coherence was red on the stoneburner header: v0.23.2 against a live
+0.24.0 on PyPI. Schema is still v21. mcpnuke drift (hub v6.19.0, repo
+v6.21.0) is separate and still open.
+
+- **`docs/reference/stoneburner.md`** — header v0.23.2 / 3111 tests →
+  **v0.24.0 / 3135 tests**. One section for 0.24.0: resumable sweeps,
+  sweep saves that write, run-to-run spread on refusal and codereview,
+  six clean codereview fixtures, and probes and judges sized to what
+  the fixtures allow. Notes the model inventory on `main` for 0.25.0.
+- **`docs/ecosystem.md`** — scorecard version, test count, and a
+  timeline entry.
+
 ## [2026-09 pt.10] stoneburner v0.23.0–v0.23.2 sync
 
 Coherence was red on the stoneburner header: v0.22.7 against a live

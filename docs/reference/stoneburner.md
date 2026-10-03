@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.23.2 · 3111 tests · schema v21
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.24.0 · 3135 tests · schema v21
 
 ---
 
@@ -20,10 +20,43 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 Install from PyPI as **`stoneburner-atomics`**. The import and CLI stay
 `atomics`. `atomics` on PyPI is a different package.
 
+### v0.24.0 — Resumable, saved sweeps (2026-10-02)
+
+Latest tagged release is 0.24.0. Schema still v21. 3135 tests. PyPI
+`stoneburner-atomics` 0.24.0. A night run can now stop and pick up,
+and what it measured is saved.
+
+- **`sweep --resume`.** A stopped night continues from its `--status`
+  file. Jobs recorded ok are kept; failed, crashed, and interrupted
+  jobs run again.
+- **`sweep --suites ... --save` saves.** The multi-suite path returned
+  before the save block and stored nothing. Each model×suite is now
+  saved under a finished parent run, and a failed save marks the job
+  failed.
+- **Run-to-run spread.** `refusal --runs` and `codereview --runs` are
+  new, and `sweep --runs` reaches them. Red/blue, refusal, and
+  codereview report the stdev of each run's mean, not fixture
+  difficulty mixed with noise.
+- **Six codereview clean fixtures, not two.** One false positive used
+  to move F1 from 1.0 to 0.667; now it moves 0.09. Codereview scores do
+  not compare with older rows.
+- **Probes and judges see what the fixtures see.** The toolcall
+  capability probe follows the run's thinking settings and 1024-token
+  budget. Resistance judges read up to the model's output budget, not
+  2000 characters, so a late compliance is no longer judged as an early
+  refusal.
+- **Security.** `pyjwt` 2.15.1 and `urllib3` 2.8.0 clear the advisories
+  that failed pip-audit from 2026-10-01.
+- **On `main` for 0.25.0.** `atomics models` is now an inventory:
+  declared capabilities and context per host, disagreements with the
+  name tables, `--probe` (answer, speed, thinking-switch verdict, tool
+  call), `--probe-judge`, and repeatable `--host`. The first fleet probe
+  found Ollama 0.32 and 0.34 declaring different capabilities for the
+  same `granite4.2` weights.
+
 ### v0.23.0–v0.23.2 — Honest exits, bounded context, cut-off replies (2026-09-20–24)
 
-Latest tagged release is 0.23.2. Schema still v21. 3111 tests. PyPI
-`stoneburner-atomics` 0.23.2. All three releases stop a number from
+Schema v21, 3111 tests at 0.23.2. PyPI `stoneburner-atomics` 0.23.2. All three releases stop a number from
 looking finished when it was not.
 
 - **0.23.0 — Honest exit codes.** `rag`, `codegen`, `toolcall`,
