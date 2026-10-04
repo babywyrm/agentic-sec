@@ -2,7 +2,7 @@
 
 MCP red teaming and security scanner.
 
-**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.19.0 · ~1940 tests · 40/57 taxonomy IDs · MIT
+**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.21.0 · 2089 tests · 54/57 taxonomy IDs · MIT
 
 **In the framework:** mcpnuke is the validator that exercises every cell of
 the [Identity Flow Framework](../identity-flows.md). New checks should
@@ -13,6 +13,39 @@ were ratified 2026-04-28 — see
 for the full taxonomy.
 
 ## Recent work (2026-08 → 2026-09)
+
+### v6.21.0 — cross-server replay and trust sets (2026-09-29)
+
+- **`--trust-set`** groups URLs that share one agent. Cross-server
+  chains, name collisions, shadow grades, and replay stay inside a set;
+  with no set, the whole run is one set.
+- **`--chain-replay --cross-server`** lets a chain step target another
+  scanned server, one closed session per step. Off by default; a step
+  naming an unscanned URL is refused, and `--safe-mode` still refuses
+  dangerous tools before connecting.
+- **`--auth-token-file` / `--client-secret-file`** keep credentials out
+  of `ps`. **`--oidc-resource`** (RFC 8707) sets the token audience to
+  the MCP endpoint for gateways that bind `aud`.
+- **Fixes.** `--baseline` reports description and schema drift as
+  CRITICAL MCP-T03 (rug pull). `--fast` static checks, titles, AIBOM,
+  and baselines read the full catalog, not the 5-tool sample. A logical
+  `aud` is MEDIUM, not "audience validation disabled". The duplicate
+  `cross_shadowing` pass is gone.
+
+### v6.20.0 — cross-server correlation; taxonomy 54/57 (2026-09-14)
+
+- **`cross_server_chain` (MCP-T05)** correlates findings across targets
+  after the scan pool drains: a context-poisoning peer plus a local
+  execution or credential sink. HIGH when the pair shares a tool name.
+- **`delegation_chain_abuse` (MCP-T25)**: a tool that both delegates
+  and accepts caller credentials. Taxonomy back to 54/57.
+- **AIBOM `inventory` block in `--json`**: server identity, transport,
+  auth posture, counts, and a sha256 over the tool surface, so a rug
+  pull is a hash mismatch.
+- **Fixes.** Cross-target checks ran on partial peer data and rarely
+  fired. OWASP mapping covers seven legacy checks. Ollama phases are
+  held to the real taxonomy IDs. The runner no longer strands a job in
+  `running` when the scan process fails to start.
 
 ### v6.19.0 — runner token leak closed; OWASP report (2026-09-07)
 
@@ -100,7 +133,7 @@ Both halves of a dual `tools/call` body are scanned.
 
 ### Earlier: coverage pass (2026-06-28)
 
-- **Taxonomy coverage:** 14/57 → **22/57 IDs** at this milestone, 40/57 today.
+- **Taxonomy coverage:** 14/57 → **22/57 IDs** at this milestone, 54/57 today.
   Tier 1 is complete; remaining gaps are mostly multi-auth, RAG/governance, and
   transport identity dilution scenarios that require specialized fixtures.
 - **New runtime/static checks:** MCP-T01 prompt injection via tool args, MCP-T02

@@ -2,6 +2,25 @@
 
 All notable hub-level changes
 
+## [2026-10 pt.2] stoneburner v0.24.1 and mcpnuke v6.21.0 sync
+
+Coherence was red on two headers: stoneburner v0.24.0 against a live
+0.24.1 on PyPI, and mcpnuke v6.19.0 against a v6.21.0 tag. Schema is
+still v21.
+
+- **`docs/reference/stoneburner.md`** — header v0.24.0 / 3135 tests →
+  **v0.24.1 / 3233 tests**. One section for 0.24.1: the model
+  inventory, `--probe` / `--probe-judge`, `cohorts`, and
+  `battery run --cohorts`. Notes the partial-sweep fix and the
+  `gemma4:26b` reference judge on `main`.
+- **`docs/reference/mcpnuke.md`** — header v6.19.0 / ~1940 tests /
+  40/57 → **v6.21.0 / 2089 tests / 54/57** (matches mcpnuke
+  `ROADMAP.md`). Sections for 6.20.0 (cross-server correlation,
+  delegation-chain check, AIBOM inventory) and 6.21.0 (trust sets,
+  opt-in cross-server replay, credential files, RFC 8707 resource).
+- **`docs/ecosystem.md`** — both scorecard rows (versions, test counts,
+  79 mcpnuke checks) and two timeline entries.
+
 ## [2026-10 pt.1] stoneburner v0.24.0 sync
 
 Coherence was red on the stoneburner header: v0.23.2 against a live

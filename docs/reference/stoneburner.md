@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.24.0 · 3135 tests · schema v21
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.24.1 · 3233 tests · schema v21
 
 ---
 
@@ -20,11 +20,43 @@ endpoint, enabling same-workload comparison across camazotz-managed providers.
 Install from PyPI as **`stoneburner-atomics`**. The import and CLI stay
 `atomics`. `atomics` on PyPI is a different package.
 
+### v0.24.1 — Inventory, cohorts, and battery plans (2026-10-03)
+
+Latest tagged release is 0.24.1. Schema still v21. 3233 tests. PyPI
+`stoneburner-atomics` 0.24.1. Before a night run, see what each host
+really serves, group it fairly, and run the groups.
+
+- **`atomics models` is an inventory.** Quantization, digest, declared
+  capabilities and context per host, and where each value came from.
+  Disagreements with the name tables are listed. `--host` repeats;
+  hosts are read in parallel, a down host is reported without failing
+  the rest, and a tag whose digest differs between hosts is flagged.
+  The Family column is gone. `-p llamacpp` reads llama-server.
+- **`--probe` and `--probe-judge`.** A live answer and its speed, a
+  thinking-switch verdict (`off-works`, `off-ignored`, `inline`,
+  `no-channel`) with the flag to evaluate with, and the tool-call
+  probe. `--probe-judge` grades one right and one wrong answer; fit
+  if the right one wins by 0.3. The first fleet probe found Ollama
+  0.32 and 0.34 declaring different capabilities for the same
+  `granite4.2` weights.
+- **`atomics cohorts INVENTORY -b BATTERY`.** Reads the saved file,
+  never the hosts. Groups by host-declared size band and the
+  capabilities the battery's suites need, sets each model's thinking
+  flag, places one copy per digest by host load, and picks one
+  reference judge outside each group's families. Every excluded model
+  has a reason. `--plan` prints the `battery run` lines.
+- **`atomics battery run --cohorts FILE`** runs those jobs against the
+  host URLs saved in the inventory.
+- **On `main`.** A sweep headline needs every fixture scored, and an
+  unreachable provider stops the sweep instead of recording the rest
+  of the fleet as failures. `gemma4:26b` is the named reference judge:
+  a blind grade of 12 judge disagreements sat closest to it, and
+  `granite4.2` scores about 0.22 high.
+
 ### v0.24.0 — Resumable, saved sweeps (2026-10-02)
 
-Latest tagged release is 0.24.0. Schema still v21. 3135 tests. PyPI
-`stoneburner-atomics` 0.24.0. A night run can now stop and pick up,
-and what it measured is saved.
+Schema v21, 3135 tests at 0.24.0. PyPI `stoneburner-atomics` 0.24.0.
+A night run can now stop and pick up, and what it measured is saved.
 
 - **`sweep --resume`.** A stopped night continues from its `--status`
   file. Jobs recorded ok are kept; failed, crashed, and interrupted
@@ -47,12 +79,6 @@ and what it measured is saved.
   refusal.
 - **Security.** `pyjwt` 2.15.1 and `urllib3` 2.8.0 clear the advisories
   that failed pip-audit from 2026-10-01.
-- **On `main` for 0.25.0.** `atomics models` is now an inventory:
-  declared capabilities and context per host, disagreements with the
-  name tables, `--probe` (answer, speed, thinking-switch verdict, tool
-  call), `--probe-judge`, and repeatable `--host`. The first fleet probe
-  found Ollama 0.32 and 0.34 declaring different capabilities for the
-  same `granite4.2` weights.
 
 ### v0.23.0–v0.23.2 — Honest exits, bounded context, cut-off replies (2026-09-20–24)
 
