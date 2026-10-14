@@ -2,6 +2,27 @@
 
 All notable hub-level changes
 
+## [2026-10 pt.3] stoneburner v0.26.2, mcpnuke v6.21.1, the handoff
+
+Coherence CI was red from 2026-10-10: stoneburner v0.24.1 / schema v21
+against 0.26.2 / v22, and mcpnuke v6.21.0 against v6.21.1.
+
+- **The stoneburner ↔ mcpnuke handoff** is stated on both reference
+  pages and the ecosystem boundary table in the words both repos use:
+  the tools meet at the agent; stoneburner grades the model, mcpnuke
+  scans the server.
+- **`docs/reference/stoneburner.md`** — header **v0.26.2 / 3345 tests /
+  schema v22**; one section for 0.25.0–0.26.2; the Claude provider row
+  names the `[claude]` extra; `--no-auth` answers only a loopback
+  `Host`; Storage cites schema v22.
+- **`docs/reference/mcpnuke.md`** — header **v6.21.1 / 2123 tests**;
+  a 6.21.1 section, with `--scan-profile` and the CI `fail-on: medium`
+  fix noted as on `main`.
+- **`docs/reference/skillseraph.md`** — 110 → **267 tests**.
+- **`docs/ecosystem.md`** — both scorecard rows, a skillseraph row (it
+  had none), two timeline entries, and a blank line so the paragraph
+  after the boundary table no longer renders as a table row.
+
 ## [2026-10 pt.2] stoneburner v0.24.1 and mcpnuke v6.21.0 sync
 
 Coherence was red on two headers: stoneburner v0.24.0 against a live

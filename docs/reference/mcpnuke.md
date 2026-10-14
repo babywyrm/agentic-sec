@@ -2,7 +2,7 @@
 
 MCP red teaming and security scanner.
 
-**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.21.0 · 2089 tests · 54/57 taxonomy IDs · MIT
+**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.21.1 · 2123 tests · 54/57 taxonomy IDs · MIT
 
 **In the framework:** mcpnuke is the validator that exercises every cell of
 the [Identity Flow Framework](../identity-flows.md). New checks should
@@ -12,7 +12,35 @@ were ratified 2026-04-28 — see
 [camazotz ADR 0001](https://github.com/babywyrm/camazotz/blob/main/docs/adr/0001-five-transport-taxonomy.md)
 for the full taxonomy.
 
-## Recent work (2026-08 → 2026-09)
+**mcpnuke and [stoneburner](stoneburner.md) meet at the agent.** mcpnuke
+scans the MCP server — whether the tools will do the dangerous thing.
+stoneburner grades the model — whether the model will ask them to. An
+attack chain needs both halves: mcpnuke's `--chain-replay` proves the
+server half, stoneburner's `adversarial` / `toolcall` suites measure the
+model half. Neither scans the other's layer.
+
+## Recent work (2026-08 → 2026-10)
+
+### v6.21.1 — chain replay that holds up (2026-10-11)
+
+- **Replay evidence.** A chain counts as reproduced only when an earlier
+  output lands in a parameter the later tool declares; the transcript
+  names the server each step ran on.
+- **Cross-server replay works end to end.** The replay session completes
+  the full `initialize` handshake before `tools/call`, resolves each step
+  on the server its `target` names, retries a rejected first step once
+  with the Phase 2 argument filler, and logs why a halted chain stopped.
+  Local Ollama proposers get a JSON schema that requires `target` when
+  peers are in scope.
+- **Exposed Ollama `DELETE /api/delete`** is reported again; the probe
+  raised and was swallowed.
+- **mypy ceiling 30 → 0.**
+- **On `main`.** `--scan-profile` (`cursor-mcp`, `claude-desktop`,
+  `stdio`) fills defaults for a known MCP host; explicit flags win. This
+  is separate from `--profile` (tool-to-lane mapping, below). The
+  reusable CI workflow's `fail-on: medium` now means medium and above,
+  matching the CLI. The quickstart is recipe-first (triage, prove,
+  policy, CI).
 
 ### v6.21.0 — cross-server replay and trust sets (2026-09-29)
 

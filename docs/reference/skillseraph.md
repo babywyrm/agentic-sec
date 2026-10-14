@@ -2,7 +2,7 @@
 
 > **Agent config security scanner** — static analysis of the agentic control plane
 
-[GitHub](https://github.com/babywyrm/skillseraph) · v0.2.0 · 110 tests · 11 platforms
+[GitHub](https://github.com/babywyrm/skillseraph) · v0.2.0 · 267 tests · 11 platforms
 
 ---
 

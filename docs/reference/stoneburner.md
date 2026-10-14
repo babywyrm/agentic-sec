@@ -2,7 +2,7 @@
 
 > **Atomics** — Agentic token usage benchmarking + LLM security evaluation platform
 
-[GitHub](https://github.com/babywyrm/stoneburner) · v0.24.1 · 3233 tests · schema v21
+[GitHub](https://github.com/babywyrm/stoneburner) · v0.26.2 · 3345 tests · schema v22
 
 ---
 
@@ -17,14 +17,60 @@ the LLM itself behave under pressure?*
 The `brain-gateway` provider routes benchmarks through camazotz's MCP inference
 endpoint, enabling same-workload comparison across camazotz-managed providers.
 
+**stoneburner and [mcpnuke](mcpnuke.md) meet at the agent.** stoneburner
+grades the model — whether the model will ask for the dangerous thing.
+mcpnuke scans the MCP server — whether the tools will do it. An attack
+chain needs both halves: stoneburner's `adversarial` / `toolcall` suites
+measure the model half, mcpnuke's `--chain-replay` proves the server half.
+Neither scans the other's layer; an endpoint-scanning idea belongs in
+mcpnuke.
+
 Install from PyPI as **`stoneburner-atomics`**. The import and CLI stay
-`atomics`. `atomics` on PyPI is a different package.
+`atomics`. `atomics` on PyPI is a different package. Claude needs the
+`[claude]` extra since 0.25.0.
+
+### v0.25.0–v0.26.2 — Honest sweeps, prompt visibility, hardening (2026-10-04–11)
+
+Latest tagged release is 0.26.2. Schema v22. 3345 tests. PyPI
+`stoneburner-atomics` 0.26.2.
+
+- **0.25.0 — Honest sweeps, tighter API, slimmer install.** A sweep
+  headline needs every fixture scored, and a dead provider stops the
+  sweep. A toolcall probe that errors is a probe failure, not an
+  incapable model. API jobs are per key. A battery `profile` over the
+  API must be a relative path under `profiles/`, and a `prompts_file`
+  must stay in its profile's directory. `anthropic` moved to the
+  `[claude]` extra.
+- **0.25.1 — Distributed runs per key; `-o` everywhere.** Distributed
+  run listings show only the caller's runs. `-o` is short for
+  `--json-out` on every command that writes JSON.
+- **0.26.0 — See what the model saw.** `atomics prompts` lists every
+  built-in system prompt and judge template; `--show-prompt` traces each
+  model and judge call (prompt, tools, settings, tokens, context fill)
+  and ends with a context timeline and notes. Every `-o` result records
+  prompt fingerprints as `provenance`, and `prompts --compare` shows
+  which rubric changed between two results. Ollama multiturn now sends
+  chat messages with the system prompt on every turn, so its scores do
+  not compare with 0.25.x. A run where nothing scored but nothing was
+  down is `unscored`, not `infrastructure_invalid`. Unparsed judge
+  scores are `null`, not `0.5`.
+- **0.26.1 — Rebinding-proof `--no-auth`.** A `--no-auth` server answers
+  only `localhost` or a loopback IP; another hostname that resolves to
+  `127.0.0.1` gets `421`. The MCP proxy and REPL percent-encode job and
+  run ids.
+- **0.26.2 — Safe worker migration, escaped gate bodies.** Schema v22
+  drops the never-set worker `api_key_hint` (`.bak` first, rows kept).
+  JSON profile bodies escape `{{ prompt }}`, `{{ model }}`, and
+  `{{ num_predict }}`, so a crafted prompt can no longer add fields to a
+  gate request; put placeholders inside quotes.
+- **On `main`.** `--temperature` on `qa`, `toolcall`, and `battery` pins
+  the model under test for like-for-like repeats.
 
 ### v0.24.1 — Inventory, cohorts, and battery plans (2026-10-03)
 
-Latest tagged release is 0.24.1. Schema still v21. 3233 tests. PyPI
-`stoneburner-atomics` 0.24.1. Before a night run, see what each host
-really serves, group it fairly, and run the groups.
+Schema v21, 3233 tests at 0.24.1. PyPI `stoneburner-atomics` 0.24.1.
+Before a night run, see what each host really serves, group it fairly,
+and run the groups.
 
 - **`atomics models` is an inventory.** Quantization, digest, declared
   capabilities and context per host, and where each value came from.
@@ -47,11 +93,9 @@ really serves, group it fairly, and run the groups.
   has a reason. `--plan` prints the `battery run` lines.
 - **`atomics battery run --cohorts FILE`** runs those jobs against the
   host URLs saved in the inventory.
-- **On `main`.** A sweep headline needs every fixture scored, and an
-  unreachable provider stops the sweep instead of recording the rest
-  of the fleet as failures. `gemma4:26b` is the named reference judge:
-  a blind grade of 12 judge disagreements sat closest to it, and
-  `granite4.2` scores about 0.22 high.
+- **Reference judge.** `gemma4:26b`: a blind grade of 12 judge
+  disagreements sat closest to it, and `granite4.2` scores about 0.22
+  high.
 
 ### v0.24.0 — Resumable, saved sweeps (2026-10-02)
 
@@ -458,7 +502,7 @@ made the project contributor-ready:
 
 | Provider | Flag | Auth | Notes |
 |----------|------|------|-------|
-| **Claude** (Anthropic) | `--provider claude` | `ANTHROPIC_API_KEY` | Default. Extended thinking via `budget_tokens`. |
+| **Claude** (Anthropic) | `--provider claude` | `ANTHROPIC_API_KEY` | Default for `run`. Extended thinking via `budget_tokens`. Install: `uv sync --extra claude`. |
 | **OpenAI / Codex** | `--provider openai` | `OPENAI_API_KEY` | Reasoning tokens tracked for o3/o4/gpt-5.x. Install: `uv sync --extra openai`. |
 | **Bedrock** (AWS) | `--provider bedrock --region us-east-1` | AWS credentials | Uses `boto3`. Install: `uv sync --extra bedrock`. |
 | **Ollama** (local) | `--provider ollama` | None | Zero-cost local inference. `--ollama-host` for remote. |
@@ -630,7 +674,7 @@ service for CI/CD, dashboards, or remote scheduling.
 | Command | What it does |
 |---------|-------------|
 | `atomics server` | Start the HTTP API server (default bind localhost:8000) |
-| `atomics server --no-auth` | Disable API key auth (local development only) |
+| `atomics server --no-auth` | Disable API key auth (local development only; answers only `localhost` / loopback `Host`) |
 | `atomics server --api-key KEY` | Allow an API key (repeatable); clients send `X-API-Key` |
 | `atomics server --host 0.0.0.0 --port 8080` | Bind address/port |
 | `atomics server --log-level debug` | Verbose uvicorn logging |
@@ -908,7 +952,7 @@ curl -s -H "X-API-Key: $ATOMICS_API_KEY" http://127.0.0.1:8000/api/v1/jobs/$JOB_
 
 ## Storage
 
-SQLite database (schema v21) with tables. Opening an older file upgrades
+SQLite database (schema v22) with tables. Opening an older file upgrades
 in place (timestamped `.bak`; tables are not dropped):
 
 | Table | Content |
