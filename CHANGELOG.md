@@ -2,6 +2,24 @@
 
 All notable hub-level changes
 
+## [2026-10 pt.4] Building radar
+
+What each tool builds next was in no single place: `roadmap.md` had not
+moved since 2026-09-13, and `ecosystem.md` kept a separate near-term list
+that had drifted.
+
+- **`docs/roadmap.md`** — new **Building radar**: per tool, the released
+  version, what is on `main`, the next items, and what is deliberately not
+  planned, each linked to that tool's own `ROADMAP.md`. Cross-tool work
+  (shared MCP-T56 result schema, the camazotz → mcpnuke → stoneburner
+  walkthrough, nullfield v0.15 fed by stoneburner `toolcall`) is listed
+  once. Maturity rows corrected: stoneburner batteries run over HTTP/MCP
+  since 0.23.0; skillseraph distribution is thin (not on PyPI, no public
+  image). Theme 5 header sync is checked off.
+- **`docs/ecosystem.md`** — the near-term list points at the radar; the
+  shipped timeline stays as history.
+- **`README.md`** — a "What we're building next" link under the tools table.
+
 ## [2026-10 pt.3] stoneburner v0.26.2, mcpnuke v6.21.1, the handoff
 
 Coherence CI was red from 2026-10-10: stoneburner v0.24.1 / schema v21

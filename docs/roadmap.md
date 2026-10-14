@@ -11,6 +11,37 @@ should be built next to **unify the shared vocabulary**, **mature the tools**, a
 
 ---
 
+## Building radar
+
+*As of 2026-10-13.* What each tool is building next. Each tool's own roadmap is the source of
+truth; this section summarizes it and is refreshed with every hub sync.
+Shipped work is in each tool's changelog and the
+[ecosystem timeline](ecosystem.md#shipped).
+
+| Tool | Released | On `main`, not tagged | Next | Not planned |
+|---|---|---|---|---|
+| **[mcpnuke](https://github.com/babywyrm/mcpnuke/blob/main/ROADMAP.md)** | v6.21.1 | `--scan-profile` (`cursor-mcp`, `claude-desktop`, `stdio`); CI `fail-on: medium` fix | 1. PyPI trusted publisher (account step; tags build but do not upload) · 2. `--coverage-report` per MCP-T ID · 3. watch mode · 4. remediation in SARIF | Model-resistance checks (stoneburner), static config scanning (skillseraph) |
+| **[stoneburner](https://github.com/babywyrm/stoneburner/blob/main/ROADMAP.md)** | v0.26.2 | `--temperature` on `qa`, `toolcall`, `battery` | A live generate on a real vLLM or llama.cpp server (the OpenAI-compatible path is proved only against Ollama's `/v1`) | HTTP MCP (`atomics mcp` stays stdio over the API); endpoint scanning (mcpnuke) |
+| **[nullfield](https://github.com/babywyrm/nullfield/blob/main/ROADMAP.md)** | v0.12.0 | — | v0.13 authority grants, previewable mesh-artifact reconciler, credential runtime demos · v0.14 external egress · v0.15 AI Gateway check of model-proposed tool calls, fed by stoneburner `toolcall` data · v1.0 | — (see its *Later* list: `ext_proc`, resource-level scoping, credential brokering) |
+| **[skillseraph](https://github.com/babywyrm/skillseraph/blob/main/ROADMAP.md)** | v0.2.0 | — | Repair distribution (PyPI upload failed at OIDC on 2026-06-26; the container image job has never built) · provenance / signature checks · versioned rule packs · Unicode / homoglyph pass | Windows `%APPDATA%` support |
+| **[camazotz](https://github.com/babywyrm/camazotz)** | 0.4.0 | — | Stable: 52 labs, 5 lanes × 5 transports. No open build items. | — |
+| **agentic-sec** (this hub) | — | — | Detection catalog and IR playbooks (Theme 2), purple-team loop (Theme 3) | Any implementation — the hub is documentation |
+
+**Across tools:**
+
+- [ ] **Shared MCP-T56 result schema** between mcpnuke (`ai_guardrail_bypass`,
+  `inference_guardrail_variance`) and stoneburner, so one guardrail finding
+  reads the same in both. Not started in either repo.
+- [ ] **End-to-end walkthrough:** camazotz target → mcpnuke `--chain-replay`
+  (server half) → stoneburner `battery run agent-gate` (model half), the
+  handoff both tools describe.
+- [ ] **nullfield v0.15 ← stoneburner `toolcall`:** divergence data from
+  stoneburner informs nullfield's interception of model-proposed calls.
+- [x] stoneburner learning path starts with `atomics battery`
+  ([learning-path.md](learning-path.md)).
+
+---
+
 ## Maturity at a glance
 
 | Area | State | Notes |
@@ -18,8 +49,8 @@ should be built next to **unify the shared vocabulary**, **mature the tools**, a
 | Vulnerable target (camazotz) | **Strong** | 52 labs, 5 lanes × 5 transports, full OWASP MCP Top 10 |
 | Policy arbiter (nullfield) | **Strong** | 5 actions, sidecar/gateway/webhook, 139-tool camazotz policy |
 | Scanner (mcpnuke) | **Strong** | static + behavioral + AI-assisted, emits nullfield policy |
-| Benchmarking + eval (stoneburner) | **Strong** | named batteries (`atomics battery`: desk-pass, blue/red, agent-gate, threat-model), provider benchmarking, adversarial/redblue (14 fixtures) suites, security-architecture review (`archreview`), API server mode (`atomics server`) with optional web dashboard, distributed benchmark runs (`atomics distributed run` / `atomics worker`), npm worker bridge (`atomics worker-npm`), and a hardened, bounded, observable server surface (sandboxed codegen execution, separable worker keys, bounded job state, per-caller job quotas, eval spend ceilings, correlation IDs, readiness/liveness split, `pip-audit` + gitleaks in CI). Batteries are CLI; `submit_battery` is not on HTTP/MCP yet. |
-| Config scanner (skillseraph) | **Strong** | scans `AGENTS.md`/`SKILL.md`/rules/hooks/MCP configs across 11 platforms; covers Attack Path Atlas Domain J |
+| Benchmarking + eval (stoneburner) | **Strong** | named batteries (`atomics battery`: desk-pass, blue/red, agent-gate, threat-model), provider benchmarking, adversarial/redblue (14 fixtures) suites, security-architecture review (`archreview`), API server mode (`atomics server`) with optional web dashboard, distributed benchmark runs (`atomics distributed run` / `atomics worker`), npm worker bridge (`atomics worker-npm`), and a hardened, bounded, observable server surface (sandboxed codegen execution, separable worker keys, bounded job state, per-caller job quotas, eval spend ceilings, correlation IDs, readiness/liveness split, `pip-audit` + gitleaks in CI). Batteries run on the CLI and over HTTP/MCP as `submit_battery`. Model inventory, cohorts, and prompt visibility (`--show-prompt`, prompt fingerprints). |
+| Config scanner (skillseraph) | **Strong** detection, **thin** distribution | scans `AGENTS.md`/`SKILL.md`/rules/hooks/MCP configs across 11 platforms; covers Attack Path Atlas Domain J. Install from source (`install.sh` uses `uv tool install git+…`); not on PyPI, no public image |
 | Shared taxonomy (MCP-T threats, lanes, transports) | **Strong** | canonical in `lanes.yaml`; surface lens (`surfaces.yaml`) and OWASP MCP Top 10 bridge (`owasp-bridge.yaml`) now first-class and CI-gated; all threats normalized to MCP01–MCP10 (no out-of-range) |
 | Taxonomy lenses (identity / attack / surface / tool) | **Strong** | four-lens model documented in `docs/taxonomy/` with a machine-readable surface inventory |
 | Defensive operations (detection, IR, purple team) | **Thin** | scattered across campaigns/walkthroughs; no consolidated catalog |
@@ -48,11 +79,11 @@ to the last hard-coded threat-ID consumers.
   `lanes.yaml` is consumed by `mcpnuke --coverage-report` and nullfield policy
   generators. Extend the same gating to camazotz `scenario.yaml` threat IDs and
   any other tool that hard-codes them.
-- [ ] **Document tool lineage.** A short "how the tools relate" note: which tool
-  enforces (nullfield), which finds (mcpnuke), which measures (stoneburner),
-  which is the target (camazotz) — plus a clear statement of what each tool
-  supersedes from earlier prototypes, so new readers aren't confused by
-  overlapping capabilities.
+- [ ] **Document tool lineage.** Who owns which layer is now in the
+  [ecosystem boundary table](ecosystem.md), including the stoneburner ↔
+  mcpnuke handoff (they meet at the agent: stoneburner grades the model,
+  mcpnuke scans the server). Still open: what each tool supersedes from
+  earlier prototypes.
 
 ---
 
@@ -119,8 +150,10 @@ Securing the tools that secure MCP. A unified hardening baseline across all four
 
 ## Theme 5 — Documentation hygiene (continuous)
 
-- [ ] Keep tool badges and reference headers in sync with releases (version,
-  test count, schema version) — enforced by `scripts/check_coherence.py`.
+- [x] Keep tool badges and reference headers in sync with releases (version,
+  test count, schema version) — enforced by `scripts/check_coherence.py` in
+  daily CI.
+- [ ] Refresh the building radar above with every hub sync.
 - [ ] Each tool reference page states its current version, what's new since the
   last hub sync, and any known drift.
 - [ ] Cross-repo links resolve; private-only references are never published.

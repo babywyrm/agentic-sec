@@ -55,6 +55,10 @@ transfers and what doesn't.
 
 Each ships independently. They are stronger together.
 
+**What we're building next:** the [building radar](docs/roadmap.md#building-radar)
+lists each tool's released version, what is on `main`, what is next, and
+what is deliberately not planned.
+
 ---
 
 ## The four lenses
@@ -129,7 +133,7 @@ Kubernetes, Helm, and Teleport options: [`docs/deployment-guide.md`](docs/deploy
 | Run a full deployment scenario (bot, CI/CD, code review, SaaS) | [`docs/campaigns/`](docs/campaigns/README.md) |
 | Stand up a zero-trust control plane (runnable) | [`blueprints/zero-trust-control-plane/`](blueprints/zero-trust-control-plane/README.md) |
 | Follow a structured curriculum | [`docs/learning-path.md`](docs/learning-path.md) |
-| See what's mature, thin, and planned next | [`docs/roadmap.md`](docs/roadmap.md) |
+| See what's mature, thin, and planned next | [`docs/roadmap.md`](docs/roadmap.md) — building radar per tool, then themes |
 
 ---
 

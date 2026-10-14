@@ -220,7 +220,9 @@ Lane 3 E — intentional boundaries of the current corpus, not bugs.
 
 ## Roadmap — How This Grows
 
-Three horizons, committed in decreasing order of near-term certainty.
+Three horizons, committed in decreasing order of near-term certainty. The
+*Shipped* list is history; what comes next is the
+[building radar](roadmap.md#building-radar).
 
 ### Shipped
 
@@ -298,10 +300,9 @@ Three horizons, committed in decreasing order of near-term certainty.
 
 ### Near-term (actively worked)
 
-- stoneburner learning path: start Track 1/model-eval with `atomics battery`, not the 72-fixture adversarial suite
-- mcpnuke PyPI publication with proper metadata and entry point
-- Shared MCP-T56 result schema between mcpnuke and stoneburner for cross-tool analysis
-- End-to-end walkthrough: camazotz + mcpnuke inference scan + stoneburner `battery run agent-gate`
+Tracked in one place: the [building radar](roadmap.md#building-radar)
+in `roadmap.md` — each tool's next items, cross-tool work, and what is
+deliberately not planned.
 
 ### Future (revisit when the vocabulary drifts)
 
