@@ -335,7 +335,7 @@ Failures in the trust verification and cryptographic layers.
 
 Domain J is owned by **[skillseraph](https://github.com/babywyrm/skillseraph)** —
 a static scanner for agent config files (skills, rules, hooks, MCP configs) across
-11 platforms. It now covers J1–J5, J7, and J8 with dedicated rule packs; J6
+13 platforms. It now covers J1–J5, J7, and J8 with dedicated rule packs; J6
 (dependency-path planting) is Partial — the scanner walks dependency trees
 (`node_modules/`, `vendor/`, `.venv/`) but relies on the generic content rules
 firing on planted files. skillseraph also contributes *static* detection for
@@ -371,7 +371,7 @@ camazotz labs and mcpnuke modules for Domain J are still planned.
 | **mcpnuke** | Which scanner modules are missing (reasoning drift, live config injection) |
 | **nullfield** | Which policy primitives need design (HITL fatigue guards, config integrity) |
 | **stoneburner** | Which benchmark suites to add (reasoning manipulation, memory persistence) |
-| **[skillseraph](https://github.com/babywyrm/skillseraph)** | Owns Domain J — static scanning of agent config files (skills, rules, hooks, instructions) across 11 platforms |
+| **[skillseraph](https://github.com/babywyrm/skillseraph)** | Owns Domain J — static scanning of agent config files (skills, rules, hooks, instructions) across 13 platforms |
 | **agentic-sec** | Where walkthroughs and campaigns are needed |
 
 ---

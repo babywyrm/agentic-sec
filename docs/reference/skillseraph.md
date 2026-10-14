@@ -2,7 +2,7 @@
 
 > **Agent config security scanner** — static analysis of the agentic control plane
 
-[GitHub](https://github.com/babywyrm/skillseraph) · v0.2.0 · 267 tests · 11 platforms
+[GitHub](https://github.com/babywyrm/skillseraph) · v0.2.0 · 267 tests · 13 platforms
 
 ---
 
@@ -32,8 +32,13 @@ suppression that never touch a live endpoint and so are invisible to mcpnuke.
 
 Auto-detected from file patterns; restrict with `--platform`:
 
-Cursor · Codex · GitHub Copilot · Claude · Windsurf · Cline/Continue · Devin ·
-Bedrock Agents · LangChain/LangGraph · CrewAI/AutoGPT · generic agent configs.
+Cursor · VS Code-compatible IDEs · JetBrains IDEs · Codex · GitHub Copilot ·
+Claude · Windsurf · Cline/Continue · Devin · Bedrock Agents ·
+LangChain/LangGraph · CrewAI/AutoGPT · generic agent configs.
+
+Install from source: `install.sh` or
+`uv tool install git+https://github.com/babywyrm/skillseraph@v0.2.0`. Not on
+PyPI yet; no public container image.
 
 ---
 

@@ -14,7 +14,7 @@ that protects AI-agent deployments built on the
   <a href="https://github.com/babywyrm/nullfield"><img alt="nullfield" src="https://img.shields.io/badge/nullfield-5%20actions-a78bfa"></a>
   <a href="https://github.com/babywyrm/mcpnuke"><img alt="mcpnuke" src="https://img.shields.io/badge/mcpnuke-scan%20%2B%20generate-34d399"></a>
   <a href="https://github.com/babywyrm/stoneburner"><img alt="stoneburner LLM eval + API + MCP" src="https://img.shields.io/badge/stoneburner-LLM%20eval%20%2B%20API%20%2B%20MCP-ef4444"></a>
-  <a href="https://github.com/babywyrm/skillseraph"><img alt="skillseraph" src="https://img.shields.io/badge/skillseraph-11%20platforms-8b5cf6"></a>
+  <a href="https://github.com/babywyrm/skillseraph"><img alt="skillseraph" src="https://img.shields.io/badge/skillseraph-13%20platforms-8b5cf6"></a>
 </p>
 
 ---
@@ -51,7 +51,7 @@ transfers and what doesn't.
 | **[nullfield](https://github.com/babywyrm/nullfield)** | Policy arbiter | Sidecar that intercepts every `tools/call` and enforces ALLOW / DENY / HOLD / SCOPE / BUDGET before forwarding |
 | **[mcpnuke](https://github.com/babywyrm/mcpnuke)** | Scanner | Outside-in MCP scanner — static, behavioral, and AI-assisted probes across both the legacy handshake and the 2026-07-28 stateless spec; emits findings **and** a nullfield policy |
 | **[stoneburner](https://github.com/babywyrm/stoneburner)** | LLM eval | Provider benchmarking plus adversarial / red-blue resilience eval, named **security batteries** (`atomics battery`), security-architecture review (`archreview`), live probing, **API server + MCP stdio proxy** (`atomics server` / `atomics mcp`) with optional **web dashboard**, shared **`--effort`** dial (including Ollama native `think` and Qwen template keys), **`atomics repl`**, **distributed benchmark runs** (`atomics distributed run` / `atomics worker`), and **npm worker bridge**. Install as `stoneburner-atomics`. |
-| **[skillseraph](https://github.com/babywyrm/skillseraph)** | Config scanner | Static analyzer for the control plane — scans `AGENTS.md`, `SKILL.md`, rules, hooks, and MCP configs across 11 platforms for poisoning and supply-chain tampering |
+| **[skillseraph](https://github.com/babywyrm/skillseraph)** | Config scanner | Static analyzer for the control plane — scans `AGENTS.md`, `SKILL.md`, rules, hooks, and MCP configs across 13 platforms for poisoning and supply-chain tampering |
 
 Each ships independently. They are stronger together.
 

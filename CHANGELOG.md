@@ -19,6 +19,10 @@ that had drifted.
 - **`docs/ecosystem.md`** — the near-term list points at the radar; the
   shipped timeline stays as history.
 - **`README.md`** — a "What we're building next" link under the tools table.
+- **skillseraph covers 13 platforms, not 11** (VS Code-compatible and
+  JetBrains IDEs were missing): README badge and table, reference page,
+  roadmap, ecosystem row, and attack-path atlas. The reference page states
+  the install paths that work.
 
 ## [2026-10 pt.3] stoneburner v0.26.2, mcpnuke v6.21.1, the handoff
 
