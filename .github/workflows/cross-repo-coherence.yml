@@ -44,47 +44,47 @@ jobs:
 
     steps:
       - name: Check out agentic-sec
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: agentic-sec
 
       - name: Check out camazotz @ main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: babywyrm/camazotz
           path: camazotz
           ref: main
 
       - name: Check out mcpnuke @ main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: babywyrm/mcpnuke
           path: mcpnuke
           ref: main
 
       - name: Check out nullfield @ main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: babywyrm/nullfield
           path: nullfield
           ref: main
 
       - name: Check out stoneburner @ main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: babywyrm/stoneburner
           path: stoneburner
           ref: main
 
       - name: Check out skillseraph @ main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: babywyrm/skillseraph
           path: skillseraph
           ref: main
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 

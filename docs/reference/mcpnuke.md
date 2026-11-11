@@ -2,7 +2,7 @@
 
 MCP red teaming and security scanner.
 
-**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.21.1 · 2123 tests · 54/57 taxonomy IDs · MIT
+**Repo:** [github.com/babywyrm/mcpnuke](https://github.com/babywyrm/mcpnuke) · v6.22.6 · 2123 tests · 54/57 taxonomy IDs · MIT
 
 **In the framework:** mcpnuke is the validator that exercises every cell of
 the [Identity Flow Framework](../identity-flows.md). New checks should
